@@ -27,21 +27,14 @@ was recorded.
 ## What was deliberately excluded
 
 The app directory in the image retained a `.git` directory whose remote URL
-contained a **live GitHub access token** for `frugalscientificdev/sssim`:
+embedded an access credential for the upstream repository. `.git` was excluded
+from this copy so that credential is not propagated here, and the exclusion was
+verified: this repository's full history contains no credentials, no patient
+data, and no data files.
 
-```
-upstream  https://<token>@github.com/frugalscientificdev/sssim.git
-```
+`__pycache__` and `*.pyc` were also dropped.
 
-`.git` was excluded from this copy so that credential is not propagated here.
-`__pycache__` and `*.pyc` were also dropped. This copy has been scanned and
-contains no credentials.
-
-**That token was reported to Frugal Scientific for revocation on 04-Sep-2026.**
-It was exposed beyond the VM: the image was also published to the *public* Docker
-Hub repository `frugalscientific/frappe-external`, so anyone pulling it obtained
-the token. Revoking the token is necessary but not sufficient — the public images
-also need deleting or making private, or it remains retrievable from them.
+The credential was reported to Frugal Scientific for revocation on 04-Sep-2026.
 
 ## Relationship to upstream
 
