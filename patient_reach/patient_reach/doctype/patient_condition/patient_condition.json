@@ -1,0 +1,55 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-21 12:29:29.289217",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "conditionrisk_factors_section",
+  "condition",
+  "column_break_rscl",
+  "response"
+ ],
+ "fields": [
+  {
+   "fieldname": "conditionrisk_factors_section",
+   "fieldtype": "Section Break",
+   "label": "Condition/Risk factors"
+  },
+  {
+   "fieldname": "condition",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Condition",
+   "options": "\nBP\nDiabetes\nObesity\nThyroid disease\nRenal disease\nLiver disease\nDyslipidemia\nCardiac disease\nAny cardiac event before\nAny surgery before\nOther"
+  },
+  {
+   "fieldname": "column_break_rscl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "response",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Response",
+   "options": "\nYes\nNo"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-05-25 16:19:39.660339",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Patient Condition",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

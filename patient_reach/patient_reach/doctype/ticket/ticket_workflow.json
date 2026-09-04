@@ -1,0 +1,219 @@
+{
+  "creation": "2024-01-01 00:00:00.000000",
+  "doctype": "Workflow",
+  "workflow_name": "Raise Ticket Workflow",
+  "document_type": "Raise Ticket",
+  "is_active": 1,
+  "modified": "2024-01-01 00:00:00.000000",
+  "modified_by": "Administrator",
+  "name": "Raise Ticket Workflow",
+  "owner": "Administrator",
+  "send_email_alert": 0,
+
+  "states": [
+    {
+      "doc_status": "0",
+      "state": "Draft",
+      "style": "Warning",
+      "allow_edit": "Patient"
+    },
+    {
+      "doc_status": "1",
+      "state": "Submitted",
+      "style": "Primary",
+      "allow_edit": "Volunteer"
+    },
+    {
+      "doc_status": "1",
+      "state": "Under Review",
+      "style": "Warning",
+      "allow_edit": "Staff"
+    },
+    {
+      "doc_status": "1",
+      "state": "Forwarded",
+      "style": "Info",
+      "allow_edit": "Doctor"      
+    },
+    {
+      "doc_status": "2",
+      "state": "Closed",
+      "style": "Success",
+      "allow_edit": "Staff"
+    },
+    {
+      "doc_status": "2",
+      "state": "Short Closed",
+      "style": "Danger",
+      "allow_edit": "Patient"
+    }
+  ],
+
+  "transitions": [
+
+    {
+      "action": "Submit",
+      "allowed": "Patient",
+      "allow_self_approval": 1,
+      "next_state": "Submitted",
+      "state": "Draft",
+      "condition": null
+    },
+    {
+      "action": "Submit",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Submitted",
+      "state": "Draft",
+      "condition": null
+    },
+
+    {
+      "action": "Start Review",
+      "allowed": "Staff",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Submitted",
+      "condition": null
+    },
+    {
+      "action": "Start Review",
+      "allowed": "Doctor",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Submitted",
+      "condition": null
+    },
+    {
+      "action": "Start Review",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Submitted",
+      "condition": "doc.ticket_type in ['Patient Enquiry', 'Telemedicine', 'Preventive Cardiology']"
+    },
+    {
+      "action": "Forward",
+      "allowed": "Staff",
+      "allow_self_approval": 1,
+      "next_state": "Forwarded",
+      "state": "Under Review",
+      "condition": "doc.forward_to and doc.ticket_type in ['Patient Enquiry', 'Telemedicine']"
+    },
+    {
+      "action": "Forward",
+      "allowed": "Doctor",
+      "allow_self_approval": 1,
+      "next_state": "Forwarded",
+      "state": "Under Review",
+      "condition": "doc.forward_to and doc.ticket_type in ['Patient Enquiry', 'Telemedicine']"
+    },
+    {
+      "action": "Forward",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Forwarded",
+      "state": "Under Review",
+      "condition": "doc.forward_to and doc.ticket_type == 'Preventive Cardiology'"
+    },
+    {
+      "action": "Forward",
+      "allowed": "Doctor",
+      "allow_self_approval": 1,
+      "next_state": "Forwarded",
+      "state": "Under Review",
+      "condition": "doc.forward_to and doc.ticket_type == 'Preventive Cardiology'"
+    },
+
+    {
+      "action": "Accept",
+      "allowed": "Staff",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Forwarded",
+      "condition": "doc.ticket_type in ['Patient Enquiry', 'Telemedicine']"
+    },
+    {
+      "action": "Accept",
+      "allowed": "Doctor",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Forwarded",
+      "condition": "doc.ticket_type in ['Patient Enquiry', 'Telemedicine']"
+    },
+    {
+      "action": "Accept",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Forwarded",
+      "condition": "doc.ticket_type == 'Preventive Cardiology'"
+    },
+    {
+      "action": "Accept",
+      "allowed": "Staff",
+      "allow_self_approval": 1,
+      "next_state": "Under Review",
+      "state": "Forwarded",
+      "condition": "doc.ticket_type == 'Preventive Cardiology'"
+    },
+    {
+      "action": "Close",
+      "allowed": "Staff",
+      "allow_self_approval": 1,
+      "next_state": "Closed",
+      "state": "Under Review",
+      "condition": "doc.ticket_type in ['Patient Enquiry', 'Telemedicine']"
+    },
+    {
+      "action": "Close",
+      "allowed": "Staff",
+      "allow_self_approval": 1,
+      "next_state": "Closed",
+      "state": "Forwarded",
+      "condition": "doc.ticket_type in ['Patient Enquiry', 'Telemedicine']"
+    },
+    {
+      "action": "Close",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Closed",
+      "state": "Under Review",
+      "condition": "doc.ticket_type == 'Preventive Cardiology'"
+    },
+    {
+      "action": "Close",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Closed",
+      "state": "Forwarded",
+      "condition": "doc.ticket_type == 'Preventive Cardiology'"
+    },
+    {
+      "action": "Short Close",
+      "allowed": "Patient",
+      "allow_self_approval": 1,
+      "next_state": "Short Closed",
+      "state": "Submitted",
+      "condition": null
+    },
+    {
+      "action": "Short Close",
+      "allowed": "Volunteer",
+      "allow_self_approval": 1,
+      "next_state": "Short Closed",
+      "state": "Submitted",
+      "condition": null
+    },
+    {
+      "action": "Short Close",
+      "allowed": "Patient",
+      "allow_self_approval": 1,
+      "next_state": "Short Closed",
+      "state": "Under Review",
+      "condition": null
+    }
+  ],
+
+  "workflow_state_field": "workflow_state"
+}

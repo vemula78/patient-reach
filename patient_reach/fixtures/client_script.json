@@ -1,0 +1,46 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Ticket",
+  "enabled": 1,
+  "modified": "2026-06-08 12:33:48.285963",
+  "module": "Patient Reach",
+  "name": "Visit Button in Ticket",
+  "script": "frappe.ui.form.on('Ticket', {\n    refresh: function(frm) {\n        add_visit_history_button(frm);\n    },\n\n    patient_id: function(frm) {\n        add_visit_history_button(frm);\n    }\n});\n\nfunction add_visit_history_button(frm) {\n\n    frm.remove_custom_button(__('Visit History'));\n\n    if (frm.doc.patient_id) {\n\n        frm.add_custom_button(__('Visit History'), function() {\n\n            frappe.set_route(\n                'List',\n                'Ticket',\n                {\n                    patient_id: frm.doc.patient_id\n                }\n            );\n\n        });\n    }\n}",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Patient",
+  "enabled": 1,
+  "modified": "2026-05-25 12:03:48.783905",
+  "module": "Patient Reach",
+  "name": "Patient hide comments and activity",
+  "script": "frappe.ui.form.on('Patient', {\n    refresh: function(frm) {\n\n        if (frm.timeline && frm.timeline.wrapper) {\n\n            $(frm.timeline.wrapper).hide();\n\n            $(frm.timeline.wrapper)\n                .find('.comment-box, .timeline-items, .new-comment, .comments')\n                .hide();\n        }\n        frm.page.wrapper.find('.form-footer').hide();\n    }\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Ticket",
+  "enabled": 1,
+  "modified": "2026-03-27 19:24:31.558807",
+  "module": "Patient Reach",
+  "name": "Pledge Form in Raise Ticket",
+  "script": "frappe.ui.form.on('Raise Ticket', {\n    refresh(frm) {\n        render_pledge(frm);\n    },\n    user_name(frm) {\n        render_pledge(frm);\n    }\n});\n\nfunction render_pledge(frm) {\n    let name = frm.doc.user_name || \"\";\n\n    let html = `\n        <div style=\"font-size:15px; line-height:1.6;\">\n            <p><b>The Specific Pledge:</b></p>\n            <p>\n                I, \n                <span style=\"border-bottom:1px solid #000; display:inline-block; min-width:150px; text-align:center;\">\n                    ${name || \"&nbsp;\"}\n                </span>, \n                pledge that for the next <b>7 days</b>, I will:\n            </p>\n        </div>\n    `;\n\n    frm.fields_dict.the_specific_pledge.$wrapper.html(html);\n}",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Patient",
+  "enabled": 1,
+  "modified": "2026-04-01 15:15:06.512253",
+  "module": "Patient Reach",
+  "name": "Filter District based on State",
+  "script": "frappe.ui.form.on('Patient', {\n    \n    custom_state: function(frm) {\n        // Clear district when state changes\n        frm.set_value('custom_district', null);\n\n        if (frm.doc.custom_state) {\n            // Filter district based on selected state\n            frm.set_query('custom_district', function() {\n                return {\n                    filters: {\n                        state: frm.doc.custom_state\n                    }\n                };\n            });\n        }\n    },\n\n    custom_district: function(frm) {\n        if (!frm.doc.custom_state) {\n            frappe.msgprint(__('Please select State before selecting District'));\n            frm.set_value('custom_district', null);\n        }\n    },\n\n    onload: function(frm) {\n        // Apply filter on load if state already selected\n        if (frm.doc.custom_state) {\n            frm.set_query('custom_district', function() {\n                return {\n                    filters: {\n                        state: frm.doc.custom_state\n                    }\n                };\n            });\n        }\n    }\n\n});",
+  "view": "Form"
+ }
+]

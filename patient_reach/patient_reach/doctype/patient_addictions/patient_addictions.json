@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-04-21 12:38:47.610233",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "habits",
+  "column_break_cgxi",
+  "response"
+ ],
+ "fields": [
+  {
+   "fieldname": "habits",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Habits",
+   "options": "\nNone\nSmoking\nAlcohol\nTobacco Chewing\nOther"
+  },
+  {
+   "fieldname": "column_break_cgxi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "response",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Response",
+   "options": "\nYes\nNo"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-21 12:40:02.656658",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Patient Addictions",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

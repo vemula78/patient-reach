@@ -1,0 +1,822 @@
+{
+ "actions": [],
+ "autoname": "TKT-.YYYY.-.#####",
+ "creation": "2024-01-01 00:00:00",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "ticket_details_section",
+  "patient_id",
+  "patient_name",
+  "col_break_1",
+  "nodal_centre",
+  "patient_mobile_no",
+  "ticket_info_section",
+  "company",
+  "col_break_2",
+  "department",
+  "ticket_type_section",
+  "ticket_type",
+  "col_break_3",
+  "visit_type",
+  "description_section",
+  "description",
+  "attachments_section",
+  "attachments",
+  "preventive_cardiology_section",
+  "caregiver_interested",
+  "best_time_to_call",
+  "parent_diabetic_history",
+  "parent_bp_history",
+  "parent_cardiac_disease_history",
+  "caregiver_medical_checkup_done_",
+  "medical_condition",
+  "any_other_medical_condition",
+  "personal_habits",
+  "any_other_habits",
+  "prevention_level",
+  "justification_of_risk_profiling",
+  "additional_information",
+  "nutrition_heading",
+  "green_plate",
+  "sunset_rule",
+  "consume_heavy",
+  "protein_intake",
+  "curry_additional_info",
+  "2_the_hurry_movement",
+  "sedentary",
+  "adequate_sleep",
+  "post_meal_walk",
+  "hurry_additional_info",
+  "3_the_worry_stresshabits",
+  "caregiver_stress",
+  "type_of_stress",
+  "stress_additional_information",
+  "column_break_ghst",
+  "relationship",
+  "actual_patient_id",
+  "patient_name_of_the_original_patient",
+  "department_of_original_patient",
+  "any_other_information_of_original_patient",
+  "section_d",
+  "string_test_heading",
+  "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
+  "is_the_caregiver_ready_to_be_measured_for_weight",
+  "is_the_caregiver_ready_to_be_measured_for_height",
+  "is_the_caregiver_ready_for_the_string_test",
+  "waist_cm",
+  "height_cm",
+  "weight",
+  "string_test_result",
+  "bp_heading",
+  "rested_5_min",
+  "bp_reading",
+  "bp_status",
+  "bp_status_other",
+  "section_title",
+  "are_you_ready_to_make_a_change_for_a_healthy_you",
+  "effort_to",
+  "referrals_safety_net",
+  "did_you_notice_any_red_flags",
+  "physiotherapy",
+  "dietician",
+  "cardiology",
+  "general_medicine_high_bp",
+  "counselling",
+  "none",
+  "other",
+  "red_flag_other_reason",
+  "meta_section",
+  "created_date",
+  "counselled_date",
+  "col_break_4",
+  "workflow_state",
+  "counsellor_name",
+  "patient_enquiry_section",
+  "pe_chief_complaint",
+  "clinical_section",
+  "examination",
+  "advice",
+  "touchpoint_section",
+  "follow_up_date",
+  "follow_up_remarks",
+  "column_break_iuue",
+  "follow_up_by",
+  "forward_section",
+  "forward_to",
+  "forward_reason",
+  "feedback",
+  "close_section",
+  "close_remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "ticket_details_section",
+   "fieldtype": "Section Break",
+   "label": "Ticket Details"
+  },
+  {
+   "fieldname": "patient_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Patient ID / Caregiver ID",
+   "options": "Patient",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nodal_centre",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": " Nodal Centre",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ticket_info_section",
+   "fieldtype": "Section Break",
+   "label": "Organisation Info"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Department",
+   "options": "Department",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ticket_type_section",
+   "fieldtype": "Section Break",
+   "label": "Ticket Classification"
+  },
+  {
+   "fieldname": "ticket_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Ticket Type",
+   "options": "\nPatient Enquiry\nTelemedicine\nPreventive Cardiology",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "visit_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Visit Type",
+   "options": "\nFirst Visit\nFollow-up",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description_section",
+   "fieldtype": "Section Break",
+   "label": "Description / Chief Complaint"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description / Chief Complaint",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "meta_section",
+   "fieldtype": "Section Break",
+   "label": "Status & Dates"
+  },
+  {
+   "default": "Now",
+   "fieldname": "created_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Created Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Workflow State",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "patient_enquiry_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Enquiry Details"
+  },
+  {
+   "fieldname": "pe_chief_complaint",
+   "fieldtype": "Text",
+   "label": "Chief Complaint"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "clinical_section",
+   "fieldtype": "Section Break",
+   "label": "Clinical Review"
+  },
+  {
+   "fieldname": "examination",
+   "fieldtype": "Text Editor",
+   "label": "Examination"
+  },
+  {
+   "fieldname": "advice",
+   "fieldtype": "Text Editor",
+   "label": "Advice"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "forward_section",
+   "fieldtype": "Section Break",
+   "label": "Forward Ticket"
+  },
+  {
+   "fieldname": "forward_to",
+   "fieldtype": "Link",
+   "label": "Forward To",
+   "options": "User"
+  },
+  {
+   "fieldname": "forward_reason",
+   "fieldtype": "Text",
+   "label": "Reason for Forwarding"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "close_section",
+   "fieldtype": "Section Break",
+   "label": "Closure Details"
+  },
+  {
+   "fieldname": "close_remarks",
+   "fieldtype": "Text",
+   "label": "Close Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Ticket",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "relationship",
+   "fieldtype": "Data",
+   "label": "Relationship to Patient",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "actual_patient_id",
+   "fieldtype": "Data",
+   "label": "Patient ID (of the original patient)",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "best_time_to_call",
+   "fieldtype": "Data",
+   "label": "Best time to call",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "additional_information",
+   "fieldtype": "Small Text",
+   "label": "Additional Information"
+  },
+  {
+   "fieldname": "prevention_level",
+   "fieldtype": "Select",
+   "label": "Where does this person fit in the Levels of Prevention?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nLevel 1 - Healthy,no habits,no family history\nLevel 1s- S modifier(Past surgeries and Structural illness) for Level 1\nLevel 2 - At Risk(Smoking/Sugar/Stress), no disease yet\nLevel 2s- S modifier(Past surgeries and Structural illness) for Level 2\nLevel 3 - Has BP/Diabetes/Obesity etc\nLevel 3s- S modifier(Past surgeries and Structural illness) for Level 3\nLevel 4 - Survivor(Heart attack/stroke)\nLevel 4s- S modifier (Past surgeries and Structural illness) for Level 4"
+  },
+  {
+   "fieldname": "nutrition_heading",
+   "fieldtype": "Heading",
+   "label": "1. The \"Curry\" (Nutrition)"
+  },
+  {
+   "fieldname": "green_plate",
+   "fieldtype": "Select",
+   "label": "Green Plate: What % of the plate is vegetables?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\n<25%\n25% - 50%\n>=50%"
+  },
+  {
+   "fieldname": "sunset_rule",
+   "fieldtype": "Select",
+   "label": "Sunset Rule: Do they eat heavy meals after 8 PM?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "preventive_cardiology_section",
+   "fieldtype": "Section Break",
+   "label": "Preventive Cardiology"
+  },
+  {
+   "fieldname": "column_break_ghst",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "protein_intake",
+   "fieldtype": "Select",
+   "label": "Protein: Is daily intake >=25%?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "curry_additional_info",
+   "fieldtype": "Small Text",
+   "label": "Curry - Any Additional Info",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "sedentary",
+   "fieldtype": "Select",
+   "label": "Sedentary: Do they sit for >6 hours/day?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "post_meal_walk",
+   "fieldtype": "Select",
+   "label": "Side Door: Walk 10 mins post meals?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "hurry_additional_info",
+   "fieldtype": "Small Text",
+   "label": "Hurry - Any Additional Info"
+  },
+  {
+   "fieldname": "caregiver_stress",
+   "fieldtype": "Select",
+   "label": "Caregiver Stress: Do they feel overwhelmed/helpless?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "2_the_hurry_movement",
+   "fieldtype": "Heading",
+   "label": "2. The \"Hurry\" (Movement)"
+  },
+  {
+   "fieldname": "3_the_worry_stresshabits",
+   "fieldtype": "Heading",
+   "label": "3. The \"Worry\" (Stress/Habits)"
+  },
+  {
+   "fieldname": "section_d",
+   "fieldtype": "Section Break",
+   "label": "SECTION D: THE MEASUREMENTS"
+  },
+  {
+   "fieldname": "string_test_heading",
+   "fieldtype": "Heading",
+   "label": "1. The String Test (Visceral Fat)"
+  },
+  {
+   "fieldname": "waist_cm",
+   "fieldtype": "Float",
+   "label": "Waist Measurement (cm)"
+  },
+  {
+   "fieldname": "height_cm",
+   "fieldtype": "Float",
+   "label": "Height (cm)"
+  },
+  {
+   "fieldname": "string_test_result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "options": "\nPASS (Waist < 0.5 x Height)\nFAIL (Central Obesity)"
+  },
+  {
+   "fieldname": "bp_heading",
+   "fieldtype": "Section Break",
+   "label": "2. Blood Pressure (BP)"
+  },
+  {
+   "fieldname": "rested_5_min",
+   "fieldtype": "Select",
+   "label": "Did they rest for 5 mins in silence?",
+   "options": "\nYes\nNo"
+  },
+  {
+   "description": "Example: 120/80",
+   "fieldname": "bp_reading",
+   "fieldtype": "Data",
+   "label": "Reading (Systolic/Diastolic mmHg)"
+  },
+  {
+   "fieldname": "bp_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nNormal\nHigh\nLow\nNeeds Reference"
+  },
+  {
+   "depends_on": "eval:doc.bp_status=='Other'",
+   "fieldname": "bp_status_other",
+   "fieldtype": "Data",
+   "label": "If Other, specify"
+  },
+  {
+   "description": "Co-create a \"Small Win\" Discuss a feasible goal.",
+   "fieldname": "section_title",
+   "fieldtype": "Section Break",
+   "label": "The Change"
+  },
+  {
+   "depends_on": "eval:doc.other==1",
+   "fieldname": "red_flag_other_reason",
+   "fieldtype": "Small Text",
+   "label": "Please specify"
+  },
+  {
+   "fieldname": "referrals_safety_net",
+   "fieldtype": "Heading",
+   "label": "REFERRALS (Safety Net)"
+  },
+  {
+   "fetch_from": "patient_id.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Patient Name / Caregiver Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "caregiver_interested",
+   "fieldtype": "Select",
+   "label": "Is caregiver interested in program?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "parent_diabetic_history",
+   "fieldtype": "Select",
+   "label": "Parent Diabetic History",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nMother\nFather\nBoth\nNone\nNA"
+  },
+  {
+   "fieldname": "parent_bp_history",
+   "fieldtype": "Select",
+   "label": "Parent BP History",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nMother\nFather\nBoth\nNone\nNA"
+  },
+  {
+   "fieldname": "parent_cardiac_disease_history",
+   "fieldtype": "Select",
+   "label": "Parent Cardiac Disease History",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nMother\nFather\nBoth\nNone\nNA"
+  },
+  {
+   "fieldname": "caregiver_medical_checkup_done_",
+   "fieldtype": "Select",
+   "label": "Caregiver Medical Checkup Done ?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nWithin last 1 year\nBefore 1 year\nNever done"
+  },
+  {
+   "fieldname": "medical_condition",
+   "fieldtype": "Table",
+   "label": "Medical Condition",
+   "options": "Patient Condition"
+  },
+  {
+   "fieldname": "any_other_medical_condition",
+   "fieldtype": "Data",
+   "label": "Any other medical condition"
+  },
+  {
+   "fieldname": "personal_habits",
+   "fieldtype": "Table",
+   "label": "Personal Habits",
+   "options": "Patient Addictions"
+  },
+  {
+   "fieldname": "any_other_habits",
+   "fieldtype": "Data",
+   "label": "Any other habits"
+  },
+  {
+   "fieldname": "patient_name_of_the_original_patient",
+   "fieldtype": "Data",
+   "label": "Patient Name (of the Original Patient)",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "department_of_original_patient",
+   "fieldtype": "Select",
+   "label": "Department (of Original Patient)",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nIP Cardiac Sciences\nIP Neuro Sciences\nIP Multi-specialty\nOPD"
+  },
+  {
+   "fieldname": "any_other_information_of_original_patient",
+   "fieldtype": "Small Text",
+   "label": "Any other Information of original patient",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "justification_of_risk_profiling",
+   "fieldtype": "Data",
+   "label": "Justification Of Risk Profiling",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
+  },
+  {
+   "fieldname": "consume_heavy",
+   "fieldtype": "Select",
+   "label": "Does the caregiver consume heavy grains or meal for dinner?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "adequate_sleep",
+   "fieldtype": "Select",
+   "label": "Does the Caregiver get adequate sleep (>7 hours)?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "type_of_stress",
+   "fieldtype": "Select",
+   "label": "Type of stress",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nClinical Stress (Medical-Related)\nNon-Clinical Stress (Family, Financial, Social, etc.)\nNone"
+  },
+  {
+   "fieldname": "stress_additional_information",
+   "fieldtype": "Small Text",
+   "label": "Stress Additional Information"
+  },
+  {
+   "fieldname": "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
+   "fieldtype": "Select",
+   "label": "Is the caregiver ready to be measured for Blood Pressure?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "is_the_caregiver_ready_to_be_measured_for_weight",
+   "fieldtype": "Select",
+   "label": "Is the caregiver ready to be measured for Weight?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "is_the_caregiver_ready_to_be_measured_for_height",
+   "fieldtype": "Select",
+   "label": "Is the caregiver ready to be measured for Height?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "is_the_caregiver_ready_for_the_string_test",
+   "fieldtype": "Select",
+   "label": "Is the caregiver ready for the String Test?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight"
+  },
+  {
+   "fieldname": "are_you_ready_to_make_a_change_for_a_healthy_you",
+   "fieldtype": "Select",
+   "label": "Are you ready to make a change for a Healthy you?",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "effort_to",
+   "fieldtype": "Small Text",
+   "label": "My Big Step (Max 2 changes where the caregivers confidence level is more than 70%)"
+  },
+  {
+   "fieldname": "did_you_notice_any_red_flags",
+   "fieldtype": "Heading",
+   "label": "Did you notice any Red Flags?"
+  },
+  {
+   "default": "0",
+   "fieldname": "physiotherapy",
+   "fieldtype": "Check",
+   "label": "Physiotherapy (Back Pain, Joint Pain)"
+  },
+  {
+   "default": "0",
+   "fieldname": "dietician",
+   "fieldtype": "Check",
+   "label": "Dietician (Uncontrolled Diabetes, Severe Obesity)"
+  },
+  {
+   "default": "0",
+   "fieldname": "cardiology",
+   "fieldtype": "Check",
+   "label": "Cardiology (Chest Pain \u2013 Immediate Attention)"
+  },
+  {
+   "default": "0",
+   "fieldname": "counselling",
+   "fieldtype": "Check",
+   "label": "Counselling (Severe Depression/Anxiety)"
+  },
+  {
+   "default": "0",
+   "fieldname": "none",
+   "fieldtype": "Check",
+   "label": "None"
+  },
+  {
+   "default": "0",
+   "fieldname": "other",
+   "fieldtype": "Check",
+   "label": "Other"
+  },
+  {
+   "fetch_from": "patient_id.mobile",
+   "fieldname": "patient_mobile_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Patient/Caregiver Mobile No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "touchpoint_section",
+   "fieldtype": "Section Break",
+   "label": "Touchpoint"
+  },
+  {
+   "fieldname": "counselled_date",
+   "fieldtype": "Data",
+   "label": "Counselled Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "counsellor_name",
+   "fieldtype": "Data",
+   "label": "Counsellor-Coach\u2019s Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "feedback",
+   "fieldtype": "Small Text",
+   "label": "Feedback"
+  },
+  {
+   "default": "0",
+   "fieldname": "general_medicine_high_bp",
+   "fieldtype": "Check",
+   "label": "General Medicine (High BP)"
+  },
+  {
+   "fieldname": "follow_up_date",
+   "fieldtype": "Date",
+   "label": "Follow-up Date"
+  },
+  {
+   "fieldname": "follow_up_remarks",
+   "fieldtype": "Small Text",
+   "label": "Follow-up Remarks"
+  },
+  {
+   "fieldname": "column_break_iuue",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "follow_up_by",
+   "fieldtype": "Link",
+   "label": "Follow-up By",
+   "options": "User"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-27 14:16:05.992693",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Ticket",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Patient",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Volunteer",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Staff",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Doctor",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Yellow",
+   "title": "Draft"
+  },
+  {
+   "color": "Blue",
+   "title": "Submitted"
+  },
+  {
+   "color": "Orange",
+   "title": "Under Review"
+  },
+  {
+   "color": "Purple",
+   "title": "Forwarded"
+  },
+  {
+   "color": "Green",
+   "title": "Closed"
+  },
+  {
+   "color": "Red",
+   "title": "Short Closed"
+  }
+ ],
+ "title_field": "patient_id",
+ "track_changes": 1,
+ "track_seen": 1,
+ "track_views": 1
+}

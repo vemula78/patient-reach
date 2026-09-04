@@ -1,0 +1,28 @@
+[
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "en",
+  "modified": "2026-05-12 18:12:38.031859",
+  "name": "gjcjj607io",
+  "source_text": "Patient",
+  "translated_text": "Patient/Caregiver"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "en",
+  "modified": "2026-05-12 18:17:17.580895",
+  "name": "jao5vkjihb",
+  "source_text": "Ticket",
+  "translated_text": "Visit"
+ }
+]
