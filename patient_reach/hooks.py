@@ -281,10 +281,15 @@ fixtures = [
         ]
     },
     {
+        # Server Scripts intentionally no longer exported. The three that lived
+        # here (Visit Owner Creation, Patient List, Update todo list if forward
+        # to is updated) moved to patient_reach/doc_events.py on 06-Sep-2026.
+        # Keeping them as fixtures reinstalled them on every migrate, so they ran
+        # alongside the hooks and overwrote user-supplied values. They also
+        # required server_script_enabled, which grants anyone with Script Manager
+        # arbitrary server-side Python.
         "dt": "Server Script",
-        "filters": [
-            ["name", "in", ["Update todo list if forward to is updated","Patient List", "Visit Owner Creation"]]
-        ]
+        "filters": [["name", "in", []]]
     },
     {
         "dt": "Translation",
@@ -298,8 +303,14 @@ fixtures = [
 
 doc_events = {
     "Patient": {
-        "autoname": "patient_reach.api.patient_autoname"
-    }
+        "autoname": "patient_reach.api.patient_autoname",
+        "after_insert": "patient_reach.doc_events.patient_after_insert",
+    },
+    "Ticket": {
+        "before_validate": "patient_reach.doc_events.ticket_before_validate",
+        "after_insert": "patient_reach.doc_events.ticket_after_insert",
+        "after_save": "patient_reach.doc_events.ticket_after_save",
+    },
 }
 
 override_doctype_dashboards = {
