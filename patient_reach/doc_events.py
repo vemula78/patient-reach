@@ -91,7 +91,15 @@ def ticket_after_insert(doc, method=None):
     if not doc.get("counselled_date"):
         doc.db_set("counselled_date", frappe.utils.getdate(doc.creation), update_modified=False)
     if not doc.get("counsellor_name"):
-        doc.db_set("counsellor_name", doc.owner, update_modified=False)
+        # get_fullname, not doc.owner. owner is the login id, so a blank field
+        # used to stamp "someone@sssihms.org" onto a clinical record where a
+        # person's name belongs. The field became editable on 06-Sep-2026, so
+        # this is only the fallback when the counsellor leaves it empty --
+        # get_fullname itself falls back to the login id if the User has no
+        # first/last name set, which is the right failure: a real identifier
+        # rather than a blank.
+        doc.db_set("counsellor_name", frappe.utils.get_fullname(doc.owner),
+                   update_modified=False)
 
 
 def ticket_after_save(doc, method=None):
@@ -134,4 +142,5 @@ def patient_after_insert(doc, method=None):
         doc.db_set("custom_counselled_date", frappe.utils.getdate(doc.creation),
                    update_modified=False)
     if not doc.get("custom_counsellor_name"):
-        doc.db_set("custom_counsellor_name", doc.owner, update_modified=False)
+        doc.db_set("custom_counsellor_name", frappe.utils.get_fullname(doc.owner),
+                   update_modified=False)

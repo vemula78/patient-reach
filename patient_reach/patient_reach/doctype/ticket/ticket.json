@@ -25,6 +25,8 @@
   "description",
   "attachments_section",
   "attachments",
+  "counsellor_name",
+  "counselled_date",
   "preventive_cardiology_section",
   "caregiver_interested",
   "best_time_to_call",
@@ -90,10 +92,8 @@
   "red_flag_other_reason",
   "meta_section",
   "created_date",
-  "counselled_date",
   "col_break_4",
   "workflow_state",
-  "counsellor_name",
   "patient_enquiry_section",
   "pe_chief_complaint",
   "clinical_section",
@@ -195,15 +195,15 @@
   {
    "fieldname": "description_section",
    "fieldtype": "Section Break",
-   "label": "Description / Chief Complaint",
-   "hidden": 1
+   "hidden": 1,
+   "label": "Description / Chief Complaint"
   },
   {
    "fieldname": "description",
    "fieldtype": "Text Editor",
+   "hidden": 1,
    "label": "Description / Chief Complaint",
-   "reqd": 1,
-   "hidden": 1
+   "reqd": 1
   },
   {
    "fieldname": "attachments_section",
@@ -453,11 +453,11 @@
    "label": "Reading (Systolic/Diastolic mmHg)"
   },
   {
+   "description": "Reference: Normal <120/80. High = 140/90 or above (High BP). Low = below 90/60. Use \"Needs Reference\" if unsure or if readings are borderline.",
    "fieldname": "bp_status",
    "fieldtype": "Select",
    "label": "BP Status",
-   "options": "\nNormal\nHigh\nLow\nNeeds Reference",
-   "description": "Reference: Normal <120/80. High = 140/90 or above (High BP). Low = below 90/60. Use \"Needs Reference\" if unsure or if readings are borderline."
+   "options": "\nNormal\nHigh\nLow\nNeeds Reference"
   },
   {
    "depends_on": "eval:doc.bp_status=='Other'",
@@ -698,17 +698,18 @@
    "label": "Touchpoint"
   },
   {
+   "default": "Today",
+   "description": "Date the caregiver was actually counselled - change it if you are entering this later.",
    "fieldname": "counselled_date",
    "fieldtype": "Date",
    "label": "Counselled Date",
-   "read_only": 1,
-   "description": "The date the caregiver was actually counselled. This is often not the date the record was entered, so set it explicitly."
+   "read_only": 0
   },
   {
    "fieldname": "counsellor_name",
    "fieldtype": "Data",
    "label": "Counsellor-Coach\u2019s Name",
-   "read_only": 1
+   "read_only": 0
   },
   {
    "fieldname": "feedback",

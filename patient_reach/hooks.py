@@ -264,14 +264,36 @@ fixtures = [
                 "Patient-custom_counselled_date",
                 "Patient-custom_counsellor_name",
                 "Patient-custom_other_known_language",
-                "Patient-custom_marital_status"
+                "Patient-custom_marital_status",
+                # Ticket's whole tab layout. Added 06-Sep-2026: these six Tab
+                # Breaks (and the Counselling section) existed ONLY in the
+                # care.sssihms.org database, so ticket.json described a form
+                # with no tabs at all and a rebuild on a fresh site could not
+                # reproduce what the counselling team actually uses.
+                "Ticket-custom_caregiver_profiling__habits",
+                "Ticket-custom_measurements",
+                "Ticket-custom_change__referrals",
+                "Ticket-custom_status__enquiry",
+                "Ticket-custom_clinical_review",
+                "Ticket-custom_touchpoint",
+                "Ticket-custom_counselling_section",
+                "Ticket-custom_counselling_col"
             ]]
         ]
     },
     {
+        # Ticket added 06-Sep-2026, same reason as its Custom Fields above: 41
+        # Property Setters -- including a field_order override for the whole
+        # doctype -- lived only in the site database.
+        #
+        # NOTE: the Patient entries in fixtures/property_setter.json are STALE.
+        # The live site has 27 Property Setters on Patient; only 12 are
+        # exported here. Re-exporting them would change Patient's form on the
+        # next migrate, so it was left alone deliberately rather than swept in
+        # with the Ticket work. Reconcile it as its own task.
         "dt": "Property Setter",
         "filters": [
-            ["doc_type", "in", ["Patient"]]
+            ["doc_type", "in", ["Patient", "Ticket"]]
         ]
     },
     {
