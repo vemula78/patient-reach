@@ -195,13 +195,15 @@
   {
    "fieldname": "description_section",
    "fieldtype": "Section Break",
-   "label": "Description / Chief Complaint"
+   "label": "Description / Chief Complaint",
+   "hidden": 1
   },
   {
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description / Chief Complaint",
-   "reqd": 1
+   "reqd": 1,
+   "hidden": 1
   },
   {
    "fieldname": "attachments_section",
@@ -453,8 +455,9 @@
   {
    "fieldname": "bp_status",
    "fieldtype": "Select",
-   "label": "Status",
-   "options": "\nNormal\nHigh\nLow\nNeeds Reference"
+   "label": "BP Status",
+   "options": "\nNormal\nHigh\nLow\nNeeds Reference",
+   "description": "Reference: Normal <120/80. High = 140/90 or above (High BP). Low = below 90/60. Use \"Needs Reference\" if unsure or if readings are borderline."
   },
   {
    "depends_on": "eval:doc.bp_status=='Other'",
@@ -530,7 +533,7 @@
   },
   {
    "fieldname": "any_other_medical_condition",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Any other medical condition"
   },
   {
@@ -541,8 +544,8 @@
   },
   {
    "fieldname": "any_other_habits",
-   "fieldtype": "Data",
-   "label": "Any other habits"
+   "fieldtype": "Small Text",
+   "label": "Any other addictions"
   },
   {
    "fieldname": "patient_name_of_the_original_patient",
@@ -565,7 +568,7 @@
   },
   {
    "fieldname": "justification_of_risk_profiling",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Justification Of Risk Profiling",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
   },
@@ -696,9 +699,10 @@
   },
   {
    "fieldname": "counselled_date",
-   "fieldtype": "Data",
+   "fieldtype": "Date",
    "label": "Counselled Date",
-   "read_only": 1
+   "read_only": 1,
+   "description": "The date the caregiver was actually counselled. This is often not the date the record was entered, so set it explicitly."
   },
   {
    "fieldname": "counsellor_name",
