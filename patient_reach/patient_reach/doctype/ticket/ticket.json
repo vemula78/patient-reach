@@ -199,11 +199,12 @@
    "label": "Description / Chief Complaint"
   },
   {
+   "description": "Retired 06-Sep-2026 at the counselling team's request. Hidden and no longer required; the 826 rows that hold text keep it. Use \"Chief Complaint\" under Patient Enquiry Details instead.",
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "hidden": 1,
    "label": "Description / Chief Complaint",
-   "reqd": 1
+   "reqd": 0
   },
   {
    "fieldname": "attachments_section",
