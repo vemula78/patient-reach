@@ -277,7 +277,11 @@ fixtures = [
                 "Ticket-custom_clinical_review",
                 "Ticket-custom_touchpoint",
                 "Ticket-custom_counselling_section",
-                "Ticket-custom_counselling_col"
+                "Ticket-custom_counselling_col",
+                # 07-Sep-2026: Curry/Hurry/Worry moved out of tab 1 into their
+                # own "Habits & Principles" tab, as the Google Form has them.
+                "Ticket-custom_habits__principles",
+                "Ticket-custom_habits_principles_section"
             ]]
         ]
     },

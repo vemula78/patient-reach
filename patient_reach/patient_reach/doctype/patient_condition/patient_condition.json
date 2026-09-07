@@ -8,7 +8,10 @@
  "field_order": [
   "conditionrisk_factors_section",
   "condition",
+  "has_disease",
+  "has_medication",
   "column_break_rscl",
+  "medication_recorded",
   "response"
  ],
  "fields": [
@@ -22,19 +25,47 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Condition",
-   "options": "\nBP\nDiabetes\nObesity\nThyroid disease\nRenal disease\nLiver disease\nDyslipidemia\nCardiac disease\nAny cardiac event before\nAny surgery before\nOther"
+   "options": "\nBP\nDiabetes\nObesity\nThyroid\nKidney Issue\nLiver Issue\nPCOD\nHeart Disease\nHeart Attack\nCholesterol\nSurgery"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "description": "Unchecked means \"Has No Disease\".",
+   "fieldname": "has_disease",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Has Disease"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "description": "Unchecked means \"Has No Medication\" -- but only when \"Medication Recorded\" is ticked. See that field.",
+   "fieldname": "has_medication",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Has Medication"
   },
   {
    "fieldname": "column_break_rscl",
    "fieldtype": "Column Break"
   },
   {
+   "default": "1",
+   "description": "Set by the app. 0 on rows captured before the medication question existed, where Has Medication means \"not recorded\" rather than \"no\".",
+   "fieldname": "medication_recorded",
+   "fieldtype": "Check",
+   "in_list_view": 0,
+   "label": "Medication Recorded",
+   "read_only": 1
+  },
+  {
    "allow_in_quick_entry": 1,
+   "description": "The single Yes/No answer this row was captured with before the two-checkbox model. Kept so nothing is reinterpreted.",
    "fieldname": "response",
    "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Response",
-   "options": "\nYes\nNo"
+   "hidden": 1,
+   "in_list_view": 0,
+   "label": "Response (legacy, pre-07-Sep-2026)",
+   "options": "\nYes\nNo",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

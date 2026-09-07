@@ -35,12 +35,18 @@
   "parent_cardiac_disease_history",
   "caregiver_medical_checkup_done_",
   "medical_condition",
-  "any_other_medical_condition",
   "personal_habits",
-  "any_other_habits",
   "prevention_level",
   "justification_of_risk_profiling",
+  "column_break_ghst",
+  "any_other_medical_condition",
+  "any_other_habits",
   "additional_information",
+  "relationship",
+  "actual_patient_id",
+  "patient_name_of_the_original_patient",
+  "department_of_original_patient",
+  "any_other_information_of_original_patient",
   "nutrition_heading",
   "green_plate",
   "sunset_rule",
@@ -56,12 +62,6 @@
   "caregiver_stress",
   "type_of_stress",
   "stress_additional_information",
-  "column_break_ghst",
-  "relationship",
-  "actual_patient_id",
-  "patient_name_of_the_original_patient",
-  "department_of_original_patient",
-  "any_other_information_of_original_patient",
   "section_d",
   "string_test_heading",
   "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
@@ -323,14 +323,14 @@
   {
    "fieldname": "additional_information",
    "fieldtype": "Small Text",
-   "label": "Additional Information"
+   "label": "Caregiver - Additional Information"
   },
   {
    "fieldname": "prevention_level",
    "fieldtype": "Select",
-   "label": "Where does this person fit in the Levels of Prevention?",
+   "label": "Where does the Caregiver fit in the Levels of Prevention ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nLevel 1 - Healthy,no habits,no family history\nLevel 1s- S modifier(Past surgeries and Structural illness) for Level 1\nLevel 2 - At Risk(Smoking/Sugar/Stress), no disease yet\nLevel 2s- S modifier(Past surgeries and Structural illness) for Level 2\nLevel 3 - Has BP/Diabetes/Obesity etc\nLevel 3s- S modifier(Past surgeries and Structural illness) for Level 3\nLevel 4 - Survivor(Heart attack/stroke)\nLevel 4s- S modifier (Past surgeries and Structural illness) for Level 4"
+   "options": "\nLevel 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.\nLevel 1s: \"S\" modifier (Past surgeries and Structural illness) for Level 1.\nLevel 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.\nLevel 2s: \"S\" modifier (Past surgeries and Structural illness) for Level 2.\nLevel 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.\nLevel 3s: \"S\" modifier (Past surgeries and Structural illness) for Level 3.\nLevel 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke.\nLevel 4s: \"S\" modifier (Past surgeries and Structural illness) for Level 4."
   },
   {
    "fieldname": "nutrition_heading",
@@ -342,12 +342,12 @@
    "fieldtype": "Select",
    "label": "Green Plate: What % of the plate is vegetables?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\n<25%\n25% - 50%\n>=50%"
+   "options": "\n< 25%\n25% - 50%\n\u2265 50%"
   },
   {
    "fieldname": "sunset_rule",
    "fieldtype": "Select",
-   "label": "Sunset Rule: Do they eat heavy meals after 8 PM?",
+   "label": "Sunset Rule: Does the caregiver have dinner after 8 PM ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -363,7 +363,7 @@
   {
    "fieldname": "protein_intake",
    "fieldtype": "Select",
-   "label": "Protein: Is daily intake >=25%?",
+   "label": "Protein: Is daily intake \u2265 25%?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -376,14 +376,14 @@
   {
    "fieldname": "sedentary",
    "fieldtype": "Select",
-   "label": "Sedentary: Do they sit for >6 hours/day?",
+   "label": "Sedentary: Does the caregiver sit for > 6 hours/day ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
   {
    "fieldname": "post_meal_walk",
    "fieldtype": "Select",
-   "label": "Side Door: Walk 10 mins post meals?",
+   "label": "The Side Door: Does the caregiver walk for 10 mins post-meals ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -395,7 +395,7 @@
   {
    "fieldname": "caregiver_stress",
    "fieldtype": "Select",
-   "label": "Caregiver Stress: Do they feel overwhelmed/helpless?",
+   "label": "Caregiver Stress: Do they feel overwhelmed/helpless ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -422,18 +422,18 @@
   {
    "fieldname": "waist_cm",
    "fieldtype": "Float",
-   "label": "Waist Measurement (cm)"
+   "label": "Waist Measurement (in cm)"
   },
   {
    "fieldname": "height_cm",
    "fieldtype": "Float",
-   "label": "Height (cm)"
+   "label": "Height (in cm)"
   },
   {
    "fieldname": "string_test_result",
    "fieldtype": "Select",
-   "label": "Result",
-   "options": "\nPASS (Waist < 0.5 x Height)\nFAIL (Central Obesity)"
+   "label": "The String Test Result (Visceral Fat)",
+   "options": "\nPASS (Ends touch/ W:H < 0.5)\nFAIL (Gap exists - Central Obesity)"
   },
   {
    "fieldname": "bp_heading",
@@ -443,14 +443,14 @@
   {
    "fieldname": "rested_5_min",
    "fieldtype": "Select",
-   "label": "Did they rest for 5 mins in silence?",
+   "label": "Did the Caregiver rest for 5 mins in silence before BP ?",
    "options": "\nYes\nNo"
   },
   {
    "description": "Example: 120/80",
    "fieldname": "bp_reading",
    "fieldtype": "Data",
-   "label": "Reading (Systolic/Diastolic mmHg)"
+   "label": "Blood Pressure Reading (mmHg)"
   },
   {
    "description": "Reference: Normal <120/80. High = 140/90 or above (High BP). Low = below 90/60. Use \"Needs Reference\" if unsure or if readings are borderline.",
@@ -493,7 +493,7 @@
   {
    "fieldname": "caregiver_interested",
    "fieldtype": "Select",
-   "label": "Is caregiver interested in program?",
+   "label": "Is the Caregiver interested in this Program ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -526,6 +526,7 @@
    "options": "\nWithin last 1 year\nBefore 1 year\nNever done"
   },
   {
+   "description": "Does the caregiver have any of the following medical conditions ? Is he/she taking any medications for the same ?",
    "fieldname": "medical_condition",
    "fieldtype": "Table",
    "label": "Medical Condition",
@@ -534,12 +535,13 @@
   {
    "fieldname": "any_other_medical_condition",
    "fieldtype": "Small Text",
-   "label": "Any other medical condition"
+   "label": "Any other medical conditions ?"
   },
   {
+   "description": "Caregiver Addictions. Anything not listed goes in \"Any other addictions\".",
    "fieldname": "personal_habits",
    "fieldtype": "Table",
-   "label": "Personal Habits",
+   "label": "Addictions",
    "options": "Patient Addictions"
   },
   {
@@ -575,23 +577,23 @@
   {
    "fieldname": "consume_heavy",
    "fieldtype": "Select",
-   "label": "Does the caregiver consume heavy grains or meal for dinner?",
+   "label": "Does the caregiver consume heavy grains/meal like rice, roti, etc. for dinner?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
   {
    "fieldname": "adequate_sleep",
    "fieldtype": "Select",
-   "label": "Does the Caregiver get adequate sleep (>7 hours)?",
+   "label": "Adequate Sleep: Does the caregiver have an adequate sleep of \u2265 7 hours ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
   {
    "fieldname": "type_of_stress",
    "fieldtype": "Select",
-   "label": "Type of stress",
+   "label": "Type of Stress",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nClinical Stress (Medical-Related)\nNon-Clinical Stress (Family, Financial, Social, etc.)\nNone"
+   "options": "\nClinical Stress (Medical related )\nNon - Clinical Stress (Family, Financial, Social etc.,)\nNone"
   },
   {
    "fieldname": "stress_additional_information",
@@ -629,12 +631,12 @@
   {
    "fieldname": "weight",
    "fieldtype": "Float",
-   "label": "Weight"
+   "label": "Weight (in kg)"
   },
   {
    "fieldname": "are_you_ready_to_make_a_change_for_a_healthy_you",
    "fieldtype": "Select",
-   "label": "Are you ready to make a change for a Healthy you?",
+   "label": "Are you ready to make a change for a Healthy You ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -652,25 +654,25 @@
    "default": "0",
    "fieldname": "physiotherapy",
    "fieldtype": "Check",
-   "label": "Physiotherapy (Back Pain, Joint Pain)"
+   "label": "Physiotherapy: (Back pain, Joint pain)"
   },
   {
    "default": "0",
    "fieldname": "dietician",
    "fieldtype": "Check",
-   "label": "Dietician (Uncontrolled Diabetes, Severe Obesity)"
+   "label": "Dietician: (Uncontrolled Diabetes, Severe Obesity)"
   },
   {
    "default": "0",
    "fieldname": "cardiology",
    "fieldtype": "Check",
-   "label": "Cardiology (Chest Pain \u2013 Immediate Attention)"
+   "label": "Cardiology: (BP > 140/90, Chest Pain - Immediate)"
   },
   {
    "default": "0",
    "fieldname": "counselling",
    "fieldtype": "Check",
-   "label": "Counselling (Severe Depression/Anxiety)"
+   "label": "Counselling: (Severe depression/anxiety)"
   },
   {
    "default": "0",
@@ -720,7 +722,7 @@
    "default": "0",
    "fieldname": "general_medicine_high_bp",
    "fieldtype": "Check",
-   "label": "General Medicine (High BP)"
+   "label": "General Medicine (High BP > 140/90)"
   },
   {
    "fieldname": "follow_up_date",

@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "habits",
+  "has_addiction",
   "column_break_cgxi",
   "response"
  ],
@@ -15,8 +16,16 @@
    "fieldname": "habits",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Habits",
-   "options": "\nNone\nSmoking\nAlcohol\nTobacco Chewing\nOther"
+   "label": "Addiction",
+   "options": "\nSmoking\nAlcohol\nTobacco Chewing\nNone"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "description": "Unchecked means the caregiver does not have this addiction.",
+   "fieldname": "has_addiction",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Has Addiction"
   },
   {
    "fieldname": "column_break_cgxi",
@@ -24,11 +33,14 @@
   },
   {
    "allow_in_quick_entry": 1,
+   "description": "The Yes/No answer this row was captured with before the checkbox model. Kept so nothing is reinterpreted.",
    "fieldname": "response",
    "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Response",
-   "options": "\nYes\nNo"
+   "hidden": 1,
+   "in_list_view": 0,
+   "label": "Response (legacy, pre-07-Sep-2026)",
+   "options": "\nYes\nNo",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

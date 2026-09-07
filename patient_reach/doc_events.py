@@ -28,7 +28,11 @@ def _string_test_result(waist_cm, height_cm):
         return None
     if waist <= 0 or height <= 0:
         return None
-    return "PASS (Waist < 0.5 x Height)" if waist < 0.5 * height else "FAIL (Central Obesity)"
+    # These two strings must stay identical to string_test_result's options in
+    # ticket.json. A mismatch does not raise -- the Select just holds a value it
+    # will not offer, and the grid renders blank.
+    return ("PASS (Ends touch/ W:H < 0.5)" if waist < 0.5 * height
+            else "FAIL (Gap exists - Central Obesity)")
 
 
 def _bp_status(bp_reading):
@@ -91,15 +95,11 @@ def ticket_after_insert(doc, method=None):
     if not doc.get("counselled_date"):
         doc.db_set("counselled_date", frappe.utils.getdate(doc.creation), update_modified=False)
     if not doc.get("counsellor_name"):
-        # get_fullname, not doc.owner. owner is the login id, so a blank field
-        # used to stamp "someone@sssihms.org" onto a clinical record where a
-        # person's name belongs. The field became editable on 06-Sep-2026, so
-        # this is only the fallback when the counsellor leaves it empty --
-        # get_fullname itself falls back to the login id if the User has no
-        # first/last name set, which is the right failure: a real identifier
-        # rather than a blank.
-        doc.db_set("counsellor_name", frappe.utils.get_fullname(doc.owner),
-                   update_modified=False)
+        # doc.owner -- the login id, not the display name. Briefly changed to
+        # get_fullname() on 06-Sep-2026; the counselling team asked for the user
+        # id back on 07-Sep-2026, so that is withdrawn. The field is editable,
+        # so this only fills a blank.
+        doc.db_set("counsellor_name", doc.owner, update_modified=False)
 
 
 def ticket_after_save(doc, method=None):
@@ -142,5 +142,4 @@ def patient_after_insert(doc, method=None):
         doc.db_set("custom_counselled_date", frappe.utils.getdate(doc.creation),
                    update_modified=False)
     if not doc.get("custom_counsellor_name"):
-        doc.db_set("custom_counsellor_name", frappe.utils.get_fullname(doc.owner),
-                   update_modified=False)
+        doc.db_set("custom_counsellor_name", doc.owner, update_modified=False)
