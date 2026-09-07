@@ -4,3 +4,7 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+# These must be post_model_sync: both read and write fields that only exist
+# once the doctype changes in this release have been applied.
+patient_reach.patches.v1_1.migrate_condition_and_addiction_checkboxes
+patient_reach.patches.v1_1.reword_prevention_level_and_string_test
