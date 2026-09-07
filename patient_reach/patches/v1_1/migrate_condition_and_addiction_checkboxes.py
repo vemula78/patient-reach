@@ -10,12 +10,17 @@ Two things this patch deliberately does NOT do:
   `has_addiction` are derived from -- so keeping it makes this patch re-runnable
   and keeps the original answer auditable.
 
-* It does not write `medication_recorded`. Medication was never asked before
-  today, so an unticked Has Medication on an old row must not read as "no
-  medication". Nothing needs doing: Frappe adds a Check column as
-  `default 0`, so every pre-existing row is already 0 ("not recorded"), while
-  the doctype default of 1 applies only to documents created from now on. That
-  asymmetry is the whole mechanism -- do not "fix" it by backfilling.
+* It does not touch `has_medication`. Medication was never asked before today,
+  so it stays unticked and `medication_recorded` is what says whether that
+  means "no" or "never asked".
+
+  `medication_recorded` IS backfilled here, and must be. An earlier version of
+  this patch assumed Frappe would create the new Check column with `default 0`,
+  leaving old rows at 0 ("not recorded") while the doctype default of 1 applied
+  only to new documents. That is wrong: Frappe creates the column using the
+  FIELD's default, so all 412 existing rows came out as 1 -- claiming medication
+  status had been established when it was never asked. Caught by rehearsing this
+  patch against a restore of live data.
 
 Condition names change to match the form's grid rows. "Other" is no longer
 offered, but the rows already holding it keep the value and are reported below
@@ -68,7 +73,21 @@ def execute():
         _log("%s: %s -> %s=1, %s were 'No', %s had no answer recorded "
              "(left unticked)" % (doctype, len(yes), target, no, blank))
 
-    # 3. Report, do not touch, the rows on a value the form no longer offers.
+    # 3. Mark every row that predates the medication question as "not recorded".
+    #    Every Patient Condition row that exists when this patch runs was
+    #    captured before the two-checkbox model, so all of them qualify. New rows
+    #    get 1 from the doctype default. This relies on Frappe's guarantee that a
+    #    patch in patches.txt runs once per site -- re-running it after new rows
+    #    existed would wrongly mark those as unrecorded too.
+    legacy = frappe.get_all("Patient Condition", pluck="name")
+    for n in legacy:
+        frappe.db.set_value("Patient Condition", n, "medication_recorded", 0,
+                            update_modified=False)
+    _log("medication_recorded=0 on %s pre-existing rows (medication was not asked "
+         "before this release, so an unticked Has Medication must not read as 'no')"
+         % len(legacy))
+
+    # 4. Report, do not touch, the rows on a value the form no longer offers.
     for doctype, field in (("Patient Condition", "condition"),
                            ("Patient Addictions", "habits")):
         n = frappe.db.count(doctype, {field: "Other"})
