@@ -8,3 +8,4 @@
 # once the doctype changes in this release have been applied.
 patient_reach.patches.v1_1.migrate_condition_and_addiction_checkboxes
 patient_reach.patches.v1_1.reword_prevention_level_and_string_test
+patient_reach.patches.v1_2.shorten_prevention_level

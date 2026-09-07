@@ -327,11 +327,12 @@
    "label": "Caregiver - Additional Information"
   },
   {
+   "description": "Level 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.\nLevel 1s: \"S\" modifier (Past surgeries and Structural illness) for Level 1.\nLevel 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.\nLevel 2s: \"S\" modifier (Past surgeries and Structural illness) for Level 2.\nLevel 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.\nLevel 3s: \"S\" modifier (Past surgeries and Structural illness) for Level 3.\nLevel 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke.\nLevel 4s: \"S\" modifier (Past surgeries and Structural illness) for Level 4.",
    "fieldname": "prevention_level",
    "fieldtype": "Select",
    "label": "Where does the Caregiver fit in the Levels of Prevention ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nLevel 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.\nLevel 1s: \"S\" modifier (Past surgeries and Structural illness) for Level 1.\nLevel 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.\nLevel 2s: \"S\" modifier (Past surgeries and Structural illness) for Level 2.\nLevel 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.\nLevel 3s: \"S\" modifier (Past surgeries and Structural illness) for Level 3.\nLevel 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke.\nLevel 4s: \"S\" modifier (Past surgeries and Structural illness) for Level 4."
+   "options": "\nLevel 1\nLevel 1s\nLevel 2\nLevel 2s\nLevel 3\nLevel 3s\nLevel 4\nLevel 4s"
   },
   {
    "fieldname": "nutrition_heading",
