@@ -59,9 +59,12 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Setup Node
+        # frappe-framework's package.json for v16 declares engines.node ">=24".
+        # bench init runs `yarn install --check-files` even with --skip-assets,
+        # so too old a Node fails the whole init, not just the asset build.
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           check-latest: true
 
       - name: Cache pip
