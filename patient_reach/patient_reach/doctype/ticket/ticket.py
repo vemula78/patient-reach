@@ -7,5 +7,4 @@ from frappe.utils import now_datetime
 
 
 class Ticket(Document):
-
-    pass
+	pass

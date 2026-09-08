@@ -17,7 +17,7 @@ add_to_apps_screen = [
 		"logo": "/assets/patient_reach/images/patient_reach.svg",
 		"title": "Patient Reach",
 		"route": "/app/healthcare",
-		"has_permission": "patient_reach.api.has_app_permission"
+		"has_permission": "patient_reach.api.has_app_permission",
 	}
 ]
 
@@ -248,97 +248,99 @@ add_to_apps_screen = [
 # ignore_translatable_strings_from = []
 
 fixtures = [
-    {
-        "dt": "Custom Field",
-        "filters": [
-            ["name", "in", [
-                "Patient-custom_hospital_id",
-                "Patient-custom_aadhaar_no",
-                "Patient-custom_district",
-                "Patient-custom_state",
-                "Patient-custom_country",
-                "Patient-custom_mother_name",
-                "Patient-custom_language",
-                "Patient-custom_other_known_language",
-                "Branch-custom_branch_code",
-                "Patient-custom_counselled_date",
-                "Patient-custom_counsellor_name",
-                "Patient-custom_other_known_language",
-                "Patient-custom_marital_status",
-                # Ticket's whole tab layout. Added 06-Sep-2026: these six Tab
-                # Breaks (and the Counselling section) existed ONLY in the
-                # care.sssihms.org database, so ticket.json described a form
-                # with no tabs at all and a rebuild on a fresh site could not
-                # reproduce what the counselling team actually uses.
-                "Ticket-custom_caregiver_profiling__habits",
-                "Ticket-custom_measurements",
-                "Ticket-custom_change__referrals",
-                "Ticket-custom_status__enquiry",
-                "Ticket-custom_clinical_review",
-                "Ticket-custom_touchpoint",
-                "Ticket-custom_counselling_section",
-                "Ticket-custom_counselling_col",
-                # 07-Sep-2026: Curry/Hurry/Worry moved out of tab 1 into their
-                # own "Habits & Principles" tab, as the Google Form has them.
-                "Ticket-custom_habits__principles",
-                "Ticket-custom_habits_principles_section"
-            ]]
-        ]
-    },
-    {
-        # Ticket added 06-Sep-2026, same reason as its Custom Fields above: 41
-        # Property Setters -- including a field_order override for the whole
-        # doctype -- lived only in the site database.
-        #
-        # NOTE: the Patient entries in fixtures/property_setter.json are STALE.
-        # The live site has 27 Property Setters on Patient; only 12 are
-        # exported here. Re-exporting them would change Patient's form on the
-        # next migrate, so it was left alone deliberately rather than swept in
-        # with the Ticket work. Reconcile it as its own task.
-        "dt": "Property Setter",
-        "filters": [
-            ["doc_type", "in", ["Patient", "Ticket"]]
-        ]
-    },
-    {
-        "dt": "Client Script",
-        "filters": [
-            ["name", "in", ["Pledge Form in Raise Ticket","Filter District based on State", "Patient hide comments and activity", "Visit Button in Ticket"]]
-        ]
-    },
-    {
-        # Server Scripts intentionally no longer exported. The three that lived
-        # here (Visit Owner Creation, Patient List, Update todo list if forward
-        # to is updated) moved to patient_reach/doc_events.py on 06-Sep-2026.
-        # Keeping them as fixtures reinstalled them on every migrate, so they ran
-        # alongside the hooks and overwrote user-supplied values. They also
-        # required server_script_enabled, which grants anyone with Script Manager
-        # arbitrary server-side Python.
-        "dt": "Server Script",
-        "filters": [["name", "in", []]]
-    },
-    {
-        "dt": "Translation",
-        "filters": [
-            ["source_text", "in", ["Ticket", "Patient"]]
-        ]
-    }
-    
-
+	{
+		"dt": "Custom Field",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Patient-custom_hospital_id",
+					"Patient-custom_aadhaar_no",
+					"Patient-custom_district",
+					"Patient-custom_state",
+					"Patient-custom_country",
+					"Patient-custom_mother_name",
+					"Patient-custom_language",
+					"Patient-custom_other_known_language",
+					"Branch-custom_branch_code",
+					"Patient-custom_counselled_date",
+					"Patient-custom_counsellor_name",
+					"Patient-custom_other_known_language",
+					"Patient-custom_marital_status",
+					# Ticket's whole tab layout. Added 06-Sep-2026: these six Tab
+					# Breaks (and the Counselling section) existed ONLY in the
+					# care.sssihms.org database, so ticket.json described a form
+					# with no tabs at all and a rebuild on a fresh site could not
+					# reproduce what the counselling team actually uses.
+					"Ticket-custom_caregiver_profiling__habits",
+					"Ticket-custom_measurements",
+					"Ticket-custom_change__referrals",
+					"Ticket-custom_status__enquiry",
+					"Ticket-custom_clinical_review",
+					"Ticket-custom_touchpoint",
+					"Ticket-custom_counselling_section",
+					"Ticket-custom_counselling_col",
+					# 07-Sep-2026: Curry/Hurry/Worry moved out of tab 1 into their
+					# own "Habits & Principles" tab, as the Google Form has them.
+					"Ticket-custom_habits__principles",
+					"Ticket-custom_habits_principles_section",
+				],
+			]
+		],
+	},
+	{
+		# Ticket added 06-Sep-2026, same reason as its Custom Fields above: 41
+		# Property Setters -- including a field_order override for the whole
+		# doctype -- lived only in the site database.
+		#
+		# NOTE: the Patient entries in fixtures/property_setter.json are STALE.
+		# The live site has 27 Property Setters on Patient; only 12 are
+		# exported here. Re-exporting them would change Patient's form on the
+		# next migrate, so it was left alone deliberately rather than swept in
+		# with the Ticket work. Reconcile it as its own task.
+		"dt": "Property Setter",
+		"filters": [["doc_type", "in", ["Patient", "Ticket"]]],
+	},
+	{
+		"dt": "Client Script",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Pledge Form in Raise Ticket",
+					"Filter District based on State",
+					"Patient hide comments and activity",
+					"Visit Button in Ticket",
+				],
+			]
+		],
+	},
+	{
+		# Server Scripts intentionally no longer exported. The three that lived
+		# here (Visit Owner Creation, Patient List, Update todo list if forward
+		# to is updated) moved to patient_reach/doc_events.py on 06-Sep-2026.
+		# Keeping them as fixtures reinstalled them on every migrate, so they ran
+		# alongside the hooks and overwrote user-supplied values. They also
+		# required server_script_enabled, which grants anyone with Script Manager
+		# arbitrary server-side Python.
+		"dt": "Server Script",
+		"filters": [["name", "in", []]],
+	},
+	{"dt": "Translation", "filters": [["source_text", "in", ["Ticket", "Patient"]]]},
 ]
 
 doc_events = {
-    "Patient": {
-        "autoname": "patient_reach.api.patient_autoname",
-        "after_insert": "patient_reach.doc_events.patient_after_insert",
-    },
-    "Ticket": {
-        "before_validate": "patient_reach.doc_events.ticket_before_validate",
-        "after_insert": "patient_reach.doc_events.ticket_after_insert",
-        "after_save": "patient_reach.doc_events.ticket_after_save",
-    },
+	"Patient": {
+		"autoname": "patient_reach.api.patient_autoname",
+		"after_insert": "patient_reach.doc_events.patient_after_insert",
+	},
+	"Ticket": {
+		"before_validate": "patient_reach.doc_events.ticket_before_validate",
+		"after_insert": "patient_reach.doc_events.ticket_after_insert",
+		"after_save": "patient_reach.doc_events.ticket_after_save",
+	},
 }
 
-override_doctype_dashboards = {
-    "Patient": "patient_reach.api.get_data"
-}
+override_doctype_dashboards = {"Patient": "patient_reach.api.get_data"}
