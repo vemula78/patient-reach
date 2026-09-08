@@ -39,6 +39,7 @@ jobs:
     # tests code that is not what care.sssihms.org runs.
     env:
       FRAPPE_BRANCH: v16.33.0
+      ERPNEXT_BRANCH: v16.34.1
       HEALTH_BRANCH: v16.5.2
       PYTHON_VERSION: '3.14'
 
@@ -104,11 +105,14 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           # patient_reach imports healthcare at module level (api.py), so the
-          # health app is a hard prerequisite, not an optional companion.
+          # health app is a hard prerequisite -- and health in turn imports
+          # erpnext, so the full chain is erpnext -> healthcare -> patient_reach.
+          bench get-app --branch "$ERPNEXT_BRANCH" erpnext https://github.com/frappe/erpnext
           bench get-app --branch "$HEALTH_BRANCH" health https://github.com/frappe/health
           bench get-app patient_reach $GITHUB_WORKSPACE
           bench setup requirements --dev
           bench new-site --db-root-password root --admin-password admin test_site
+          bench --site test_site install-app erpnext
           bench --site test_site install-app healthcare
           bench --site test_site install-app patient_reach
         env:
