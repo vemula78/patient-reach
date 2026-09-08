@@ -4,7 +4,7 @@ authors = [
     { name = "Frugal Scientific", email = "ziya.fazal@frugalscientific.com"}
 ]
 description = "A custom application built on the Frappe Framework to extend and tailor business workflows, data management, and automation according to specific organizational needs."
-requires-python = ">=3.10"
+requires-python = ">=3.14,<3.15"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
