@@ -176,19 +176,23 @@ Until 08-Sep-2026 this workflow had never executed once — it triggered on
 Python 3.10 and a missing health app. So treat any test that predates that as
 never having passed, rather than as passing.
 
-**CI does not lint.** `linter.yml` runs Frappe semgrep rules and `pip-audit` on
-pull requests; `ci.yml` runs server tests. Neither runs ruff. `pre-commit` is
-configured (ruff, eslint, prettier, pyupgrade) but is not installed and no git
-hook is enabled, so **formatting and lint are checked only if you run them**:
+**`linter.yml` runs `pre-commit`** (ruff, ruff-format, prettier, eslint, plus
+the whitespace/AST/JSON checks) on **pull requests only**, alongside Frappe
+semgrep rules and `pip-audit`. So a push straight to `main` is never linted —
+only `ci.yml`'s server tests run. Work through a PR if you want the linter's
+opinion, or run it yourself:
 
 ```bash
-uvx ruff@0.8.1 check .          # the rev pinned in .pre-commit-config.yaml
+uvx ruff@0.8.1 check . && uvx ruff@0.8.1 format --check .   # rev pinned in .pre-commit-config.yaml
+npx prettier@2.7.1 --check "patient_reach/**/*.js"
 ```
 
-Files added by us are clean as of `84dda53`; four cosmetic findings remain in
-vendor-origin files and are left deliberately. **Do not run `ruff-format`
-casually** — it is configured `indent-style = "tab"` while everything we have
-added uses four spaces, so it would rewrite those files wholesale.
+`pre-commit` itself is not installed here and no git hook is enabled, so nothing
+runs locally unless you run it.
+
+**Indentation is tabs.** `.editorconfig` declares `indent_style = tab` for `*.py`
+and `*.js`, and `[tool.ruff.format]` sets `indent-style = "tab"`. New code must
+match, or `ruff-format` will retab it and the linter check will fail on a PR.
 
 ## Related repositories
 
