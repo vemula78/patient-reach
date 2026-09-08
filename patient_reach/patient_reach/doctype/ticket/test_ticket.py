@@ -12,7 +12,15 @@
    rewrote 44 of 138 recorded assessments while the import reported success.
    The behaviour is wanted -- the counselling team asked for those two fields to
    be derived rather than chosen -- so the test pins it down instead of removing
-   it, and pins down the `db_set` escape hatch that bulk writes must use.
+   it. (An earlier version of this docstring also claimed to pin down the
+   `db_set` escape hatch a bulk write must use. Nothing here calls `db_set`, so
+   that claim was removed rather than left to mislead; the test needs a persisted
+   Ticket and is still to be written.)
+
+3. The doc_events registration itself. `after_save` is not an event Frappe
+   dispatches, and a doc_events key matching no document method is ignored
+   silently, so this app's forwarding handler ran never between 06- and
+   08-Sep-2026.
 
 There is also a parity test between the strings these functions return and the
 Select options in ticket.json. A mismatch there does not raise: the Select just
@@ -178,3 +186,58 @@ class TestTicketBeforeValidate(UnitTestCase):
 		doc.docstatus = 1
 		ticket_before_validate(doc)
 		self.assertFalse(doc.flags.get("ignore_mandatory"))
+
+
+class TestBPStatusConflictingReadings(UnitTestCase):
+	"""Readings that satisfy both the low and the high test.
+
+	Until 08-Sep-2026 branch order decided these, so a hypertensive caregiver was
+	recorded as hypotensive. The field's own policy is to defer rather than guess.
+	"""
+
+	def test_systolic_high_with_low_diastolic_is_not_low(self):
+		# Isolated systolic hypertension with a wide pulse pressure -- the
+		# commonest pattern in older patients, and the one that read as "Low".
+		for reading in ("150/50", "160/55", "180/50", "140/59"):
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status(reading), NEEDS_REFERENCE)
+
+	def test_diastolic_high_with_low_systolic_is_not_low(self):
+		for reading in ("85/95", "89/90"):
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status(reading), NEEDS_REFERENCE)
+
+	def test_unambiguous_readings_still_classify(self):
+		"""The conflict rule must not swallow ordinary readings."""
+		self.assertEqual(_bp_status("85/55"), "Low")
+		self.assertEqual(_bp_status("150/95"), "High")
+		self.assertEqual(_bp_status("110/70"), "Normal")
+
+
+class TestDocEventRegistration(UnitTestCase):
+	"""The regression guard for the fault that made this file necessary.
+
+	`after_save` is a Server Script UI label, not a document method. Frappe
+	ignores an unknown doc_events key without error or log, so the only symptom
+	was referrals never reaching a doctor.
+	"""
+
+	def _ticket_events(self):
+		return frappe.get_hooks("doc_events").get("Ticket", {})
+
+	def test_every_hooked_event_is_one_frappe_dispatches(self):
+		from frappe.core.doctype.server_script.server_script_utils import EVENT_MAP
+
+		# EVENT_MAP is keyed by the document method Frappe calls, so it is the
+		# framework's own list of valid names. autoname/onload are real hooks
+		# that predate it.
+		dispatched = set(EVENT_MAP) | {"autoname", "onload"}
+		for event in self._ticket_events():
+			with self.subTest(event=event):
+				self.assertIn(event, dispatched)
+
+	def test_forwarding_is_registered_on_on_update(self):
+		self.assertIn("on_update", self._ticket_events())
+
+	def test_after_save_is_not_used(self):
+		self.assertNotIn("after_save", self._ticket_events())

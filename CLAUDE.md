@@ -132,6 +132,19 @@ bulk.
   committing one.
 - **`condition` is a MariaDB reserved word.** Backtick it in raw SQL against
   `Patient Condition`.
+- **A `doc_events` key that names no document method is ignored in silence** —
+  no error, no log, no startup warning. `after_save` is not a Frappe event: it is
+  the Server Script *UI label*, which `EVENT_MAP` maps to the method `on_update`.
+  Registering it meant this app's forwarding handler ran never from 06- to
+  08-Sep-2026, and referrals reached no doctor. The authoritative list of valid
+  names is `EVENT_MAP` in `frappe/core/doctype/server_script/server_script_utils.py`;
+  `test_ticket.py` asserts every hooked event against it. Check that list when
+  porting a Server Script — the labels and the method names are not the same
+  words.
+- **Assign work through `frappe.desk.form.assign_to`, never by writing `ToDo`
+  rows.** A hand-built ToDo with `owner` set but not `allocated_to` appears in
+  nobody's assignment list, and writing ToDos directly leaves the reference
+  document's `_assign` stale, which shows a badge the UI cannot clear.
 
 ## Field conventions the team chose
 
@@ -171,10 +184,11 @@ green run is testing something other than what is deployed. It installs the
 health app before `patient_reach`, which is mandatory: `api.py` imports
 `healthcare` at module level.
 
-Until 08-Sep-2026 this workflow had never executed once — it triggered on
-`develop`, a branch this repo does not have, and would have failed anyway on
-Python 3.10 and a missing health app. So treat any test that predates that as
-never having passed, rather than as passing.
+Until 08-Sep-2026 this workflow had never executed once. The reason is **not**
+the `develop` push trigger: it also had a bare `pull_request:` trigger, so it
+would have run on any PR — none had ever been opened. It would have failed
+anyway, on Python 3.10 and a missing health app. So treat any test that predates
+that as never having passed, rather than as passing.
 
 **`linter.yml` runs `pre-commit`** (ruff, ruff-format, prettier, eslint, plus
 the whitespace/AST/JSON checks) on **pull requests only**, alongside Frappe
