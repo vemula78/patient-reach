@@ -18,10 +18,19 @@ There is also a parity test between the strings these functions return and the
 Select options in ticket.json. A mismatch there does not raise: the Select just
 holds a value it will not offer and the grid renders blank, so nothing would
 tell us it had happened.
+
+These use `UnitTestCase`, not `FrappeTestCase`/`IntegrationTestCase`, and that
+is deliberate. IntegrationTestCase.setUpClass calls make_test_records(cls.doctype),
+which walks Ticket's Link fields to Patient and imports the health app's
+test_patient module; that module creates Patients at import time and cannot,
+because this app's fixtures make six Patient custom fields mandatory. Nothing
+here writes to the database -- the hook is exercised on an unsaved document --
+so the test-record machinery is pure cost. Note this is why the vendor's empty
+stubs passed: with no test methods, unittest never calls setUpClass.
 """
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from frappe.tests import UnitTestCase
 
 from patient_reach.doc_events import _bp_status, _string_test_result, ticket_before_validate
 
@@ -36,7 +45,7 @@ def _options(fieldname):
 	return [o for o in raw.split("\n") if o]
 
 
-class TestBPStatus(FrappeTestCase):
+class TestBPStatus(UnitTestCase):
 	def test_borderline_band_is_needs_reference(self):
 		"""Systolic 120-139 or diastolic 80-89 must not be called Normal."""
 		for reading in ("120/70", "128/84", "139/89", "110/80", "118/85"):
@@ -89,7 +98,7 @@ class TestBPStatus(FrappeTestCase):
 				self.assertIn(verdict, offered)
 
 
-class TestStringTestResult(FrappeTestCase):
+class TestStringTestResult(UnitTestCase):
 	def test_pass_when_waist_under_half_of_height(self):
 		self.assertEqual(_string_test_result(70, 160), PASS_RESULT)
 
@@ -113,7 +122,7 @@ class TestStringTestResult(FrappeTestCase):
 		self.assertIn(FAIL_RESULT, offered)
 
 
-class TestTicketBeforeValidate(FrappeTestCase):
+class TestTicketBeforeValidate(UnitTestCase):
 	"""The hook is called directly on an unsaved doc.
 
 	A saved Ticket needs Patient, Branch, Company and Department to exist, none
