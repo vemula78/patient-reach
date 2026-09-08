@@ -13,9 +13,9 @@ MIT, attribution retained. **Read `PROVENANCE.md` before changing anything**: it
 explains why the copy exists, what was excluded from it, and that upstream is not
 tracked, so nothing here flows back and nothing flows in automatically.
 
-`README.md` is untouched `bench new-app` boilerplate. It is wrong about the
-branch (`develop`; this repo only has `main`) and describes CI that does not run —
-see "CI does not run" below. Do not follow it.
+`README.md` is untouched `bench new-app` boilerplate — wrong about the branch
+(`develop`; this repo only has `main`) and about how to install the app, which
+needs the health app first. Do not follow it.
 
 ## Where this runs
 
@@ -26,8 +26,8 @@ present in an image does not mean it is installed on a site; check with
 
 There is **no local bench in this environment.** Everything Frappe-facing here is
 verified by reading, syntax check, and rehearsal on the VM against a restore of
-live data — never executed locally. The `test_*.py` files are not run anywhere
-(see CI below).
+live data — never executed locally. The `test_*.py` files run in CI only (see
+below), so a change cannot be tested on this machine before it is pushed.
 
 ## Deploying — pushing to `main` changes nothing
 
@@ -162,12 +162,33 @@ double-nested path). `patient_reach/doctype/`, `patient_reach/config/`,
 stubs from the app scaffold. Diagnosing nesting by counting path segments has
 misled me twice — compare against a known-good app in the same image instead.
 
-## CI does not run
+## CI, and what it does not cover
 
-`.github/workflows/ci.yml` triggers on pushes to `develop`. This repo has only
-`main`, so it never fires; `linter.yml` runs on pull requests only, and work here
-lands directly on `main`. Treat the `test_*.py` files as unexecuted. `pre-commit`
-(ruff, eslint, prettier, pyupgrade) is configured but not enforced anywhere.
+`ci.yml` runs on pushes to `main` and on pull requests. It pins
+`FRAPPE_BRANCH`/`HEALTH_BRANCH` to the same versions as `apps-external.json` and
+`build-image.yml` in the ops repo — **keep those in step with a deploy**, or a
+green run is testing something other than what is deployed. It installs the
+health app before `patient_reach`, which is mandatory: `api.py` imports
+`healthcare` at module level.
+
+Until 08-Sep-2026 this workflow had never executed once — it triggered on
+`develop`, a branch this repo does not have, and would have failed anyway on
+Python 3.10 and a missing health app. So treat any test that predates that as
+never having passed, rather than as passing.
+
+**CI does not lint.** `linter.yml` runs Frappe semgrep rules and `pip-audit` on
+pull requests; `ci.yml` runs server tests. Neither runs ruff. `pre-commit` is
+configured (ruff, eslint, prettier, pyupgrade) but is not installed and no git
+hook is enabled, so **formatting and lint are checked only if you run them**:
+
+```bash
+uvx ruff@0.8.1 check .          # the rev pinned in .pre-commit-config.yaml
+```
+
+Files added by us are clean as of `84dda53`; four cosmetic findings remain in
+vendor-origin files and are left deliberately. **Do not run `ruff-format`
+casually** — it is configured `indent-style = "tab"` while everything we have
+added uses four spaces, so it would rewrite those files wholesale.
 
 ## Related repositories
 
