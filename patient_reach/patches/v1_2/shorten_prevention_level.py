@@ -48,14 +48,14 @@ FROM_ORIGINAL = {
 
 
 def _log(msg):
-    print("[patient_reach v1_2 prevention_level] %s" % msg)
+    print(f"[patient_reach v1_2 prevention_level] {msg}")
 
 
 def execute():
     total = frappe.db.sql(
         "select count(*) from tabTicket where ifnull(prevention_level,%s)<>%s", ("", "")
     )[0][0]
-    _log("tickets with a prevention level: %s" % total)
+    _log(f"tickets with a prevention level: {total}")
 
     moved = 0
     for mapping, label in ((FROM_V1_1, "v1_1 wording"), (FROM_ORIGINAL, "pre-v1_1 wording")):
@@ -64,9 +64,9 @@ def execute():
             for n in names:
                 frappe.db.set_value("Ticket", n, "prevention_level", code, update_modified=False)
             if names:
-                _log("%s: %s rows -> %r" % (label, len(names), code))
+                _log(f"{label}: {len(names)} rows -> {code!r}")
             moved += len(names)
-    _log("migrated: %s" % moved)
+    _log(f"migrated: {moved}")
 
     # Anything left that is neither blank nor a short code would render as an
     # empty field, so say so rather than let it be found later.
@@ -76,7 +76,7 @@ def execute():
     )
     unknown = [(v, c) for v, c in rows if v not in CODES]
     if unknown:
-        _log("WARNING not covered by either map, left as-is and now unselectable: %s" % unknown)
+        _log(f"WARNING not covered by either map, left as-is and now unselectable: {unknown}")
     else:
         _log("every populated value is now a short code")
     frappe.db.commit()

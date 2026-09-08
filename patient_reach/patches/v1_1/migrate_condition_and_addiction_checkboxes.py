@@ -42,12 +42,12 @@ CONDITION_RENAMES = {
 
 
 def _log(msg):
-    print("[patient_reach v1_1 conditions] %s" % msg)
+    print(f"[patient_reach v1_1 conditions] {msg}")
 
 
 def execute():
-    _log("Patient Condition rows: %s" % frappe.db.count("Patient Condition"))
-    _log("Patient Addictions rows: %s" % frappe.db.count("Patient Addictions"))
+    _log("Patient Condition rows: {}".format(frappe.db.count("Patient Condition")))
+    _log("Patient Addictions rows: {}".format(frappe.db.count("Patient Addictions")))
 
     # 1. Rename condition values. Row-at-a-time via set_value rather than a bulk
     #    UPDATE: a keyless UPDATE is refused outright when the server runs in
@@ -58,9 +58,9 @@ def execute():
         for n in names:
             frappe.db.set_value("Patient Condition", n, "condition", new, update_modified=False)
         if names:
-            _log("renamed %-26s -> %-14s %s rows" % (old, new, len(names)))
+            _log(f"renamed {old:<26} -> {new:<14} {len(names)} rows")
         renamed += len(names)
-    _log("condition values renamed: %s" % renamed)
+    _log(f"condition values renamed: {renamed}")
 
     # 2. Derive the checkboxes from the answer that was actually recorded.
     for doctype, target in (("Patient Condition", "has_disease"),
@@ -70,8 +70,8 @@ def execute():
             frappe.db.set_value(doctype, n, target, 1, update_modified=False)
         no = frappe.db.count(doctype, {"response": "No"})
         blank = frappe.db.count(doctype, {"response": ["in", ["", None]]})
-        _log("%s: %s -> %s=1, %s were 'No', %s had no answer recorded "
-             "(left unticked)" % (doctype, len(yes), target, no, blank))
+        _log(f"{doctype}: {len(yes)} -> {target}=1, {no} were 'No', {blank} had no answer recorded "
+             "(left unticked)")
 
     # 3. Mark every row that predates the medication question as "not recorded".
     #    Every Patient Condition row that exists when this patch runs was
@@ -83,16 +83,15 @@ def execute():
     for n in legacy:
         frappe.db.set_value("Patient Condition", n, "medication_recorded", 0,
                             update_modified=False)
-    _log("medication_recorded=0 on %s pre-existing rows (medication was not asked "
-         "before this release, so an unticked Has Medication must not read as 'no')"
-         % len(legacy))
+    _log(f"medication_recorded=0 on {len(legacy)} pre-existing rows (medication was not asked "
+         "before this release, so an unticked Has Medication must not read as 'no')")
 
     # 4. Report, do not touch, the rows on a value the form no longer offers.
     for doctype, field in (("Patient Condition", "condition"),
                            ("Patient Addictions", "habits")):
         n = frappe.db.count(doctype, {field: "Other"})
         if n:
-            _log("%s: %s rows keep %s='Other', which is no longer selectable "
-                 "(retained on purpose)" % (doctype, n, field))
+            _log(f"{doctype}: {n} rows keep {field}='Other', which is no longer selectable "
+                 "(retained on purpose)")
 
     frappe.db.commit()
