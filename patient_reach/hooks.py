@@ -339,7 +339,9 @@ doc_events = {
 	"Ticket": {
 		"before_validate": "patient_reach.doc_events.ticket_before_validate",
 		"after_insert": "patient_reach.doc_events.ticket_after_insert",
-		"after_save": "patient_reach.doc_events.ticket_after_save",
+		# on_update, not after_save: "After Save" is the Server Script label for
+		# this event, and after_save is dispatched by nothing in Frappe.
+		"on_update": "patient_reach.doc_events.ticket_on_update",
 	},
 }
 

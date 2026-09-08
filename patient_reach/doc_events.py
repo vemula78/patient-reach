@@ -53,9 +53,19 @@ def _bp_status(bp_reading):
 	systolic, diastolic = int(m.group(1)), int(m.group(2))
 	if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
 		return "Needs Reference"
-	if systolic < 90 or diastolic < 60:
+	low = systolic < 90 or diastolic < 60
+	high = systolic >= 140 or diastolic >= 90
+	if low and high:
+		# The two bands are not mutually exclusive, and until 08-Sep-2026 branch
+		# order silently decided the verdict: 150/50 -- isolated systolic
+		# hypertension, the commonest pattern in older patients -- was reported
+		# as "Low", as were 160/55, 180/50 and 85/95. A contradictory pair is
+		# exactly what this field's stated policy defers to a human on, so it
+		# does that instead of preferring whichever test runs first.
+		return "Needs Reference"
+	if low:
 		return "Low"
-	if systolic >= 140 or diastolic >= 90:
+	if high:
 		return "High"
 	if systolic < 120 and diastolic < 80:
 		return "Normal"
@@ -102,10 +112,43 @@ def ticket_after_insert(doc, method=None):
 		doc.db_set("counsellor_name", doc.owner, update_modified=False)
 
 
-def ticket_after_save(doc, method=None):
-	"""Reassign the ToDo when a ticket is forwarded to a different doctor."""
+def ticket_on_update(doc, method=None):
+	"""Keep the forwarded doctor's assignment in step with `forward_to`.
+
+	Registered on `on_update`, **not** `after_save`. "After Save" is the Server
+	Script UI label; `EVENT_MAP` in frappe/core/doctype/server_script/
+	server_script_utils.py maps that label to the document method `on_update`,
+	and `after_save` is dispatched by nothing in frappe/model/document.py. When
+	these handlers were moved out of Server Scripts on 06-Sep-2026 the label was
+	carried across as a method name, so from then until 08-Sep-2026 this ran
+	never: a doc_events key matching no document method is ignored in silence,
+	with no error and no log. Forwarded referrals reached no one.
+
+	Assignments now go through frappe.desk.form.assign_to rather than
+	hand-rolled ToDo writes. That matters for three reasons the old code got
+	wrong: it sets `allocated_to` (the field Frappe uses for the assignee --
+	setting `owner` alone creates a ToDo that appears in nobody's assignment
+	list), it keeps the reference document's `_assign` in step, and it notifies
+	the assignee. It also cancels rather than deletes, so a completed task stays
+	in the record.
+	"""
 	if not (doc.has_value_changed("forward_to") or doc.has_value_changed("forward_reason")):
 		return
+
+	# Imported here rather than at module scope: this module is loaded on every
+	# request through hooks, and frappe.desk pulls in the whole desk stack.
+	from frappe.desk.form.assign_to import add as assign_add
+	from frappe.desk.form.assign_to import remove as assign_remove
+
+	before = doc.get_doc_before_save()
+	previously_forwarded_to = (before.forward_to if before else None) or None
+
+	# Withdraw the previous doctor's assignment when the ticket moves on, or when
+	# forward_to is cleared. The old code returned early on an empty forward_to
+	# and left the stale assignment in place.
+	if previously_forwarded_to and previously_forwarded_to != doc.forward_to:
+		assign_remove(doc.doctype, doc.name, previously_forwarded_to)
+
 	if not doc.forward_to:
 		return
 
@@ -113,34 +156,27 @@ def ticket_after_save(doc, method=None):
 	if doc.forward_reason:
 		description += f"\nReason: {doc.forward_reason}"
 
-	for existing in frappe.get_all(
+	# assign_to.add refuses to duplicate an open assignment, so a change to the
+	# reason alone would otherwise leave the doctor reading the old one.
+	existing = frappe.db.get_value(
 		"ToDo",
-		filters={"reference_type": doc.doctype, "reference_name": doc.name, "status": ("!=", "Cancelled")},
-		pluck="name",
-	):
-		frappe.delete_doc("ToDo", existing, ignore_permissions=True)
-
-	frappe.get_doc(
 		{
-			"doctype": "ToDo",
-			"owner": doc.forward_to,
-			"assigned_by": frappe.session.user,
 			"reference_type": doc.doctype,
 			"reference_name": doc.name,
-			"description": description,
+			"allocated_to": doc.forward_to,
 			"status": "Open",
+		},
+		"name",
+	)
+	if existing:
+		frappe.db.set_value("ToDo", existing, "description", description, update_modified=False)
+		return
+
+	assign_add(
+		{
+			"doctype": doc.doctype,
+			"name": doc.name,
+			"assign_to": [doc.forward_to],
+			"description": description,
 		}
-	).insert(ignore_permissions=True)
-
-
-# --------------------------------------------------------------------------
-# Patient
-# --------------------------------------------------------------------------
-
-
-def patient_after_insert(doc, method=None):
-	# Same "do not overwrite a user-supplied date" rule as the Ticket.
-	if not doc.get("custom_counselled_date"):
-		doc.db_set("custom_counselled_date", frappe.utils.getdate(doc.creation), update_modified=False)
-	if not doc.get("custom_counsellor_name"):
-		doc.db_set("custom_counsellor_name", doc.owner, update_modified=False)
+	)
