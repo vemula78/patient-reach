@@ -40,7 +40,7 @@ STRING_TEST_RESULT = {
 
 
 def _log(msg):
-    print("[patient_reach v1_1 rewording] %s" % msg)
+    print(f"[patient_reach v1_1 rewording] {msg}")
 
 
 def _remap(fieldname, mapping):
@@ -50,7 +50,7 @@ def _remap(fieldname, mapping):
         for n in names:
             frappe.db.set_value("Ticket", n, fieldname, new, update_modified=False)
         if names:
-            _log("%s: %s rows  %r -> %r" % (fieldname, len(names), old[:38], new[:38]))
+            _log(f"{fieldname}: {len(names)} rows  {old[:38]!r} -> {new[:38]!r}")
         moved += len(names)
 
     # Anything left that is neither blank nor one of the new strings is a value
@@ -58,14 +58,14 @@ def _remap(fieldname, mapping):
     # as a blank field months later.
     valid = set(mapping.values())
     stragglers = frappe.db.sql(
-        "select `%s`, count(*) from tabTicket "
-        "where ifnull(`%s`, '') <> '' group by `%s`" % (fieldname, fieldname, fieldname)
+        f"select `{fieldname}`, count(*) from tabTicket "
+        f"where ifnull(`{fieldname}`, '') <> '' group by `{fieldname}`"
     )
     unknown = [(v, c) for v, c in stragglers if v not in valid]
     if unknown:
-        _log("WARNING %s: %s value(s) not covered by the map, left untouched and now "
-             "unselectable: %s" % (fieldname, len(unknown), unknown))
-    _log("%s: %s rows migrated, %s distinct values remain" % (fieldname, moved, len(stragglers)))
+        _log(f"WARNING {fieldname}: {len(unknown)} value(s) not covered by the map, left untouched and now "
+             f"unselectable: {unknown}")
+    _log(f"{fieldname}: {moved} rows migrated, {len(stragglers)} distinct values remain")
     return moved
 
 
