@@ -180,3 +180,16 @@ def ticket_on_update(doc, method=None):
 			"description": description,
 		}
 	)
+
+
+# --------------------------------------------------------------------------
+# Patient
+# --------------------------------------------------------------------------
+
+
+def patient_after_insert(doc, method=None):
+	# Same "do not overwrite a user-supplied date" rule as the Ticket.
+	if not doc.get("custom_counselled_date"):
+		doc.db_set("custom_counselled_date", frappe.utils.getdate(doc.creation), update_modified=False)
+	if not doc.get("custom_counsellor_name"):
+		doc.db_set("custom_counsellor_name", doc.owner, update_modified=False)
