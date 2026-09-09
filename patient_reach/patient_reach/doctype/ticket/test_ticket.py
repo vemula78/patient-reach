@@ -241,3 +241,25 @@ class TestDocEventRegistration(UnitTestCase):
 
 	def test_after_save_is_not_used(self):
 		self.assertNotIn("after_save", self._ticket_events())
+
+	def test_every_handler_this_app_registers_actually_exists(self):
+		"""A hook naming a function that is not there is a 500 for the user.
+
+		On 09-Sep-2026 `patient_after_insert` was deleted by an edit that replaced
+		everything from `ticket_after_save` to the end of the file -- it sat below
+		that function. hooks.py still pointed at it, so creating a Patient failed
+		with AttributeError. Nothing caught it: the deleted handler is on Patient,
+		no test touched Patient, and the deploy's own checks only exercised Ticket.
+
+		Resolving every target we register is one call and covers all of them,
+		including ones added later.
+		"""
+		targets = []
+		for _doctype, events in (frappe.get_hooks("doc_events") or {}).items():
+			for _event, spec in events.items():
+				targets += [spec] if isinstance(spec, str) else list(spec)
+		ours = sorted({t for t in targets if t.startswith("patient_reach.")})
+		self.assertTrue(ours, "no patient_reach doc_events found -- hooks not loaded?")
+		for target in ours:
+			with self.subTest(target=target):
+				self.assertTrue(callable(frappe.get_attr(target)), f"{target} is not callable")
