@@ -227,3 +227,57 @@ match, or `ruff-format` will retab it and the linter check will fail on a PR.
   duplicated. 23 reference values were left empty by the import as a result.
 - The counselling team asked for radio buttons. Frappe has no Radio fieldtype, so
   this needs a Client Script; deferred.
+
+## Sparsh Follow Up (built 18-Sep-2026, PLAN.md)
+
+A second submittable doctype, `Sparsh Follow Up`, records a caregiver follow-up
+*call* against a `Ticket` intake (`baseline_ticket`). Built inside this app
+rather than as a separate one — see PLAN.md's "Recommended approach" for why:
+in short, it Links to Ticket, needs a `before_cancel` guard on Ticket, and the
+06-Sep-2026 stress-spelling patch (`patches/v1_3/`) is a Ticket data patch that
+has to ship with this release regardless.
+
+**Three look-alikes — do not confuse them:**
+
+| Thing | Where | Domain |
+|---|---|---|
+| `Patient Follow-Up` | `sssihms_patient_followup` (a different app, not installed here) | post-discharge, WS MRN, readmission |
+| `Ticket Follow up` | `doctype/ticket_follow_up/` | an orphan `istable` child table (3 fields, no Ticket field references it) — leave it alone |
+| `Sparsh Follow Up` | `doctype/sparsh_follow_up/` | caregiver pledge follow-up call — this one |
+
+**Decision 5 is load-bearing throughout the reports and the form: a blank
+lifestyle or Select answer is *missing*, never zero.** `habit_score` is never
+shown, in a report column or `in_list_view`, without `habit_answered` or
+`habit_score_display` beside it. Every Select breakdown in
+`report/sparsh_intake_overview/` and `report/sparsh_follow_up_progress/` emits
+an explicit "Not Recorded" row rather than dropping blanks or folding them into
+an option. The same rule applies to the intake Ticket's own Select fields
+(`sunset_rule`, `type_of_stress`, etc.), not only to the follow-up call's.
+
+**Decision 10: Prevention Level and S status are two separate columns.**
+`"Level 2s"` is not itself a level — `report/sparsh_intake_overview.py`'s
+`_split_prevention_level` splits it into `("Level 2", "Active")`; a bare
+`"Level 3"` is `("Level 3", "Inactive")`. This mirrors the pure function of the
+same name specified for `sparsh_follow_up.py`/`doc_events.py` in PLAN.md's
+acceptance check; the report keeps its own copy rather than importing across
+the module boundary the two builders split the work along — if a shared
+version appears later, delete the report's copy in favour of it so the two
+cannot drift.
+
+**Reports own doctype ownership:** `report/sparsh_follow_up_progress/` and
+`report/sparsh_overdue_calls/` read `Sparsh Follow Up`; `report/
+sparsh_intake_overview/` reads `Ticket` — there is no baseline to follow up
+until an intake exists, so an "intake overview" is necessarily a Ticket report,
+not a Sparsh Follow Up one.
+
+**Ticket dashboard.** `doctype/ticket/ticket_dashboard.py` is new and adds the
+"Sparsh Follow Up" connection to the Ticket form (`non_standard_fieldnames`
+mapping `baseline_ticket`). It is additive to `override_doctype_dashboards` in
+`hooks.py`, which previously had only a `Patient` entry
+(`patient_reach.api.get_data`) — the two are different functions on different
+doctypes reached by different hooks.py keys; do not merge them.
+
+**Ops artefacts live in `sssihms-frappe-deploy`, not here** (this app stays
+source-only, per "Related repositories" above): the care.sssihms.org landing
+workspace amendment, the release block in `tools/deploy-external.sh`, and
+`tools/rehearse-sparsh-follow-up.py`.

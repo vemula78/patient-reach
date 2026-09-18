@@ -193,3 +193,26 @@ def patient_after_insert(doc, method=None):
 		doc.db_set("custom_counselled_date", frappe.utils.getdate(doc.creation), update_modified=False)
 	if not doc.get("custom_counsellor_name"):
 		doc.db_set("custom_counsellor_name", doc.owner, update_modified=False)
+
+
+def ticket_before_cancel(doc, method=None):
+	"""Refuse to cancel an intake that a Sparsh Follow Up still points at.
+
+	Frappe's own link check blocks a cancel only on *submitted* linked
+	documents, so a Draft follow-up -- which decision 2 says keeps counting --
+	does not stop it. The result would be a follow-up whose baseline is a
+	cancelled assessment, carrying a prevention level and a pledge from a record
+	the counselling team has withdrawn.
+	"""
+	linked = frappe.get_all(
+		"Sparsh Follow Up",
+		filters={"baseline_ticket": doc.name, "docstatus": ["!=", 2]},
+		pluck="name",
+		limit_page_length=5,
+	)
+	if linked:
+		frappe.throw(
+			frappe._("Cancel or delete the follow-up calls against this assessment first: {0}").format(
+				", ".join(linked)
+			)
+		)

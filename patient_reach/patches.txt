@@ -9,3 +9,4 @@
 patient_reach.patches.v1_1.migrate_condition_and_addiction_checkboxes
 patient_reach.patches.v1_1.reword_prevention_level_and_string_test
 patient_reach.patches.v1_2.shorten_prevention_level
+patient_reach.patches.v1_3.merge_type_of_stress_spellings

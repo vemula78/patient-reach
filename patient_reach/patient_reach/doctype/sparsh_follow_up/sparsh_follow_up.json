@@ -1,0 +1,528 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "SFU-.YYYY.-.#####",
+ "creation": "2026-09-18 00:00:00",
+ "description": "Sai Sparsh caregiver follow-up call against an intake Ticket. Not the post-discharge Patient Follow-Up.",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "identifiers_section",
+  "caregiver_id",
+  "baseline_ticket",
+  "coach_id",
+  "column_break_id1",
+  "follow_up_week",
+  "scheduled_date",
+  "actual_call_date",
+  "call_duration_mins",
+  "call_disposition_section",
+  "call_disposition",
+  "safety_section",
+  "safety_red_flag",
+  "safety_escalation_type",
+  "safety_escalation_other_text",
+  "column_break_safety",
+  "clinical_review_status",
+  "clinical_review_date",
+  "clinical_action_taken",
+  "clinical_disposition",
+  "baseline_section",
+  "baseline_prevention_level",
+  "baseline_s_status",
+  "baseline_traffic_light",
+  "column_break_baseline",
+  "previous_traffic_light",
+  "previous_pledge_text",
+  "previous_confidence_score",
+  "progress_section",
+  "pledge_progress_raw",
+  "column_break_progress",
+  "primary_barrier",
+  "intervention_section",
+  "coach_pivot_type",
+  "lifestyle_section",
+  "sunset_rule_binary",
+  "builder_habit_binary",
+  "column_break_lifestyle",
+  "stress_check_binary",
+  "sleep_check_binary",
+  "habit_score",
+  "habit_answered",
+  "habit_score_display",
+  "next_steps_section",
+  "pledge_category",
+  "new_target_pledge_text",
+  "pledge_target_value",
+  "pledge_target_unit",
+  "column_break_nextsteps",
+  "confidence_score",
+  "current_traffic_light",
+  "next_call_date",
+  "trajectory_section",
+  "traffic_light_transition",
+  "traffic_light_change_category",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "identifiers_section",
+   "fieldtype": "Section Break",
+   "label": "Identifiers & Call Logistics"
+  },
+  {
+   "fieldname": "caregiver_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Caregiver",
+   "options": "Patient",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The caregiver's intake Ticket. Not a Sparsh Visit -- that doctype belonged to the decommissioned site.",
+   "fieldname": "baseline_ticket",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Baseline Assessment (Intake)",
+   "options": "Ticket",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "__user",
+   "fieldname": "coach_id",
+   "fieldtype": "Link",
+   "label": "Counsellor",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_id1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "follow_up_week",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Follow-Up Week",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scheduled_date",
+   "fieldtype": "Date",
+   "label": "Scheduled Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actual_call_date",
+   "fieldtype": "Date",
+   "label": "Actual Call Date",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\""
+  },
+  {
+   "fieldname": "call_duration_mins",
+   "fieldtype": "Float",
+   "label": "Call Duration (mins)",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\""
+  },
+  {
+   "fieldname": "call_disposition_section",
+   "fieldtype": "Section Break",
+   "label": "Call Outcome"
+  },
+  {
+   "description": "Every attempt is recorded, including one that never connected.",
+   "fieldname": "call_disposition",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Call Outcome",
+   "options": "\nConnected\nNo Answer\nWrong Number\nCaregiver Declined",
+   "reqd": 1
+  },
+  {
+   "fieldname": "safety_section",
+   "fieldtype": "Section Break",
+   "label": "Safety Check (Red Flags)"
+  },
+  {
+   "default": "0",
+   "fieldname": "safety_red_flag",
+   "fieldtype": "Check",
+   "label": "Severe medical symptoms since last call?"
+  },
+  {
+   "depends_on": "eval:doc.safety_red_flag",
+   "fieldname": "safety_escalation_type",
+   "fieldtype": "Select",
+   "label": "Escalation Type",
+   "options": "\nChest Pain\nBreathlessness\nFainting / Dizziness\nSevere Weakness\nOther"
+  },
+  {
+   "depends_on": "eval:doc.safety_escalation_type==\"Other\"",
+   "fieldname": "safety_escalation_other_text",
+   "fieldtype": "Small Text",
+   "label": "If Other, specify"
+  },
+  {
+   "fieldname": "column_break_safety",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "clinical_review_status",
+   "fieldtype": "Select",
+   "label": "Clinical Review Status",
+   "options": "\nPending\nReviewed\nResolved",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "clinical_review_date",
+   "fieldtype": "Date",
+   "label": "Clinical Review Date",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "clinical_action_taken",
+   "fieldtype": "Select",
+   "label": "Clinical Action Taken",
+   "options": "\nEmergency Referral\nPhysician Review\nReviewed - No Action Needed\nOther",
+   "permlevel": 1
+  },
+  {
+   "description": "What the reviewing clinician concluded, in their own words.",
+   "fieldname": "clinical_disposition",
+   "fieldtype": "Small Text",
+   "label": "Clinical Disposition",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "baseline_section",
+   "fieldtype": "Section Break",
+   "label": "Baseline & Previous State (system)"
+  },
+  {
+   "fieldname": "baseline_prevention_level",
+   "fieldtype": "Select",
+   "label": "Prevention Level at Intake",
+   "no_copy": 1,
+   "options": "\nLevel 1\nLevel 2\nLevel 3\nLevel 4",
+   "read_only": 1
+  },
+  {
+   "description": "The 's' modifier of the intake prevention level (past surgeries / structural illness), kept separate from the level itself.",
+   "fieldname": "baseline_s_status",
+   "fieldtype": "Select",
+   "label": "S Status at Intake",
+   "no_copy": 1,
+   "options": "\nActive\nInactive",
+   "read_only": 1
+  },
+  {
+   "fieldname": "baseline_traffic_light",
+   "fieldtype": "Select",
+   "label": "Traffic Light at First Call",
+   "no_copy": 1,
+   "options": "\nRed\nYellow\nGreen",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_baseline",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "previous_traffic_light",
+   "fieldtype": "Select",
+   "label": "Traffic Light at Last Call",
+   "no_copy": 1,
+   "options": "\nRed\nYellow\nGreen",
+   "read_only": 1
+  },
+  {
+   "fieldname": "previous_pledge_text",
+   "fieldtype": "Small Text",
+   "label": "Pledge Made at Last Call",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "previous_confidence_score",
+   "fieldtype": "Int",
+   "label": "Confidence at Last Call",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "progress_section",
+   "fieldtype": "Section Break",
+   "label": "Progress on Previous Pledge"
+  },
+  {
+   "description": "Descriptive only. These four are deliberately not ranked or scored.",
+   "fieldname": "pledge_progress_raw",
+   "fieldtype": "Select",
+   "label": "Progress on Pledge",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\"",
+   "options": "\nAchieved\nPartially Achieved\nSelf-Modified\nNot Yet Achieved"
+  },
+  {
+   "fieldname": "column_break_progress",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "primary_barrier",
+   "fieldtype": "Select",
+   "label": "Primary Barrier",
+   "options": "\nTime constraints / Too busy\nHigh emotional stress / Anxiety\nLack of family support\nPhysical pain / Exhaustion\nFinancial Constraints\nOther"
+  },
+  {
+   "fieldname": "intervention_section",
+   "fieldtype": "Section Break",
+   "label": "Coaching Intervention"
+  },
+  {
+   "fieldname": "coach_pivot_type",
+   "fieldtype": "Select",
+   "label": "Coaching Response",
+   "options": "\nShrink to a Micro-Habit\nChange the Category\nAddress the Stress\nMaintain Existing Goal\nExpand / Advance Goal"
+  },
+  {
+   "fieldname": "lifestyle_section",
+   "fieldtype": "Section Break",
+   "label": "Lifestyle Check (Hurry, Worry, Curry)"
+  },
+  {
+   "description": "Yes is the healthy answer. The intake Ticket asks the opposite question ('dinner AFTER 8 PM?'), where Yes is the unhealthy answer -- the two must never share a mapping.",
+   "fieldname": "sunset_rule_binary",
+   "fieldtype": "Select",
+   "label": "Heaviest meal before 8 PM?",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "builder_habit_binary",
+   "fieldtype": "Select",
+   "label": "Builder food added to dal/veg?",
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "column_break_lifestyle",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "stress_check_binary",
+   "fieldtype": "Select",
+   "label": "Mostly calm this week?",
+   "options": "\nMostly Calm\nOverwhelmed"
+  },
+  {
+   "fieldname": "sleep_check_binary",
+   "fieldtype": "Select",
+   "label": "At least 7 hours sleep most nights?",
+   "options": "\nYes\nNo"
+  },
+  {
+   "description": "Never read this without habit_answered beside it: an Int cannot be null, so 0 alone cannot tell 'four unhealthy answers' from 'nothing asked'.",
+   "fieldname": "habit_score",
+   "fieldtype": "Int",
+   "label": "Healthy Answers",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "habit_answered",
+   "fieldtype": "Int",
+   "label": "Questions Answered",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "habit_score_display",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Habit Score",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "next_steps_section",
+   "fieldtype": "Section Break",
+   "label": "Re-Pledging & Traffic Light"
+  },
+  {
+   "fieldname": "pledge_category",
+   "fieldtype": "Select",
+   "label": "Pledge Category",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\"",
+   "options": "\nPhysical Activity\nDiet\nSleep\nStress Management\nMedical Adherence\nOther"
+  },
+  {
+   "fieldname": "new_target_pledge_text",
+   "fieldtype": "Small Text",
+   "label": "New Target Pledge",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\""
+  },
+  {
+   "fieldname": "pledge_target_value",
+   "fieldtype": "Float",
+   "label": "Target Value (if measurable)"
+  },
+  {
+   "fieldname": "pledge_target_unit",
+   "fieldtype": "Select",
+   "label": "Target Unit",
+   "options": "\nMinutes\nServings\nHours\nSteps\nOther"
+  },
+  {
+   "fieldname": "column_break_nextsteps",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "confidence_score",
+   "fieldtype": "Int",
+   "label": "Confidence (1-10)",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\""
+  },
+  {
+   "fieldname": "current_traffic_light",
+   "fieldtype": "Select",
+   "label": "Traffic Light Now",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\"",
+   "options": "\nRed\nYellow\nGreen"
+  },
+  {
+   "fieldname": "next_call_date",
+   "fieldtype": "Date",
+   "label": "Schedule Next Call",
+   "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\""
+  },
+  {
+   "fieldname": "trajectory_section",
+   "fieldtype": "Section Break",
+   "label": "Trajectory (system)"
+  },
+  {
+   "fieldname": "traffic_light_transition",
+   "fieldtype": "Data",
+   "label": "Traffic Light Movement",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "traffic_light_change_category",
+   "fieldtype": "Select",
+   "label": "Direction",
+   "no_copy": 1,
+   "options": "\nImprovement\nMaintenance\nRelapse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Sparsh Follow Up",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-09-18 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Sparsh Follow Up",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Patient",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Volunteer",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Staff",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Doctor",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Doctor",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "baseline_ticket",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Yellow",
+   "title": "Draft"
+  },
+  {
+   "color": "Blue",
+   "title": "Submitted"
+  },
+  {
+   "color": "Red",
+   "title": "Cancelled"
+  }
+ ],
+ "title_field": "caregiver_id",
+ "track_changes": 1
+}

@@ -26,7 +26,7 @@ class _Doc(frappe.utils.DotDict):
 
 class TestPatientAutoname(UnitTestCase):
 	def test_no_hospital_is_refused_not_named_none(self):
-		"""The regression: no Hospital must raise, never yield "SWF-None-".""" 
+		"""The regression: no Hospital must raise, never yield "SWF-None-"."""
 		doc = _Doc(custom_hospital_id=None)
 		with self.assertRaises(frappe.ValidationError):
 			patient_autoname(doc, "autoname")
@@ -41,9 +41,9 @@ class TestPatientAutoname(UnitTestCase):
 
 	def test_hospital_without_a_branch_code_is_refused(self):
 		"""A Branch exists but carries no code: still not nameable."""
-		branch = frappe.get_doc(
-			doctype="Branch", branch=frappe.generate_hash("nocode", 8)
-		).insert(ignore_permissions=True)
+		branch = frappe.get_doc(doctype="Branch", branch=frappe.generate_hash("nocode", 8)).insert(
+			ignore_permissions=True
+		)
 		self.addCleanup(branch.delete, ignore_permissions=True)
 
 		doc = _Doc(custom_hospital_id=branch.name)

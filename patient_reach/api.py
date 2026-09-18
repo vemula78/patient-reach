@@ -19,10 +19,10 @@ def patient_autoname(doc, method):
 	)
 	if not branch_code:
 		frappe.throw(
-			_("Cannot name a Patient without a Hospital that has a Branch Code. "
-			  "Set Hospital on the Patient, or give Branch {0} a Branch Code.").format(
-				doc.custom_hospital_id or _("(none)")
-			)
+			_(
+				"Cannot name a Patient without a Hospital that has a Branch Code. "
+				"Set Hospital on the Patient, or give Branch {0} a Branch Code."
+			).format(doc.custom_hospital_id or _("(none)"))
 		)
 	doc.name = make_autoname(f"SWF-{branch_code}-.####")
 
@@ -35,7 +35,10 @@ def get_data(data=None):
 
 	# Tell Frappe that Ticket links to Patient via patient_id
 	data["non_standard_fieldnames"]["Ticket"] = "patient_id"
+	# ... and that Sparsh Follow Up links to it via caregiver_id.
+	data["non_standard_fieldnames"]["Sparsh Follow Up"] = "caregiver_id"
 
 	data["transactions"].append({"label": frappe._("Support"), "items": ["Ticket"]})
+	data["transactions"].append({"label": frappe._("Sai Sparsh"), "items": ["Sparsh Follow Up"]})
 
 	return data

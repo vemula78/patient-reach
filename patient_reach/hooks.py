@@ -339,10 +339,19 @@ doc_events = {
 	"Ticket": {
 		"before_validate": "patient_reach.doc_events.ticket_before_validate",
 		"after_insert": "patient_reach.doc_events.ticket_after_insert",
+		# Frappe's link check blocks a cancel only on SUBMITTED linked docs, so a
+		# Draft Sparsh Follow Up would not stop one.
+		"before_cancel": "patient_reach.doc_events.ticket_before_cancel",
 		# on_update, not after_save: "After Save" is the Server Script label for
 		# this event, and after_save is dispatched by nothing in Frappe.
 		"on_update": "patient_reach.doc_events.ticket_on_update",
 	},
 }
 
-override_doctype_dashboards = {"Patient": "patient_reach.api.get_data"}
+override_doctype_dashboards = {
+	"Patient": "patient_reach.api.get_data",
+	# Ticket shows the Sparsh Follow Up calls made against it, via
+	# baseline_ticket. A separate module from api.get_data: different
+	# doctype, different link field.
+	"Ticket": "patient_reach.patient_reach.doctype.ticket.ticket_dashboard.get_data",
+}
