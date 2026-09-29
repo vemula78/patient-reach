@@ -163,6 +163,28 @@ def missing_when_connected(doc):
 	return [fieldname for fieldname in CONNECTED_ONLY_MANDATORY if not doc.get(fieldname)]
 
 
+def previous_call_filters(baseline_ticket, name, actual_call_date):
+	"""Filters for the connected calls that count as *before* this one.
+
+	A No Answer attempt has no pledge and no traffic light, so only Connected
+	calls are candidates, and a cancelled call is not a call at all.
+
+	**Earlier, not latest.** Without the date bound, a call entered, edited or
+	amended after a later call already existed took that later call's pledge as
+	the one it followed up on. A Draft saved before its call date is entered has
+	nothing to bound by, and sees every connected call.
+	"""
+	filters = {
+		"baseline_ticket": baseline_ticket,
+		"call_disposition": "Connected",
+		"docstatus": ["!=", 2],
+		"name": ["!=", name],
+	}
+	if actual_call_date:
+		filters["actual_call_date"] = ["<", actual_call_date]
+	return filters
+
+
 def check_confidence_score(confidence_score):
 	"""Confidence is a 1-10 scale; 0 is the Int column's "not entered"."""
 	if confidence_score in (None, "", 0):
@@ -282,12 +304,7 @@ class SparshFollowUp(Document):
 
 		previous = frappe.get_all(
 			"Sparsh Follow Up",
-			filters={
-				"baseline_ticket": self.baseline_ticket,
-				"call_disposition": "Connected",
-				"docstatus": ["!=", 2],
-				"name": ["!=", self.name],
-			},
+			filters=previous_call_filters(self.baseline_ticket, self.name, self.actual_call_date),
 			fields=["current_traffic_light", "new_target_pledge_text", "confidence_score"],
 			order_by="actual_call_date desc, creation desc",
 			limit_page_length=1,
@@ -308,12 +325,7 @@ class SparshFollowUp(Document):
 		# the intake form records no traffic light.
 		first = frappe.get_all(
 			"Sparsh Follow Up",
-			filters={
-				"baseline_ticket": self.baseline_ticket,
-				"call_disposition": "Connected",
-				"docstatus": ["!=", 2],
-				"name": ["!=", self.name],
-			},
+			filters=previous_call_filters(self.baseline_ticket, self.name, self.actual_call_date),
 			fields=["current_traffic_light"],
 			order_by="actual_call_date asc, creation asc",
 			limit_page_length=1,

@@ -23,7 +23,10 @@ What is pinned, and why each one matters:
    would report it.
 4. **Conditional mandatory** (decision 1). `mandatory_depends_on` is evaluated by
    the client only, so an API save or a data import bypasses it entirely.
-5. **The Ticket `before_cancel` registration.** A `doc_events` key naming no
+5. **"Previous" means earlier, not latest** (decision 3's sequence). A call
+   entered, edited or amended after a later call exists must not inherit that
+   later call's pledge as the one it followed up on.
+6. **The Ticket `before_cancel` registration.** A `doc_events` key naming no
    document method is ignored in silence; that is what made this app's
    forwarding handler run never for two days in September 2026.
 """
@@ -38,6 +41,7 @@ from patient_reach.patient_reach.doctype.sparsh_follow_up.sparsh_follow_up impor
 	check_red_flag_disposition,
 	habit_summary,
 	missing_when_connected,
+	previous_call_filters,
 	split_prevention_level,
 	traffic_movement,
 )
@@ -354,3 +358,73 @@ class TestDocTypeShape(UnitTestCase):
 	def test_it_links_to_the_intake_ticket_not_to_sparsh_visit(self):
 		"""`Sparsh Visit` died with the old site; the intake is a Ticket."""
 		self.assertEqual(frappe.get_meta("Sparsh Follow Up").get_field("baseline_ticket").options, "Ticket")
+
+
+def _matches(row, filters):
+	"""Apply the only filter shapes `previous_call_filters` uses to one row."""
+	for field, want in filters.items():
+		have = row.get(field)
+		if isinstance(want, list):
+			op, value = want
+			if op == "!=" and have == value:
+				return False
+			if op == "<" and not (have is not None and have < value):
+				return False
+		elif have != want:
+			return False
+	return True
+
+
+class TestPreviousCall(UnitTestCase):
+	"""Out-of-order entry is ordinary in launch week: counsellors catch up from
+	paper, correct a call by cancel-and-amend, or finish a Draft late. Without a
+	bound, "previous" was simply the latest connected call, so an earlier call
+	saved after a later one took the later call's pledge as its own starting point
+	-- and the baseline traffic light with it."""
+
+	TICKET = "TKT-2026-00001"
+	CALLS = (
+		{
+			"name": "SFU-1",
+			"baseline_ticket": TICKET,
+			"call_disposition": "Connected",
+			"docstatus": 1,
+			"actual_call_date": "2026-10-01",
+		},
+		{
+			"name": "SFU-2",
+			"baseline_ticket": TICKET,
+			"call_disposition": "No Answer",
+			"docstatus": 1,
+			"actual_call_date": "2026-10-06",
+		},
+		{
+			"name": "SFU-3",
+			"baseline_ticket": TICKET,
+			"call_disposition": "Connected",
+			"docstatus": 1,
+			"actual_call_date": "2026-10-08",
+		},
+	)
+
+	def _candidates(self, name, actual_call_date):
+		filters = previous_call_filters(self.TICKET, name, actual_call_date)
+		return [c["name"] for c in self.CALLS if _matches(c, filters)]
+
+	def test_a_later_call_finds_the_earlier_connected_one(self):
+		self.assertEqual(self._candidates("SFU-3", "2026-10-08"), ["SFU-1"])
+
+	def test_an_earlier_call_saved_again_does_not_see_the_later_one(self):
+		"""Editing or amending week 1 after week 2 exists."""
+		self.assertEqual(self._candidates("SFU-1", "2026-10-01"), [])
+
+	def test_a_backfilled_call_sees_only_what_came_before_it(self):
+		"""Entering the 04-Oct call after the 08-Oct one was already recorded."""
+		self.assertEqual(self._candidates("SFU-NEW", "2026-10-04"), ["SFU-1"])
+
+	def test_an_unanswered_attempt_is_never_the_previous_call(self):
+		self.assertNotIn("SFU-2", self._candidates("SFU-NEW", "2026-10-31"))
+
+	def test_a_draft_with_no_call_date_yet_still_finds_every_connected_call(self):
+		"""Saved mid-call before the date is entered: nothing to bound by."""
+		self.assertEqual(self._candidates("SFU-NEW", None), ["SFU-1", "SFU-3"])
