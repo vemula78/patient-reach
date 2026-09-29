@@ -20,7 +20,7 @@ from frappe.tests import UnitTestCase
 from patient_reach.api import patient_autoname
 
 
-class _Doc(frappe.utils.DotDict):
+class _Doc(frappe._dict):
 	"""Enough of a Patient for the naming hook: it reads one field, sets `name`."""
 
 
