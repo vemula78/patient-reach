@@ -8,6 +8,8 @@ frappe.listview_settings["Sparsh Follow Up"] = {
 		"clinical_review_status",
 		"current_traffic_light",
 		"docstatus",
+		"scheduled_date",
+		"actual_call_date",
 	],
 
 	get_indicator: function (doc) {
@@ -18,6 +20,15 @@ frappe.listview_settings["Sparsh Follow Up"] = {
 		}
 		if (doc.docstatus === 2) {
 			return [__("Cancelled"), "red", "docstatus,=,2"];
+		}
+		// A call not yet made: say whether it is late, so a counsellor filtering
+		// the list by Counsellor sees what is pending for them at a glance.
+		if (doc.docstatus === 0 && !doc.actual_call_date && doc.scheduled_date) {
+			const today = frappe.datetime.get_today();
+			const pending = "docstatus,=,0|actual_call_date,is,not set";
+			if (doc.scheduled_date < today) return [__("Overdue"), "red", pending + "|scheduled_date,<," + today];
+			if (doc.scheduled_date === today) return [__("Due today"), "orange", pending + "|scheduled_date,=," + today];
+			return [__("Scheduled"), "blue", pending + "|scheduled_date,>," + today];
 		}
 		if (doc.docstatus === 0) {
 			return [__("Draft"), "yellow", "docstatus,=,0"];

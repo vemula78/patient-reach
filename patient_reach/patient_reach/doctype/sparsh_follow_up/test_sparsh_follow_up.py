@@ -37,6 +37,7 @@ from frappe.tests import UnitTestCase
 from patient_reach.patient_reach.doctype.sparsh_follow_up.sparsh_follow_up import (
 	CONNECTED_ONLY_MANDATORY,
 	HABIT_MAPS,
+	age_in_years,
 	check_confidence_score,
 	check_red_flag_disposition,
 	habit_summary,
@@ -428,3 +429,46 @@ class TestPreviousCall(UnitTestCase):
 	def test_a_draft_with_no_call_date_yet_still_finds_every_connected_call(self):
 		"""Saved mid-call before the date is entered: nothing to bound by."""
 		self.assertEqual(self._candidates("SFU-NEW", None), ["SFU-1", "SFU-3"])
+
+
+class TestAgeInYears(UnitTestCase):
+	"""Age is shown on the form; a wrong one would be read as a clinical fact."""
+
+	def test_the_day_before_a_birthday_is_still_the_younger_age(self):
+		self.assertEqual(age_in_years("1980-10-03", "2026-10-02"), 45)
+
+	def test_on_the_birthday_the_age_turns(self):
+		self.assertEqual(age_in_years("1980-10-02", "2026-10-02"), 46)
+
+	def test_no_date_of_birth_is_blank_not_zero(self):
+		self.assertIsNone(age_in_years(None, "2026-10-02"))
+		self.assertIsNone(age_in_years("", "2026-10-02"))
+
+	def test_a_birth_date_after_the_call_is_blank(self):
+		self.assertIsNone(age_in_years("2027-01-01", "2026-10-02"))
+
+
+class TestCaregiverDetailsAreCopiesOnly(UnitTestCase):
+	"""The 02-Oct-2026 caregiver/intake section copies from the Patient and the Ticket.
+
+	Each field must name a source that exists -- a fetch_from pointing at a missing
+	field fills nothing and raises nothing -- and must be read-only, so the copy is
+	never edited in place of the record it came from.
+	"""
+
+	def test_every_fetch_source_exists_and_the_copy_is_read_only(self):
+		meta = frappe.get_meta("Sparsh Follow Up")
+		sources = {"caregiver_id": "Patient", "baseline_ticket": "Ticket"}
+		fetched = [df for df in meta.fields if (df.fetch_from or "").split(".")[0] in sources]
+		self.assertGreaterEqual(len(fetched), 11)
+		for df in fetched:
+			link, source = df.fetch_from.split(".", 1)
+			self.assertIsNotNone(frappe.get_meta(sources[link]).get_field(source), df.fetch_from)
+			self.assertTrue(df.read_only, df.fieldname)
+
+	def test_the_list_shows_and_filters_by_counsellor(self):
+		meta = frappe.get_meta("Sparsh Follow Up")
+		self.assertEqual(meta.title_field, "caregiver_name")
+		for fieldname in ("coach_id", "scheduled_date"):
+			df = meta.get_field(fieldname)
+			self.assertTrue(df.in_list_view and df.in_standard_filter, fieldname)

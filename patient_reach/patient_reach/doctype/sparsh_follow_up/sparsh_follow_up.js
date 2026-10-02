@@ -22,7 +22,17 @@ frappe.ui.form.on("Sparsh Follow Up", {
 		// A new caregiver invalidates whatever Ticket was previously chosen.
 		frm.set_value("baseline_ticket", "");
 		set_baseline_ticket_query(frm);
+		pick_only_intake(frm);
+		refresh_call_context(frm);
 	},
+
+	// The baseline, previous-call and age fields used to appear only after Save.
+	// They are still computed by the server -- refresh_call_context asks the same
+	// function that save uses -- the form just asks as soon as an input changes.
+	baseline_ticket: refresh_call_context,
+	actual_call_date: refresh_call_context,
+	scheduled_date: refresh_call_context,
+	current_traffic_light: refresh_call_context,
 
 	call_disposition: function (frm) {
 		toggle_connected_only_sections(frm);
@@ -100,4 +110,60 @@ function recompute_habit_preview(frm) {
 	if (!frm.is_new() || frm.doc.__islocal) {
 		frm.dirty();
 	}
+}
+
+function pick_only_intake(frm) {
+	// Most caregivers have exactly one intake Ticket; choose it for them. With
+	// two or more the counsellor picks, from the list set_baseline_ticket_query
+	// already narrows to this caregiver.
+	if (!frm.doc.caregiver_id || frm.doc.docstatus !== 0) return;
+	frappe.db
+		.get_list("Ticket", {
+			filters: { patient_id: frm.doc.caregiver_id, docstatus: ["!=", 2] },
+			fields: ["name"],
+			limit: 2,
+		})
+		.then((rows) => {
+			if (rows.length === 1 && !frm.doc.baseline_ticket) {
+				frm.set_value("baseline_ticket", rows[0].name);
+			}
+		});
+}
+
+const CALL_CONTEXT_FIELDS = [
+	"baseline_prevention_level",
+	"baseline_s_status",
+	"previous_traffic_light",
+	"previous_pledge_text",
+	"previous_confidence_score",
+	"baseline_traffic_light",
+	"traffic_light_transition",
+	"traffic_light_change_category",
+	"caregiver_age",
+];
+
+function refresh_call_context(frm) {
+	if (frm.doc.docstatus !== 0) return;
+	frappe
+		.call({
+			method: "patient_reach.patient_reach.doctype.sparsh_follow_up.sparsh_follow_up.get_call_context",
+			args: {
+				caregiver_id: frm.doc.caregiver_id || null,
+				baseline_ticket: frm.doc.baseline_ticket || null,
+				name: frm.is_new() ? null : frm.doc.name,
+				actual_call_date: frm.doc.actual_call_date || null,
+				scheduled_date: frm.doc.scheduled_date || null,
+				current_traffic_light: frm.doc.current_traffic_light || null,
+			},
+		})
+		.then((r) => {
+			const ctx = r.message || {};
+			const changes = {};
+			CALL_CONTEXT_FIELDS.forEach((f) => {
+				const v = ctx[f] === undefined ? null : ctx[f];
+				if ((frm.doc[f] || null) !== v) changes[f] = v;
+			});
+			if (Object.keys(changes).length) frm.set_value(changes);
+			if (ctx.warning) frappe.show_alert({ message: ctx.warning, indicator: "orange" });
+		});
 }

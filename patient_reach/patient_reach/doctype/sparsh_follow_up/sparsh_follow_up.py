@@ -203,6 +203,115 @@ def check_red_flag_disposition(safety_red_flag, call_disposition):
 		)
 
 
+def age_in_years(dob, on):
+	"""Whole years from `dob` to `on`; None when either is missing or dob is after `on`.
+
+	A missing date of birth must read as blank, never as 0 -- an Int column cannot
+	be null, so the caller stores None and the form shows nothing.
+	"""
+	if not dob or not on:
+		return None
+	dob, on = frappe.utils.getdate(dob), frappe.utils.getdate(on)
+	if dob > on:
+		return None
+	return on.year - dob.year - ((on.month, on.day) < (dob.month, dob.day))
+
+
+# --------------------------------------------------------------------------
+# Baseline and previous call -- one function for save and for the live form
+# --------------------------------------------------------------------------
+
+
+def call_context(baseline_ticket, name=None, actual_call_date=None, current_traffic_light=None):
+	"""Everything this call carries forward from the intake and from earlier calls.
+
+	Used by `validate` on save and by `get_call_context` while the form is open,
+	so what the counsellor sees before saving is exactly what saving stores -- the
+	rules exist once, here, and nowhere in JavaScript.
+	"""
+	ctx = {
+		"baseline_prevention_level": None,
+		"baseline_s_status": None,
+		"previous_traffic_light": None,
+		"previous_pledge_text": None,
+		"previous_confidence_score": None,
+		"baseline_traffic_light": current_traffic_light or None,
+		"warning": None,
+	}
+	if not baseline_ticket:
+		return ctx
+
+	# Prevention level and S status from the intake Ticket (decision 10).
+	prevention_level = frappe.db.get_value("Ticket", baseline_ticket, "prevention_level")
+	try:
+		ctx["baseline_prevention_level"], ctx["baseline_s_status"] = split_prevention_level(prevention_level)
+	except ValueError:
+		# A code the intake form no longer offers. Say so rather than store a
+		# level the Ticket does not claim.
+		ctx["warning"] = _(
+			"Ticket {0} holds prevention level {1}, which is not one of the eight codes; "
+			"baseline level and S status left blank."
+		).format(baseline_ticket, prevention_level)
+
+	# The previous *connected* call. The recovered Server Script ordered by
+	# `actual_call_date` over every record, so a No Answer attempt -- which has no
+	# pledge and no traffic light -- would be picked up as "the last call" and
+	# carry a blank pledge forward, hiding what the caregiver actually promised.
+	# Decision 1 makes those attempts common, so the filter is not optional.
+	filters = previous_call_filters(baseline_ticket, name or "", actual_call_date)
+	previous = frappe.get_all(
+		"Sparsh Follow Up",
+		filters=filters,
+		fields=["current_traffic_light", "new_target_pledge_text", "confidence_score"],
+		order_by="actual_call_date desc, creation desc",
+		limit_page_length=1,
+	)
+	if previous:
+		ctx["previous_traffic_light"] = previous[0].current_traffic_light
+		ctx["previous_pledge_text"] = previous[0].new_target_pledge_text
+		ctx["previous_confidence_score"] = previous[0].confidence_score
+	else:
+		# First connected call for this intake: the pledge to follow up on is
+		# the one made on the intake form itself.
+		ctx["previous_pledge_text"] = frappe.db.get_value("Ticket", baseline_ticket, "effort_to")
+
+	# The baseline traffic light is the first connected call's own result --
+	# the intake form records no traffic light.
+	first = frappe.get_all(
+		"Sparsh Follow Up",
+		filters=filters,
+		fields=["current_traffic_light"],
+		order_by="actual_call_date asc, creation asc",
+		limit_page_length=1,
+	)
+	if first:
+		ctx["baseline_traffic_light"] = first[0].current_traffic_light
+	return ctx
+
+
+@frappe.whitelist()
+def get_call_context(
+	caregiver_id=None,
+	baseline_ticket=None,
+	name=None,
+	actual_call_date=None,
+	scheduled_date=None,
+	current_traffic_light=None,
+):
+	"""Read-only preview for the open form. Writes nothing; save recomputes it all."""
+	if baseline_ticket:
+		frappe.has_permission("Ticket", "read", baseline_ticket, throw=True)
+	if caregiver_id:
+		frappe.has_permission("Patient", "read", caregiver_id, throw=True)
+	ctx = call_context(baseline_ticket, name, actual_call_date or None, current_traffic_light)
+	ctx["traffic_light_transition"], ctx["traffic_light_change_category"] = traffic_movement(
+		ctx["previous_traffic_light"], current_traffic_light
+	)
+	dob = frappe.db.get_value("Patient", caregiver_id, "dob") if caregiver_id else None
+	ctx["caregiver_age"] = age_in_years(dob, actual_call_date or scheduled_date or frappe.utils.today())
+	return ctx
+
+
 # --------------------------------------------------------------------------
 # Controller
 # --------------------------------------------------------------------------
@@ -219,7 +328,7 @@ class SparshFollowUp(Document):
 	def validate(self):
 		self._guard_baseline_ticket()
 		self._pull_baseline()
-		self._pull_previous_call()
+		self._pull_caregiver_age()
 		self._derive()
 
 		for check, args in (
@@ -272,65 +381,21 @@ class SparshFollowUp(Document):
 			frappe.throw(_("Ticket {0} is cancelled and cannot be followed up.").format(self.baseline_ticket))
 
 	def _pull_baseline(self):
-		"""Prevention level and S status from the intake Ticket (decision 10)."""
+		"""Prevention level, S status, previous call and baseline light -- see call_context."""
+		ctx = call_context(self.baseline_ticket, self.name, self.actual_call_date, self.current_traffic_light)
 		if not self.baseline_ticket:
 			return
-		prevention_level = frappe.db.get_value("Ticket", self.baseline_ticket, "prevention_level")
-		try:
-			self.baseline_prevention_level, self.baseline_s_status = split_prevention_level(prevention_level)
-		except ValueError:
-			# A code the intake form no longer offers. Say so rather than store a
-			# level the Ticket does not claim.
-			self.baseline_prevention_level, self.baseline_s_status = None, None
-			frappe.msgprint(
-				_(
-					"Ticket {0} holds prevention level {1}, which is not one of the eight codes; "
-					"baseline level and S status left blank."
-				).format(self.baseline_ticket, prevention_level),
-				indicator="orange",
-			)
+		warning = ctx.pop("warning")
+		for fieldname, value in ctx.items():
+			self.set(fieldname, value)
+		if warning:
+			frappe.msgprint(warning, indicator="orange")
 
-	def _pull_previous_call(self):
-		"""Carry the previous *connected* call forward.
-
-		The recovered Server Script ordered by `actual_call_date` over every
-		record, so a No Answer attempt -- which has no pledge and no traffic
-		light -- would be picked up as "the last call" and carry a blank pledge
-		forward, hiding what the caregiver actually promised. Decision 1 makes
-		those attempts common, so the filter is not optional.
-		"""
-		if not self.baseline_ticket:
-			return
-
-		previous = frappe.get_all(
-			"Sparsh Follow Up",
-			filters=previous_call_filters(self.baseline_ticket, self.name, self.actual_call_date),
-			fields=["current_traffic_light", "new_target_pledge_text", "confidence_score"],
-			order_by="actual_call_date desc, creation desc",
-			limit_page_length=1,
+	def _pull_caregiver_age(self):
+		dob = frappe.db.get_value("Patient", self.caregiver_id, "dob") if self.caregiver_id else None
+		self.caregiver_age = age_in_years(
+			dob, self.actual_call_date or self.scheduled_date or frappe.utils.today()
 		)
-
-		if previous:
-			self.previous_traffic_light = previous[0].current_traffic_light
-			self.previous_pledge_text = previous[0].new_target_pledge_text
-			self.previous_confidence_score = previous[0].confidence_score
-		else:
-			# First connected call for this intake: the pledge to follow up on is
-			# the one made on the intake form itself.
-			self.previous_traffic_light = None
-			self.previous_pledge_text = frappe.db.get_value("Ticket", self.baseline_ticket, "effort_to")
-			self.previous_confidence_score = None
-
-		# The baseline traffic light is the first connected call's own result --
-		# the intake form records no traffic light.
-		first = frappe.get_all(
-			"Sparsh Follow Up",
-			filters=previous_call_filters(self.baseline_ticket, self.name, self.actual_call_date),
-			fields=["current_traffic_light"],
-			order_by="actual_call_date asc, creation asc",
-			limit_page_length=1,
-		)
-		self.baseline_traffic_light = first[0].current_traffic_light if first else self.current_traffic_light
 
 	# -- duplicates ------------------------------------------------------
 

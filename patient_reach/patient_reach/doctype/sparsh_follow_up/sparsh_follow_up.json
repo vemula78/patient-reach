@@ -18,6 +18,22 @@
   "scheduled_date",
   "actual_call_date",
   "call_duration_mins",
+  "caregiver_details_section",
+  "caregiver_name",
+  "caregiver_mobile",
+  "caregiver_sex",
+  "caregiver_dob",
+  "caregiver_age",
+  "column_break_cg1",
+  "intake_counselled_date",
+  "intake_counsellor",
+  "intake_nodal_centre",
+  "intake_department",
+  "column_break_cg2",
+  "original_patient_id",
+  "original_patient_name",
+  "original_patient_department",
+  "relationship_to_patient",
   "call_disposition_section",
   "call_disposition",
   "safety_section",
@@ -97,7 +113,9 @@
    "fieldname": "coach_id",
    "fieldtype": "Link",
    "label": "Counsellor",
-   "options": "User"
+   "options": "User",
+   "in_list_view": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "column_break_id1",
@@ -114,7 +132,9 @@
    "fieldname": "scheduled_date",
    "fieldtype": "Date",
    "label": "Scheduled Date",
-   "reqd": 1
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "actual_call_date",
@@ -127,6 +147,114 @@
    "fieldtype": "Float",
    "label": "Call Duration (mins)",
    "mandatory_depends_on": "eval:doc.call_disposition==\"Connected\""
+  },
+  {
+   "fieldname": "caregiver_details_section",
+   "fieldtype": "Section Break",
+   "label": "Caregiver & Intake (from the records)",
+   "description": "Filled from the Patient and the intake Ticket as soon as they are chosen. To correct any of these, edit the Patient or the Ticket."
+  },
+  {
+   "fieldname": "caregiver_name",
+   "fieldtype": "Data",
+   "label": "Caregiver Name",
+   "fetch_from": "caregiver_id.patient_name",
+   "read_only": 1,
+   "bold": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "caregiver_mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "fetch_from": "caregiver_id.mobile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "caregiver_sex",
+   "fieldtype": "Data",
+   "label": "Sex",
+   "fetch_from": "caregiver_id.sex",
+   "read_only": 1
+  },
+  {
+   "fieldname": "caregiver_dob",
+   "fieldtype": "Date",
+   "label": "Date of Birth",
+   "fetch_from": "caregiver_id.dob",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "caregiver_age",
+   "fieldtype": "Int",
+   "label": "Age (years)",
+   "read_only": 1,
+   "description": "On the call date, or today until the call is made."
+  },
+  {
+   "fieldname": "column_break_cg1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "intake_counselled_date",
+   "fieldtype": "Date",
+   "label": "Intake Counselled On",
+   "fetch_from": "baseline_ticket.counselled_date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "intake_counsellor",
+   "fieldtype": "Data",
+   "label": "Intake Counsellor",
+   "fetch_from": "baseline_ticket.counsellor_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "intake_nodal_centre",
+   "fieldtype": "Data",
+   "label": "Nodal Centre",
+   "fetch_from": "baseline_ticket.nodal_centre",
+   "read_only": 1
+  },
+  {
+   "fieldname": "intake_department",
+   "fieldtype": "Data",
+   "label": "Department",
+   "fetch_from": "baseline_ticket.department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_cg2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "original_patient_id",
+   "fieldtype": "Data",
+   "label": "Original Patient ID",
+   "fetch_from": "baseline_ticket.actual_patient_id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_patient_name",
+   "fieldtype": "Data",
+   "label": "Original Patient Name",
+   "fetch_from": "baseline_ticket.patient_name_of_the_original_patient",
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_patient_department",
+   "fieldtype": "Data",
+   "label": "Original Patient Department",
+   "fetch_from": "baseline_ticket.department_of_original_patient",
+   "read_only": 1
+  },
+  {
+   "fieldname": "relationship_to_patient",
+   "fieldtype": "Data",
+   "label": "Relationship to Patient",
+   "fetch_from": "baseline_ticket.relationship",
+   "read_only": 1
   },
   {
    "fieldname": "call_disposition_section",
@@ -429,7 +557,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-09-18 00:00:00",
+ "modified": "2026-10-02 18:00:00",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Sparsh Follow Up",
@@ -506,7 +634,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "baseline_ticket",
+ "search_fields": "caregiver_name,caregiver_mobile,baseline_ticket,coach_id",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [
@@ -523,6 +651,7 @@
    "title": "Cancelled"
   }
  ],
- "title_field": "caregiver_id",
- "track_changes": 1
+ "title_field": "caregiver_name",
+ "track_changes": 1,
+ "show_title_field_in_link": 1
 }
