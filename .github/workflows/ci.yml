@@ -91,7 +91,12 @@ jobs:
 
       - name: Install MariaDB Client
         # Was mariadb-client-10.6, which no longer exists on ubuntu-latest.
-        run: sudo apt-get install -y mariadb-client
+        # The runner image's package index goes stale between image releases;
+        # without an update, install fetches superseded .debs and 404s (run
+        # 37004471919, libdbi-perl 1.643-4ubuntu0.1).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
 
       - name: Setup
         run: |
