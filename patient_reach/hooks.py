@@ -294,11 +294,8 @@ fixtures = [
 		# Property Setters -- including a field_order override for the whole
 		# doctype -- lived only in the site database.
 		#
-		# NOTE: the Patient entries in fixtures/property_setter.json are STALE.
-		# The live site has 27 Property Setters on Patient; only 12 are
-		# exported here. Re-exporting them would change Patient's form on the
-		# next migrate, so it was left alone deliberately rather than swept in
-		# with the Ticket work. Reconcile it as its own task.
+		# Patient's 15 live-only Property Setters were added on 05-Oct-2026,
+		# copied from care unchanged; until then only 12 of its 27 were here.
 		"dt": "Property Setter",
 		"filters": [["doc_type", "in", ["Patient", "Ticket"]]],
 	},
