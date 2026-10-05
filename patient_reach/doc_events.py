@@ -72,6 +72,54 @@ def _bp_status(bp_reading):
 	return "Needs Reference"
 
 
+# The BP Status rule a Ticket is graded by is stamped on it when it is created,
+# so a change of rule applies to visits entered from then on and never re-grades
+# an earlier one. That matters because this hook recomputes on every save and
+# almost every Ticket is a Draft that is still being saved. Blank = _bp_status.
+BP_RULE_CURRENT = "2026-10"
+
+
+def _bp_status_2026_10(bp_reading):
+	"""The rule from 2026-10, chosen 05-Oct-2026 from Dr Nayanjeet's reference:
+	Low below 90 systolic or 60 diastolic; High above 160 systolic or 100
+	diastolic; Normal below 120/80; everything between -- 120/80 up to and
+	including 160/100 -- is Needs Reference, as is anything unparseable.
+
+	The bands are strict as written: 160/100 itself is Needs Reference, not High.
+	A reading that is both low and high is a contradiction and is deferred to a
+	human, for the reason given in `_bp_status`.
+	"""
+	if not bp_reading:
+		return None
+	m = re.search(r"(\d{2,3})\s*[/\\-]\s*(\d{2,3})", str(bp_reading))
+	if not m:
+		return "Needs Reference"
+	systolic, diastolic = int(m.group(1)), int(m.group(2))
+	if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
+		return "Needs Reference"
+	low = systolic < 90 or diastolic < 60
+	high = systolic > 160 or diastolic > 100
+	if low and high:
+		return "Needs Reference"
+	if low:
+		return "Low"
+	if high:
+		return "High"
+	if systolic < 120 and diastolic < 80:
+		return "Normal"
+	return "Needs Reference"
+
+
+def bp_status_for(bp_reading, bp_rule):
+	"""Grade a reading by the rule the Ticket was created under."""
+	if bp_rule == BP_RULE_CURRENT:
+		return _bp_status_2026_10(bp_reading)
+	return _bp_status(bp_reading)
+
+
+NO_STRESS = "None"
+
+
 # --------------------------------------------------------------------------
 # Ticket (the Visit form)
 # --------------------------------------------------------------------------
@@ -87,13 +135,52 @@ def ticket_before_validate(doc, method=None):
 	# Derive the measurements the counselling team asked to have calculated
 	# rather than chosen by hand. These are descriptive summaries of values the
 	# counsellor already recorded, not clinical decisions.
+	# A new visit is graded by the current BP rule. An amendment is a
+	# correction of an earlier visit, so it keeps that visit's rule (copied
+	# with the rest of the document).
+	if doc.is_new() and not doc.get("amended_from"):
+		doc.bp_rule = BP_RULE_CURRENT
+
 	result = _string_test_result(doc.get("waist_cm"), doc.get("height_cm"))
 	if result:
 		doc.string_test_result = result
 
-	status = _bp_status(doc.get("bp_reading"))
+	status = bp_status_for(doc.get("bp_reading"), doc.get("bp_rule"))
 	if status:
 		doc.bp_status = status
+
+	stress_types = [row.stress_type for row in doc.get("stress_types") or []]
+	if NO_STRESS in stress_types and len(stress_types) > 1:
+		frappe.throw(
+			frappe._('Type of Stress: "None" cannot be chosen together with another type.'),
+			title=frappe._("Type of Stress"),
+		)
+
+	if doc.is_new():
+		_warn_if_caregiver_already_has_a_first_visit(doc)
+
+
+def _warn_if_caregiver_already_has_a_first_visit(doc):
+	"""Warn, do not block: a second First Visit is usually a duplicate entry,
+	but the counsellor is the one who can tell. 7 caregivers on care had one
+	on 05-Oct-2026. Only on the first save, so a Draft does not nag on every
+	save afterwards."""
+	if not doc.get("patient_id") or doc.get("visit_type") != "First Visit":
+		return
+	existing = frappe.get_all(
+		"Ticket",
+		filters={"patient_id": doc.patient_id, "visit_type": "First Visit", "docstatus": ["<", 2]},
+		pluck="name",
+		limit=5,
+	)
+	if existing:
+		frappe.msgprint(
+			frappe._(
+				"This caregiver already has a First Visit: {0}. Check that this is not a duplicate entry."
+			).format(", ".join(existing)),
+			title=frappe._("Possible duplicate visit"),
+			indicator="orange",
+		)
 
 
 def ticket_after_insert(doc, method=None):
@@ -185,6 +272,43 @@ def ticket_on_update(doc, method=None):
 # --------------------------------------------------------------------------
 # Patient
 # --------------------------------------------------------------------------
+
+
+def _normalised_name(name):
+	return " ".join((name or "").lower().split())
+
+
+def _mobile_digits(mobile):
+	"""The last 10 digits, so "+91 98450-12345" and "9845012345" compare equal."""
+	return re.sub(r"\D", "", mobile or "")[-10:]
+
+
+def patient_validate(doc, method=None):
+	"""Refuse a second registration of the same caregiver: same name and same
+	mobile number. The name alone is not enough, and nor is the mobile alone --
+	on 05-Oct-2026 six numbers on care were shared by twelve different
+	caregivers, members of one family on one phone.
+
+	Runs after Patient's own validate, which builds `patient_name` from the
+	first/middle/last names."""
+	digits = _mobile_digits(doc.get("mobile"))
+	name = _normalised_name(doc.get("patient_name"))
+	if len(digits) < 10 or not name:
+		return
+	candidates = frappe.db.sql(
+		"""select name, patient_name from `tabPatient`
+		where name != %s and right(regexp_replace(ifnull(mobile, ''), '[^0-9]', ''), 10) = %s""",
+		(doc.name or "", digits),
+	)
+	for other, other_name in candidates:
+		if _normalised_name(other_name) == name:
+			frappe.throw(
+				frappe._(
+					"This caregiver is already registered as {0} (same name and mobile number). "
+					"Open that record instead of registering again."
+				).format(other),
+				title=frappe._("Already registered"),
+			)
 
 
 def patient_after_insert(doc, method=None):

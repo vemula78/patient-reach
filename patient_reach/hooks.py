@@ -25,8 +25,12 @@ add_to_apps_screen = [
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/patient_reach/css/patient_reach.css"
-# app_include_js = "/assets/patient_reach/js/patient_reach.js"
+# Plain files, not bundles: /assets/patient_reach is a symlink to this app's
+# public/ in the image, so they ship with the routine release, unbuilt.
+# Loaded after the health app's healthcare.bundle.js (app install order), which
+# patient_quick_entry.js depends on.
+app_include_css = "/assets/patient_reach/css/patient_reach.css"
+app_include_js = "/assets/patient_reach/js/patient_quick_entry.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/patient_reach/css/patient_reach.css"
@@ -331,6 +335,7 @@ fixtures = [
 doc_events = {
 	"Patient": {
 		"autoname": "patient_reach.api.patient_autoname",
+		"validate": "patient_reach.doc_events.patient_validate",
 		"after_insert": "patient_reach.doc_events.patient_after_insert",
 	},
 	"Ticket": {
@@ -347,8 +352,8 @@ doc_events = {
 
 override_doctype_dashboards = {
 	"Patient": "patient_reach.api.get_data",
-	# Ticket shows the Sparsh Follow Up calls made against it, via
-	# baseline_ticket. A separate module from api.get_data: different
-	# doctype, different link field.
-	"Ticket": "patient_reach.patient_reach.doctype.ticket.ticket_dashboard.get_data",
+	# Not Ticket: ticket_dashboard.py is Ticket's own standard dashboard, which
+	# Frappe loads by file name, so registering it here as well ran it twice and
+	# showed "Follow-up / Sparsh Follow Up" twice on every Ticket (until
+	# 05-Oct-2026).
 }

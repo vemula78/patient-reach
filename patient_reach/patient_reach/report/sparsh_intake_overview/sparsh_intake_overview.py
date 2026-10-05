@@ -48,12 +48,17 @@ BREAKDOWN_FIELDS = {
 	"consume_heavy": ["Yes", "No"],
 	"adequate_sleep": ["Yes", "No"],
 	"caregiver_stress": ["Yes", "No"],
-	"type_of_stress": [
-		"Clinical Stress (Medical related )",
-		"Non - Clinical Stress (Family, Financial, Social etc.,)",
-		"None",
-	],
 }
+
+# Type of Stress is a multi-select since 05-Oct-2026 (`stress_types`, rows of
+# Ticket Stress Type). The old single-choice `type_of_stress` was copied into it
+# by patch v1_5, so this one source covers old and new visits alike. The report
+# still labels the breakdown "type_of_stress" so it reads as it did.
+STRESS_TYPE_OPTIONS = [
+	"Clinical Stress (Medical related )",
+	"Non - Clinical Stress (Family, Financial, Social etc.,)",
+	"None",
+]
 
 LEVELS = ["Level 1", "Level 2", "Level 3", "Level 4"]
 S_STATUSES = ["Active", "Inactive"]
@@ -65,6 +70,7 @@ def execute(filters: dict | None = None):
 	rows = []
 	for fieldname in BREAKDOWN_FIELDS:
 		rows += select_breakdown(tickets, fieldname, BREAKDOWN_FIELDS[fieldname])
+	rows += multi_select_breakdown(tickets, "type_of_stress", STRESS_TYPE_OPTIONS)
 	rows += prevention_level_breakdown(tickets)
 	return _columns(), rows, _message(tickets), None
 
@@ -73,11 +79,23 @@ def _fetch(filters: dict) -> list[dict]:
 	conditions = dict(INTAKE_FILTERS)
 	if filters.get("nodal_centre"):
 		conditions["nodal_centre"] = filters["nodal_centre"]
-	return frappe.get_all(
+	tickets = frappe.get_all(
 		"Ticket",
 		filters=conditions,
 		fields=["name", "prevention_level", *BREAKDOWN_FIELDS],
 	)
+	stress = {}
+	if tickets:
+		for parent, stress_type in frappe.get_all(
+			"Ticket Stress Type",
+			filters={"parenttype": "Ticket", "parent": ["in", [t.name for t in tickets]]},
+			fields=["parent", "stress_type"],
+			as_list=True,
+		):
+			stress.setdefault(parent, []).append(stress_type)
+	for ticket in tickets:
+		ticket["type_of_stress"] = stress.get(ticket.name, [])
+	return tickets
 
 
 def select_breakdown(rows: list[dict], fieldname: str, options: list[str]) -> list[dict]:
@@ -88,6 +106,23 @@ def select_breakdown(rows: list[dict], fieldname: str, options: list[str]) -> li
 	for row in rows:
 		value = row.get(fieldname)
 		counts[value if value in counts else NOT_RECORDED] += 1
+	return [{"field": fieldname, "option": option, "count": count} for option, count in counts.items()]
+
+
+def multi_select_breakdown(rows: list[dict], fieldname: str, options: list[str]) -> list[dict]:
+	"""Like `select_breakdown`, for a multi-select holding a list per row: a
+	row counts once under every option it chose, so the counts can add up to
+	more than the number of visits. A row that chose nothing is "Not
+	Recorded". A value outside `options` is counted under its own name rather
+	than dropped."""
+	counts = {option: 0 for option in options}
+	counts[NOT_RECORDED] = 0
+	for row in rows:
+		values = set(row.get(fieldname) or [])
+		if not values:
+			counts[NOT_RECORDED] += 1
+		for value in values:
+			counts[value] = counts.get(value, 0) + 1
 	return [{"field": fieldname, "option": option, "count": count} for option, count in counts.items()]
 
 
@@ -133,7 +168,10 @@ def prevention_level_breakdown(rows: list[dict]) -> list[dict]:
 
 
 def _message(rows: list[dict]) -> str:
-	return _("{0} Preventive Cardiology intake Tickets (not cancelled).").format(len(rows))
+	return _(
+		"{0} Preventive Cardiology intake Tickets (not cancelled). Type of Stress allows more than one "
+		"answer, so its counts can add up to more than the number of Tickets."
+	).format(len(rows))
 
 
 def _columns() -> list[dict]:

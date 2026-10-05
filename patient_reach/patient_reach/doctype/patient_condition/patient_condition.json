@@ -25,7 +25,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Condition",
-   "options": "\nBP\nDiabetes\nObesity\nThyroid\nKidney Issue\nLiver Issue\nPCOD\nHeart Disease\nHeart Attack\nCholesterol\nSurgery"
+   "options": "\nBP\nDiabetes\nObesity\nThyroid\nKidney Issue\nLiver Issue\nPCOD\nHeart Disease\nHeart Attack\nCholesterol\nSurgery",
+   "columns": 4
   },
   {
    "allow_in_quick_entry": 1,
@@ -33,7 +34,8 @@
    "fieldname": "has_disease",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Has Disease"
+   "label": "Has Disease",
+   "columns": 3
   },
   {
    "allow_in_quick_entry": 1,
@@ -41,7 +43,8 @@
    "fieldname": "has_medication",
    "fieldtype": "Check",
    "in_list_view": 1,
-   "label": "Has Medication"
+   "label": "Has Medication",
+   "columns": 3
   },
   {
    "fieldname": "column_break_rscl",
@@ -72,7 +75,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-05-25 16:19:39.660339",
+ "modified": "2026-10-05 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Patient Condition",

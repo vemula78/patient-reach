@@ -17,15 +17,18 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Addiction",
-   "options": "\nSmoking\nAlcohol\nTobacco Chewing\nNone"
+   "options": "\nSmoking\nAlcohol\nTobacco Chewing\nNone",
+   "columns": 10
   },
   {
    "allow_in_quick_entry": 1,
-   "description": "Unchecked means the caregiver does not have this addiction.",
+   "description": "Not asked any more (05-Oct-2026): listing an addiction is the answer, so new rows are 1. Rows from the old per-addiction yes/no form keep their recorded 0.",
    "fieldname": "has_addiction",
    "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Has Addiction"
+   "in_list_view": 0,
+   "label": "Has Addiction",
+   "default": "1",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_cgxi",
@@ -47,7 +50,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-04-21 12:40:02.656658",
+ "modified": "2026-10-05 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Patient Addictions",

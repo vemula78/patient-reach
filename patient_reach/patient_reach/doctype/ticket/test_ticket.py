@@ -40,7 +40,14 @@ stubs passed: with no test methods, unittest never calls setUpClass.
 import frappe
 from frappe.tests import UnitTestCase
 
-from patient_reach.doc_events import _bp_status, _string_test_result, ticket_before_validate
+from patient_reach.doc_events import (
+	BP_RULE_CURRENT,
+	_bp_status,
+	_bp_status_2026_10,
+	_string_test_result,
+	bp_status_for,
+	ticket_before_validate,
+)
 
 NEEDS_REFERENCE = "Needs Reference"
 PASS_RESULT = "PASS (Ends touch/ W:H < 0.5)"
@@ -212,6 +219,81 @@ class TestBPStatusConflictingReadings(UnitTestCase):
 		self.assertEqual(_bp_status("85/55"), "Low")
 		self.assertEqual(_bp_status("150/95"), "High")
 		self.assertEqual(_bp_status("110/70"), "Normal")
+
+
+class TestBPStatus2026_10(UnitTestCase):
+	"""The rule chosen on 05-Oct-2026 from Dr Nayanjeet's reference, for visits
+	entered from then on."""
+
+	def test_high_is_strictly_above_160_or_100(self):
+		for reading in ("161/80", "130/101", "180/110"):
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status_2026_10(reading), "High")
+
+	def test_the_old_high_band_is_now_needs_reference(self):
+		for reading in ("140/90", "150/95", "160/100", "160/80", "130/100"):
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status_2026_10(reading), NEEDS_REFERENCE)
+
+	def test_low_and_normal_are_unchanged(self):
+		for reading, verdict in (
+			("85/70", "Low"),
+			("110/55", "Low"),
+			("119/79", "Normal"),
+			("128/84", NEEDS_REFERENCE),
+		):
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status_2026_10(reading), verdict)
+
+	def test_contradictory_and_unreadable_readings_are_deferred(self):
+		for reading in ("170/55", "85/105", "BP machine not working", "400/250"):
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status_2026_10(reading), NEEDS_REFERENCE)
+
+	def test_absent_reading_returns_none(self):
+		self.assertIsNone(_bp_status_2026_10(""))
+
+	def test_every_verdict_is_an_option_the_form_offers(self):
+		offered = _options("bp_status")
+		for reading in ("119/79", "150/95", "170/105", "85/55"):
+			with self.subTest(reading=reading):
+				self.assertIn(_bp_status_2026_10(reading), offered)
+
+	def test_rule_is_chosen_by_the_stamp(self):
+		self.assertEqual(bp_status_for("150/95", BP_RULE_CURRENT), NEEDS_REFERENCE)
+		self.assertEqual(bp_status_for("150/95", None), "High")
+		self.assertEqual(bp_status_for("150/95", ""), "High")
+
+
+class TestBPRuleStamp(UnitTestCase):
+	def test_new_visit_is_stamped_and_graded_by_the_current_rule(self):
+		doc = frappe.new_doc("Ticket")
+		doc.bp_reading = "150/95"
+		ticket_before_validate(doc)
+		self.assertEqual(doc.bp_rule, BP_RULE_CURRENT)
+		self.assertEqual(doc.bp_status, NEEDS_REFERENCE)
+
+	def test_amendment_keeps_the_rule_it_was_copied_with(self):
+		doc = frappe.new_doc("Ticket")
+		doc.update({"amended_from": "TKT-2026-00001", "bp_rule": "", "bp_reading": "150/95"})
+		ticket_before_validate(doc)
+		self.assertEqual(doc.bp_rule, "")
+		self.assertEqual(doc.bp_status, "High")
+
+
+class TestStressTypes(UnitTestCase):
+	def test_none_cannot_be_combined(self):
+		doc = frappe.new_doc("Ticket")
+		doc.append("stress_types", {"stress_type": "None"})
+		doc.append("stress_types", {"stress_type": "Clinical Stress (Medical related )"})
+		with self.assertRaises(frappe.ValidationError):
+			ticket_before_validate(doc)
+
+	def test_two_real_types_are_allowed(self):
+		doc = frappe.new_doc("Ticket")
+		doc.append("stress_types", {"stress_type": "Clinical Stress (Medical related )"})
+		doc.append("stress_types", {"stress_type": "Non - Clinical Stress (Family, Financial, Social etc.,)"})
+		ticket_before_validate(doc)
 
 
 class TestDocEventRegistration(UnitTestCase):

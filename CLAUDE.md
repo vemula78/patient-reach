@@ -64,6 +64,7 @@ instead, and all three must be checked when tracing a field:
 | `patient_reach/doc_events.py` | all server-side derivation and stamping |
 | `patient_reach/api.py` | `Patient` autoname, dashboard override |
 | `fixtures/client_script.json` | 4 Client Scripts (pledge form, district filter, visit button, hiding comments) |
+| `public/js/patient_quick_entry.js`, `public/css/patient_reach.css` | plain `app_include_*` files (not bundles), served through the `/assets/patient_reach` symlink |
 
 Child tables: `Patient Condition` and `Patient Addictions` (both `istable`), plus
 `Ticket Follow up`. `Patient State` / `Patient District` are the geography
@@ -161,6 +162,25 @@ bulk.
 - `bp_reading` is free text and genuinely contains prose ("BP machine not
   working"), so anything unparseable classifies as `Needs Reference`, as does the
   120–139/80–89 band, since there is no "Elevated" option.
+- **Two BP Status rules, chosen per Ticket by `bp_rule`.** A Ticket is stamped
+  with `BP_RULE_CURRENT` (`2026-10`) when created, and graded by
+  `_bp_status_2026_10` (High only *above* 160/100; 120/80–160/100 is Needs
+  Reference). Blank `bp_rule` = every Ticket before 05-Oct-2026, graded by the
+  old `_bp_status` (High from 140/90) for ever — the save hook recomputes on
+  every save and almost all Tickets are Drafts, so a new rule must never reach
+  old visits. An amendment keeps the copied rule. The form shows the result
+  live through `api.classify_measurements`, which calls the same functions.
+- **Superseded fields are hidden and read-only, never dropped** (05-Oct-2026):
+  `type_of_stress` (now the multi-select `stress_types`) and the four
+  `is_the_caregiver_ready_…` Yes/No fields (now `ready_for_*` checkboxes, where
+  No and blank both became 0). They are the only record of the earlier answers.
+  `has_addiction` is hidden and defaults to 1; its 169 recorded 0s from the old
+  per-addiction yes/no form stay 0.
+- **`counsellor_name` is a Link to User** (05-Oct-2026), picked through
+  `api.counsellor_query` (enabled users with the Volunteer role).
+- The Patient "Add New" popup is the health app's hard-coded
+  `PatientQuickEntryForm`, extended (not edited) by
+  `public/js/patient_quick_entry.js`. Re-check it after every health upgrade.
 - **The legacy `response` Select on both child tables is kept hidden and
   read-only on purpose.** It is the only record of what was asked before
   07-Sep-2026 and what `has_disease` / `has_addiction` were derived from. Do not

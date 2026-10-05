@@ -5,11 +5,11 @@
 intake Ticket, so a counsellor open on the Ticket can see and open them
 without a separate report.
 
-Ticket has no dashboard override before this (`override_doctype_dashboards`
-in hooks.py has nothing for "Ticket" yet -- Patient is the only entry). This
-file is additive: it does not touch Patient's dashboard
-(`patient_reach.api.get_data`), which is a different function on a different
-doctype reached by a different hooks.py key.
+Frappe loads this file itself, as Ticket's standard dashboard (it finds
+`<doctype>_dashboard.py` by name). It must therefore **not** also be listed in
+`override_doctype_dashboards`: it was from d99161d until 05-Oct-2026, which ran
+it twice and showed the Follow-up group twice. It does not touch Patient's
+dashboard (`patient_reach.api.get_data`).
 """
 
 import frappe

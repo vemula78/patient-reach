@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:stress_type",
+ "creation": "2026-10-05 10:00:00.000000",
+ "description": "The options offered by Type of Stress on the Visit (Ticket). Names are the exact strings the old single-choice field stored, so intake reports match old and new visits.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "stress_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "stress_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Stress Type",
+   "reqd": 1,
+   "unique": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-05 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Stress Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "role": "System Manager",
+   "create": 1,
+   "delete": 1,
+   "write": 1,
+   "export": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "read": 1,
+   "role": "Volunteer",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "Staff",
+   "select": 1
+  },
+  {
+   "read": 1,
+   "role": "Doctor",
+   "select": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

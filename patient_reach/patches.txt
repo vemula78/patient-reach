@@ -11,3 +11,8 @@ patient_reach.patches.v1_1.reword_prevention_level_and_string_test
 patient_reach.patches.v1_2.shorten_prevention_level
 patient_reach.patches.v1_3.merge_type_of_stress_spellings
 patient_reach.patches.v1_4.backfill_follow_up_caregiver_details
+patient_reach.patches.v1_5.map_counsellor_names
+patient_reach.patches.v1_5.copy_type_of_stress_to_multiselect
+patient_reach.patches.v1_5.readiness_checkboxes
+patient_reach.patches.v1_5.add_nepal_bangladesh_states
+patient_reach.patches.v1_5.workspace_counselling_shortcuts_first

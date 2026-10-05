@@ -20,6 +20,7 @@ from patient_reach.patient_reach.report.sparsh_intake_overview.sparsh_intake_ove
 	NOT_RECORDED,
 	S_STATUSES,
 	_split_prevention_level,
+	multi_select_breakdown,
 	prevention_level_breakdown,
 	select_breakdown,
 )
@@ -34,6 +35,31 @@ class TestSelectBreakdown(unittest.TestCase):
 		rows = [{"sunset_rule": None}, {"sunset_rule": ""}, {}]
 		breakdown = {r["option"]: r["count"] for r in select_breakdown(rows, "sunset_rule", ["Yes", "No"])}
 		self.assertEqual(breakdown[NOT_RECORDED], 3)
+
+
+STRESS_OPTIONS = ("Clinical", "Non-Clinical", "None")
+
+
+class TestMultiSelectBreakdown(unittest.TestCase):
+	def _counts(self, rows):
+		return {
+			r["option"]: r["count"] for r in multi_select_breakdown(rows, "type_of_stress", STRESS_OPTIONS)
+		}
+
+	def test_a_visit_counts_under_every_type_it_chose(self):
+		counts = self._counts(
+			[{"type_of_stress": ["Clinical", "Non-Clinical"]}, {"type_of_stress": ["Clinical"]}]
+		)
+		self.assertEqual(counts["Clinical"], 2)
+		self.assertEqual(counts["Non-Clinical"], 1)
+
+	def test_nothing_chosen_is_not_recorded(self):
+		counts = self._counts([{"type_of_stress": []}, {}])
+		self.assertEqual(counts[NOT_RECORDED], 2)
+
+	def test_unknown_value_is_counted_not_dropped(self):
+		counts = self._counts([{"type_of_stress": ["Other"]}])
+		self.assertEqual(counts["Other"], 1)
 
 
 class TestSplitPreventionLevel(unittest.TestCase):

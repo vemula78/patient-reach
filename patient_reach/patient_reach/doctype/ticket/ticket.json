@@ -27,6 +27,7 @@
   "attachments",
   "counsellor_name",
   "counselled_date",
+  "created_date",
   "preventive_cardiology_section",
   "caregiver_interested",
   "best_time_to_call",
@@ -34,19 +35,24 @@
   "parent_bp_history",
   "parent_cardiac_disease_history",
   "caregiver_medical_checkup_done_",
-  "medical_condition",
-  "personal_habits",
-  "prevention_level",
-  "justification_of_risk_profiling",
   "column_break_ghst",
-  "any_other_medical_condition",
-  "any_other_habits",
   "additional_information",
   "relationship",
   "actual_patient_id",
   "patient_name_of_the_original_patient",
   "department_of_original_patient",
   "any_other_information_of_original_patient",
+  "medical_condition_section",
+  "medical_condition",
+  "medical_condition_col",
+  "any_other_medical_condition",
+  "addictions_section",
+  "personal_habits",
+  "addictions_col",
+  "any_other_habits",
+  "risk_level_section",
+  "prevention_level",
+  "justification_of_risk_profiling",
   "nutrition_heading",
   "green_plate",
   "sunset_rule",
@@ -60,23 +66,35 @@
   "hurry_additional_info",
   "3_the_worry_stresshabits",
   "caregiver_stress",
+  "stress_types",
   "type_of_stress",
   "stress_additional_information",
   "section_d",
+  "ready_for_weight",
+  "weight_col",
+  "weight",
+  "height_section",
+  "ready_for_height",
+  "height_col",
+  "height_cm",
+  "string_test_section",
   "string_test_heading",
+  "ready_for_string_test",
+  "string_test_col",
+  "waist_cm",
+  "string_test_result",
+  "bp_heading",
+  "ready_for_bp",
+  "rested_5_min",
+  "bp_col",
+  "bp_reading",
+  "bp_status",
+  "bp_status_other",
   "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
   "is_the_caregiver_ready_to_be_measured_for_weight",
   "is_the_caregiver_ready_to_be_measured_for_height",
   "is_the_caregiver_ready_for_the_string_test",
-  "waist_cm",
-  "height_cm",
-  "weight",
-  "string_test_result",
-  "bp_heading",
-  "rested_5_min",
-  "bp_reading",
-  "bp_status",
-  "bp_status_other",
+  "bp_rule",
   "section_title",
   "are_you_ready_to_make_a_change_for_a_healthy_you",
   "effort_to",
@@ -91,7 +109,6 @@
   "other",
   "red_flag_other_reason",
   "meta_section",
-  "created_date",
   "col_break_4",
   "workflow_state",
   "patient_enquiry_section",
@@ -327,7 +344,7 @@
    "label": "Caregiver - Additional Information"
   },
   {
-   "description": "Level 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.\nLevel 1s: \"S\" modifier (Past surgeries and Structural illness) for Level 1.\nLevel 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.\nLevel 2s: \"S\" modifier (Past surgeries and Structural illness) for Level 2.\nLevel 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.\nLevel 3s: \"S\" modifier (Past surgeries and Structural illness) for Level 3.\nLevel 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke.\nLevel 4s: \"S\" modifier (Past surgeries and Structural illness) for Level 4.",
+   "description": "<ul><li>Level 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.</li><li>Level 1s: \"S\" modifier (Past surgeries and Structural illness) for Level 1.</li><li>Level 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.</li><li>Level 2s: \"S\" modifier (Past surgeries and Structural illness) for Level 2.</li><li>Level 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.</li><li>Level 3s: \"S\" modifier (Past surgeries and Structural illness) for Level 3.</li><li>Level 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke.</li><li>Level 4s: \"S\" modifier (Past surgeries and Structural illness) for Level 4.</li></ul>",
    "fieldname": "prevention_level",
    "fieldtype": "Select",
    "label": "Where does the Caregiver fit in the Levels of Prevention ?",
@@ -435,7 +452,9 @@
    "fieldname": "string_test_result",
    "fieldtype": "Select",
    "label": "The String Test Result (Visceral Fat)",
-   "options": "\nPASS (Ends touch/ W:H < 0.5)\nFAIL (Gap exists - Central Obesity)"
+   "options": "\nPASS (Ends touch/ W:H < 0.5)\nFAIL (Gap exists - Central Obesity)",
+   "read_only": 1,
+   "description": "Calculated from waist and height: PASS when the waist is less than half the height (waist \u00f7 height &lt; 0.5)."
   },
   {
    "fieldname": "bp_heading",
@@ -455,11 +474,12 @@
    "label": "Blood Pressure Reading (mmHg)"
   },
   {
-   "description": "Reference: Normal <120/80. High = 140/90 or above (High BP). Low = below 90/60. Use \"Needs Reference\" if unsure or if readings are borderline.",
+   "description": "Calculated from the reading. Low: systolic below 90 or diastolic below 60. High: systolic above 160 or diastolic above 100. Normal: below 120/80. Anything else, or a reading that cannot be read, is Needs Reference.",
    "fieldname": "bp_status",
    "fieldtype": "Select",
    "label": "BP Status",
-   "options": "\nNormal\nHigh\nLow\nNeeds Reference"
+   "options": "\nNormal\nHigh\nLow\nNeeds Reference",
+   "read_only": 1
   },
   {
    "depends_on": "eval:doc.bp_status=='Other'",
@@ -593,9 +613,10 @@
   {
    "fieldname": "type_of_stress",
    "fieldtype": "Select",
-   "label": "Type of Stress",
-   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nClinical Stress (Medical related )\nNon - Clinical Stress (Family, Financial, Social etc.,)\nNone"
+   "label": "Type of Stress (legacy single choice, replaced by the multi-select)",
+   "options": "\nClinical Stress (Medical related )\nNon - Clinical Stress (Family, Financial, Social etc.,)\nNone",
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "stress_additional_information",
@@ -605,30 +626,34 @@
   {
    "fieldname": "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
    "fieldtype": "Select",
-   "label": "Is the caregiver ready to be measured for Blood Pressure?",
-   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nYes\nNo"
+   "label": "Is the caregiver ready to be measured for Blood Pressure? (legacy Yes/No, replaced by the checkbox)",
+   "options": "\nYes\nNo",
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "is_the_caregiver_ready_to_be_measured_for_weight",
    "fieldtype": "Select",
-   "label": "Is the caregiver ready to be measured for Weight?",
-   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nYes\nNo"
+   "label": "Is the caregiver ready to be measured for Weight? (legacy Yes/No, replaced by the checkbox)",
+   "options": "\nYes\nNo",
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "is_the_caregiver_ready_to_be_measured_for_height",
    "fieldtype": "Select",
-   "label": "Is the caregiver ready to be measured for Height?",
-   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nYes\nNo"
+   "label": "Is the caregiver ready to be measured for Height? (legacy Yes/No, replaced by the checkbox)",
+   "options": "\nYes\nNo",
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "is_the_caregiver_ready_for_the_string_test",
    "fieldtype": "Select",
-   "label": "Is the caregiver ready for the String Test?",
-   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nYes\nNo"
+   "label": "Is the caregiver ready for the String Test? (legacy Yes/No, replaced by the checkbox)",
+   "options": "\nYes\nNo",
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "weight",
@@ -640,7 +665,7 @@
    "fieldtype": "Select",
    "label": "Are you ready to make a change for a Healthy You ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nYes\nNo"
+   "options": "\nYes\nNo\nMay be"
   },
   {
    "fieldname": "effort_to",
@@ -711,9 +736,10 @@
   },
   {
    "fieldname": "counsellor_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Counsellor-Coach\u2019s Name",
-   "read_only": 0
+   "read_only": 0,
+   "options": "User"
   },
   {
    "fieldname": "feedback",
@@ -745,11 +771,95 @@
    "fieldtype": "Link",
    "label": "Follow-up By",
    "options": "User"
+  },
+  {
+   "fieldname": "medical_condition_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "medical_condition_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "addictions_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "addictions_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "risk_level_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "stress_types",
+   "fieldtype": "Table MultiSelect",
+   "label": "Type of Stress",
+   "options": "Ticket Stress Type",
+   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "description": "Choose every type that applies. \"None\" cannot be combined with another type."
+  },
+  {
+   "fieldname": "ready_for_weight",
+   "fieldtype": "Check",
+   "label": "Caregiver ready to be measured for Weight",
+   "default": "0"
+  },
+  {
+   "fieldname": "weight_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "height_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ready_for_height",
+   "fieldtype": "Check",
+   "label": "Caregiver ready to be measured for Height",
+   "default": "0"
+  },
+  {
+   "fieldname": "height_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "string_test_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ready_for_string_test",
+   "fieldtype": "Check",
+   "label": "Caregiver ready for the String Test",
+   "default": "0"
+  },
+  {
+   "fieldname": "string_test_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ready_for_bp",
+   "fieldtype": "Check",
+   "label": "Caregiver ready to be measured for Blood Pressure",
+   "default": "0"
+  },
+  {
+   "fieldname": "bp_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bp_rule",
+   "fieldtype": "Data",
+   "label": "BP Status rule",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Which BP Status rule this visit is graded by. Blank: the rule in use before 2026-10 (High from 140/90). 2026-10: High above 160/100."
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-27 14:16:05.992693",
+ "modified": "2026-10-05 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Ticket",

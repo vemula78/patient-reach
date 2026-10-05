@@ -38,7 +38,51 @@ def get_data(data=None):
 	# ... and that Sparsh Follow Up links to it via caregiver_id.
 	data["non_standard_fieldnames"]["Sparsh Follow Up"] = "caregiver_id"
 
+	# The health app's activity heatmap counts its own transactions
+	# (appointments, encounters). care records a visit as a Ticket, so it was
+	# always empty -- the counselling team asked for it to go (05-Oct-2026).
+	data["heatmap"] = False
+	data.pop("heatmap_message", None)
+
 	data["transactions"].append({"label": frappe._("Support"), "items": ["Ticket"]})
 	data["transactions"].append({"label": frappe._("Sai Sparsh"), "items": ["Sparsh Follow Up"]})
 
 	return data
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def counsellor_query(doctype, txt, searchfield, start, page_len, filters):
+	"""Counsellor picker on the Ticket: enabled users holding the Volunteer role
+	(every counsellor on care had it on 05-Oct-2026). `user_query` cannot filter
+	by role -- its filters go to User's own columns."""
+	return frappe.db.sql(
+		"""select u.name, u.full_name from `tabUser` u
+		where u.enabled = 1
+			and exists (select 1 from `tabHas Role` r
+				where r.parent = u.name and r.parenttype = 'User' and r.role = 'Volunteer')
+			and (u.name like %(txt)s or u.full_name like %(txt)s)
+		order by u.full_name
+		limit %(start)s, %(page_len)s""",
+		{"txt": f"%{txt}%", "start": start, "page_len": page_len},
+	)
+
+
+@frappe.whitelist()
+def classify_measurements(
+	waist_cm=None, height_cm=None, bp_reading=None, bp_rule=None, is_new=0, amended_from=None
+):
+	"""The String Test result and BP Status the Ticket will get on save, so the
+	form can show them as soon as the numbers are typed. The same functions the
+	save hook uses -- one rule, one implementation."""
+	from patient_reach.doc_events import BP_RULE_CURRENT, _string_test_result, bp_status_for
+
+	# Pick the rule exactly as ticket_before_validate stamps it: a new visit gets
+	# the current rule; a saved visit or an amendment keeps its own (blank = the
+	# rule before 2026-10).
+	if frappe.utils.cint(is_new) and not amended_from:
+		bp_rule = BP_RULE_CURRENT
+	return {
+		"string_test_result": _string_test_result(waist_cm, height_cm),
+		"bp_status": bp_status_for(bp_reading, bp_rule),
+	}
