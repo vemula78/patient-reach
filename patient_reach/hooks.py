@@ -29,8 +29,18 @@ add_to_apps_screen = [
 # public/ in the image, so they ship with the routine release, unbuilt.
 # Loaded after the health app's healthcare.bundle.js (app install order), which
 # patient_quick_entry.js depends on.
-app_include_css = "/assets/patient_reach/css/patient_reach.css"
-app_include_js = "/assets/patient_reach/js/patient_quick_entry.js"
+# The ?v= is a hash of the file: nothing else in the URL changes between
+# releases, so without it a browser kept the old file after a release (06-Oct).
+def _versioned(path):
+	import hashlib
+	import os
+
+	with open(os.path.join(os.path.dirname(__file__), "public", path), "rb") as f:
+		return f"/assets/patient_reach/{path}?v={hashlib.md5(f.read()).hexdigest()[:10]}"
+
+
+app_include_css = _versioned("css/patient_reach.css")
+app_include_js = _versioned("js/patient_quick_entry.js")
 
 # include js, css files in header of web template
 # web_include_css = "/assets/patient_reach/css/patient_reach.css"

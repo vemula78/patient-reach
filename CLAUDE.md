@@ -64,7 +64,7 @@ instead, and all three must be checked when tracing a field:
 | `patient_reach/doc_events.py` | all server-side derivation and stamping |
 | `patient_reach/api.py` | `Patient` autoname, dashboard override |
 | `fixtures/client_script.json` | 4 Client Scripts (pledge form, district filter, visit button, hiding comments) |
-| `public/js/patient_quick_entry.js`, `public/css/patient_reach.css` | plain `app_include_*` files (not bundles), served through the `/assets/patient_reach` symlink |
+| `public/js/patient_quick_entry.js`, `public/css/patient_reach.css` | plain `app_include_*` files (not bundles), served through the `/assets/patient_reach` symlink; `hooks.py` adds `?v=<hash of the file>` so browsers fetch each release's copy |
 
 Child tables: `Patient Condition` and `Patient Addictions` (both `istable`), plus
 `Ticket Follow up`. `Patient State` / `Patient District` are the geography
