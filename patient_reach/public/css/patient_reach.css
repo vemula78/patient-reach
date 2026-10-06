@@ -1,9 +1,13 @@
 /* Frappe shows the value of every mandatory field in medium weight (it puts
    .bold on the input), so a Visit or Patient reads half bold, half regular.
    The counselling team asked for one weight throughout (05-Oct-2026). The
-   asterisk still marks a mandatory field. This app is installed on care only. */
+   asterisk still marks a mandatory field. This app is installed on care only.
+   !important because Frappe's desk global.scss has `.bold { font-weight:
+   var(--weight-semibold) !important }`, which beat this rule until 07-Oct-2026
+   (the values stayed bold). These selectors are more specific, so they win. */
 .frappe-control .form-control.bold,
 .frappe-control .like-disabled-input.bold,
-.frappe-control .control-value.bold {
-	font-weight: var(--weight-regular);
+.frappe-control .control-value.bold,
+.editable-form .grid-static-col.bold {
+	font-weight: var(--weight-regular) !important;
 }

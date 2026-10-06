@@ -28,6 +28,8 @@ frappe.ui.form.on("Ticket", {
 	waist_cm: classify_measurements,
 	height_cm: classify_measurements,
 	bp_reading: classify_measurements,
+	bp_repeat_reading: classify_measurements,
+	bp_concerning_symptoms: classify_measurements,
 	nodal_centre: function (frm) {
 		if (frm.doc.nodal_centre === "SSSIHMS-WFD Preventive Medicine Centre - Sai Sparsh") {
 			frm.set_value("department", "Cardiology - SSSIHMS");
@@ -54,6 +56,8 @@ function classify_measurements(frm) {
 			bp_rule: frm.doc.bp_rule,
 			is_new: frm.is_new() ? 1 : 0,
 			amended_from: frm.doc.amended_from,
+			bp_repeat_reading: frm.doc.bp_repeat_reading,
+			bp_concerning_symptoms: frm.doc.bp_concerning_symptoms ? 1 : 0,
 		},
 		callback: function (r) {
 			const result = r.message || {};
@@ -62,6 +66,10 @@ function classify_measurements(frm) {
 			}
 			if (result.bp_status && result.bp_status !== frm.doc.bp_status) {
 				frm.set_value("bp_status", result.bp_status);
+			}
+			// Dr Nayanjeet's prompt or action (2026-10-07 rule only; older rules have none).
+			if ((result.bp_action || "") !== (frm.doc.bp_action || "")) {
+				frm.set_value("bp_action", result.bp_action || "");
 			}
 		},
 	});
