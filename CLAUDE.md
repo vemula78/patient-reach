@@ -164,12 +164,17 @@ bulk.
   120–139/80–89 band, since there is no "Elevated" option.
 - **Two BP Status rules, chosen per Ticket by `bp_rule`.** A Ticket is stamped
   with `BP_RULE_CURRENT` (`2026-10`) when created, and graded by
-  `_bp_status_2026_10` (High only *above* 160/100; 120/80–160/100 is Needs
-  Reference). Blank `bp_rule` = every Ticket before 05-Oct-2026, graded by the
+  `_bp_status_2026_10` (as corrected 06-Oct-2026: Normal to 140/90, High
+  141–160 / 91–100, outside 90/60–160/100 Needs Reference; no Low). Blank `bp_rule` = every Ticket before 05-Oct-2026, graded by the
   old `_bp_status` (High from 140/90) for ever — the save hook recomputes on
   every save and almost all Tickets are Drafts, so a new rule must never reach
   old visits. An amendment keeps the copied rule. The form shows the result
   live through `api.classify_measurements`, which calls the same functions.
+- **A Property Setter fixture without `modified` is re-imported on every
+  migrate**, overwriting the site. `Ticket-main-field_order` is one: it is the
+  whole Visit layout. deploy-2026-10-05 shipped the old order by mistake and the
+  Caregiver tab rendered in four columns; check the live order after any
+  layout release, not only the fields.
 - **Superseded fields are hidden and read-only, never dropped** (05-Oct-2026):
   `type_of_stress` (now the multi-select `stress_types`) and the four
   `is_the_caregiver_ready_…` Yes/No fields (now `ready_for_*` checkboxes, where

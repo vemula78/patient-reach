@@ -474,7 +474,7 @@
    "label": "Blood Pressure Reading (mmHg)"
   },
   {
-   "description": "Calculated from the reading. Low: systolic below 90 or diastolic below 60. High: systolic above 160 or diastolic above 100. Normal: below 120/80. Anything else, or a reading that cannot be read, is Needs Reference.",
+   "description": "Calculated from the reading. Normal: up to 140/90. High: systolic 141-160 or diastolic 91-100. Needs Reference: systolic below 90 or above 160, diastolic below 60 or above 100, or a reading that cannot be read.",
    "fieldname": "bp_status",
    "fieldtype": "Select",
    "label": "BP Status",
@@ -854,12 +854,12 @@
    "label": "BP Status rule",
    "hidden": 1,
    "read_only": 1,
-   "description": "Which BP Status rule this visit is graded by. Blank: the rule in use before 2026-10 (High from 140/90). 2026-10: High above 160/100."
+   "description": "Which BP Status rule this visit is graded by. Blank: the rule in use before 2026-10 (High from 140/90). 2026-10: Normal to 140/90, High to 160/100, outside 90/60-160/100 Needs Reference."
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-05 10:00:00.000000",
+ "modified": "2026-10-06 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Ticket",

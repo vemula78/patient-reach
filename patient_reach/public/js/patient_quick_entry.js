@@ -6,7 +6,8 @@
 // - drops Blood Group, Email, Invite as User and the Primary Address section,
 //   none of which the counselling team uses (Invite as User would give a
 //   caregiver a login);
-// - adds District under State, filtered to the chosen State.
+// - adds District under State, filtered to the chosen State;
+// - adds Other known language under Language.
 //
 // Re-check after every health upgrade: this relies on Health's class name,
 // its get_standard_fields(), and render_dialog() splicing the remaining
@@ -47,6 +48,18 @@
 			}
 
 			render_dialog() {
+				// Other known language under Language (06-Oct-2026): it is optional, so
+				// Health's mandatory-only popup would otherwise leave it out.
+				const language_at = this.mandatory.findIndex((df) => df.fieldname === "custom_language");
+				const other_language = frappe.meta.get_docfield("Patient", "custom_other_known_language");
+				if (
+					language_at >= 0 &&
+					other_language &&
+					!this.mandatory.some((df) => df.fieldname === "custom_other_known_language")
+				) {
+					this.mandatory.splice(language_at + 1, 0, Object.assign({}, other_language));
+				}
+
 				const state_at = this.mandatory.findIndex((df) => df.fieldname === "custom_state");
 				const district = frappe.meta.get_docfield("Patient", "custom_district");
 				if (state_at >= 0 && district && !this.mandatory.some((df) => df.fieldname === "custom_district")) {

@@ -80,14 +80,16 @@ BP_RULE_CURRENT = "2026-10"
 
 
 def _bp_status_2026_10(bp_reading):
-	"""The rule from 2026-10, chosen 05-Oct-2026 from Dr Nayanjeet's reference:
-	Low below 90 systolic or 60 diastolic; High above 160 systolic or 100
-	diastolic; Normal below 120/80; everything between -- 120/80 up to and
-	including 160/100 -- is Needs Reference, as is anything unparseable.
+	"""The rule from 2026-10, as Praveen set it on 06-Oct-2026 (correcting the
+	first 2026-10 rule of 05-Oct, which had High only above 160/100):
 
-	The bands are strict as written: 160/100 itself is Needs Reference, not High.
-	A reading that is both low and high is a contradiction and is deferred to a
-	human, for the reason given in `_bp_status`.
+	- systolic below 90 or diastolic below 60: Needs Reference;
+	- systolic above 160 or diastolic above 100: Needs Reference;
+	- otherwise, systolic 141-160 or diastolic 91-100: High;
+	- otherwise (systolic 90-140 and diastolic 60-90): Normal.
+
+	So 140/90 is Normal and 160/100 is High. Anything unparseable is Needs
+	Reference. "Low" is no longer produced: a low reading goes to a human.
 	"""
 	if not bp_reading:
 		return None
@@ -97,17 +99,11 @@ def _bp_status_2026_10(bp_reading):
 	systolic, diastolic = int(m.group(1)), int(m.group(2))
 	if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
 		return "Needs Reference"
-	low = systolic < 90 or diastolic < 60
-	high = systolic > 160 or diastolic > 100
-	if low and high:
+	if systolic < 90 or diastolic < 60 or systolic > 160 or diastolic > 100:
 		return "Needs Reference"
-	if low:
-		return "Low"
-	if high:
+	if systolic > 140 or diastolic > 90:
 		return "High"
-	if systolic < 120 and diastolic < 80:
-		return "Normal"
-	return "Needs Reference"
+	return "Normal"
 
 
 def bp_status_for(bp_reading, bp_rule):
