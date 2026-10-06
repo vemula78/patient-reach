@@ -336,3 +336,84 @@ def ticket_before_cancel(doc, method=None):
 				", ".join(linked)
 			)
 		)
+
+
+# --------------------------------------------------------------------------
+# Sparsh Follow-up Tracker (06-Oct-2026)
+# --------------------------------------------------------------------------
+
+TRACKER = "Sparsh Follow-up Tracker"
+
+# Tracker field -> visit field. The tracker fetches these itself on save; this
+# list only decides whether a visit save needs to re-save the tracker.
+TRACKER_FROM_VISIT = {
+	"counsellor": "counsellor_name",
+	"prevention_level": "prevention_level",
+	"justification_of_risk_profiling": "justification_of_risk_profiling",
+	"acceptance_to_change": "are_you_ready_to_make_a_change_for_a_healthy_you",
+	"big_step": "effort_to",
+	"call_1_scheduled_date": "follow_up_date",
+}
+
+
+def ticket_sync_follow_up_tracker(doc, method=None):
+	"""Put the caregiver on the follow-up list, and keep their row in step.
+
+	A visit that makes the caregiver eligible creates their tracker (one per
+	caregiver). An existing tracker moves to this visit when its own visit was
+	cancelled (an amendment), or when this visit is newer and no call has been
+	entered yet -- the list follows the latest assessment until follow-up
+	starts. Otherwise a save of the tracker's own visit re-fetches its Baseline
+	State and Call 1 Scheduled Date. A visit that stops being eligible leaves
+	an existing tracker alone: the team closes it by its Status.
+	"""
+	from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
+		any_call_entry,
+		is_eligible,
+	)
+
+	if doc.docstatus == 2 or not doc.get("patient_id"):
+		return
+	eligible = is_eligible(doc.get("caregiver_interested"), doc.get("are_you_ready_to_make_a_change_for_a_healthy_you"))
+	name = frappe.db.get_value(TRACKER, {"caregiver_id": doc.patient_id})
+	if not name:
+		if eligible:
+			frappe.get_doc({"doctype": TRACKER, "caregiver_id": doc.patient_id, "baseline_ticket": doc.name}).insert(
+				ignore_permissions=True
+			)
+		return
+
+	tracker = frappe.get_doc(TRACKER, name)
+	if tracker.baseline_ticket != doc.name:
+		if not eligible:
+			return
+		current = frappe.db.get_value("Ticket", tracker.baseline_ticket, ["docstatus", "creation"], as_dict=True)
+		replaced = not current or current.docstatus == 2
+		get_datetime = frappe.utils.get_datetime
+		newer = (
+			current
+			and get_datetime(doc.creation) > get_datetime(current.creation)
+			and not any_call_entry(tracker.as_dict())
+		)
+		if not (replaced or newer):
+			return
+		tracker.baseline_ticket = doc.name
+	# str(): a visit saved from the form holds dates as text, a loaded tracker as dates.
+	elif all(str(tracker.get(t) or "") == str(doc.get(v) or "") for t, v in TRACKER_FROM_VISIT.items()):
+		return
+	tracker.save(ignore_permissions=True)
+
+
+def ticket_on_trash(doc, method=None):
+	"""Deleting a visit removes its tracker while no call has been entered.
+
+	Runs before Frappe's link check, so a tracker that does hold calls still
+	blocks the delete with Frappe's usual "linked with" message."""
+	from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
+		any_call_entry,
+	)
+
+	for name in frappe.get_all(TRACKER, filters={"baseline_ticket": doc.name}, pluck="name"):
+		tracker = frappe.get_doc(TRACKER, name)
+		if not any_call_entry(tracker.as_dict()):
+			frappe.delete_doc(TRACKER, name, ignore_permissions=True)

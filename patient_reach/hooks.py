@@ -356,7 +356,11 @@ doc_events = {
 		"before_cancel": "patient_reach.doc_events.ticket_before_cancel",
 		# on_update, not after_save: "After Save" is the Server Script label for
 		# this event, and after_save is dispatched by nothing in Frappe.
-		"on_update": "patient_reach.doc_events.ticket_on_update",
+		"on_update": [
+			"patient_reach.doc_events.ticket_on_update",
+			"patient_reach.doc_events.ticket_sync_follow_up_tracker",
+		],
+		"on_trash": "patient_reach.doc_events.ticket_on_trash",
 	},
 }
 

@@ -306,3 +306,24 @@ doctypes reached by different hooks.py keys; do not merge them.
 source-only, per "Related repositories" above): the care.sssihms.org landing
 workspace amendment, the release block in `tools/deploy-external.sh`, and
 `tools/rehearse-sparsh-follow-up.py`.
+
+## Sparsh Follow-up Tracker (06-Oct-2026) — what counsellors use now
+
+The counselling team's "Follow-up version 1" request, approved by Dr Nayanjeet
+Chaudhury on 06-Oct-2026, replaced `Sparsh Follow Up` **on the workspace** with
+`Sparsh Follow-up Tracker` (`doctype/sparsh_follow_up_tracker/`): one record per
+caregiver (`caregiver_id` unique), Baseline State fetched from the visit, and up
+to three calls, each opening only when the previous call's interest is Yes or
+May be. `Sparsh Follow Up` and its reports are untouched and still installed;
+do not delete them — the team may bring the full form back.
+
+- Trackers are made by the visit, never by hand: `doc_events.
+  ticket_sync_follow_up_tracker` (Ticket `on_update`) creates one when a visit
+  says interested OR ready to change, and moves it to a newer visit only while
+  no call has been entered. `ticket_on_trash` removes an untouched tracker so a
+  mistaken visit can still be deleted. Volunteers have no create permission,
+  which is what hides the list's Add button.
+- The rules (eligibility, call gating, chained Scheduled Dates, Next Call Due)
+  are pure functions in the controller, pinned by `test_sparsh_follow_up_tracker.py`.
+- `patches/v1_7/` filled the trackers for existing visits and repointed the
+  Counselling workspace (a care-only record) at the tracker list.

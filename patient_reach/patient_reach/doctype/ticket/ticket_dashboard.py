@@ -24,8 +24,11 @@ def get_data(data=None):
 	# same reason api.get_data maps Ticket -> Patient via patient_id rather
 	# than assuming the field is called "patient".
 	data["non_standard_fieldnames"]["Sparsh Follow Up"] = "baseline_ticket"
+	data["non_standard_fieldnames"]["Sparsh Follow-up Tracker"] = "baseline_ticket"
 
 	data.setdefault("transactions", [])
-	data["transactions"].append({"label": frappe._("Follow-up"), "items": ["Sparsh Follow Up"]})
+	data["transactions"].append(
+		{"label": frappe._("Follow-up"), "items": ["Sparsh Follow-up Tracker", "Sparsh Follow Up"]}
+	)
 
 	return data

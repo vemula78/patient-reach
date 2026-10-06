@@ -1,0 +1,403 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "SFT-.#####",
+ "naming_rule": "Expression",
+ "creation": "2026-10-06 18:00:00",
+ "modified": "2026-10-06 18:00:00",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "description": "Sai Sparsh follow-up of one caregiver over up to three calls. Created from the visit; replaces the Sparsh Follow Up form on the workspace (06-Oct-2026).",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "caregiver_section",
+  "caregiver_id",
+  "caregiver_name",
+  "caregiver_mobile",
+  "column_break_cg",
+  "baseline_ticket",
+  "counsellor",
+  "baseline_section",
+  "prevention_level",
+  "justification_of_risk_profiling",
+  "column_break_bl",
+  "acceptance_to_change",
+  "big_step",
+  "call_1_section",
+  "call_1_scheduled_date",
+  "call_1_actual_date",
+  "call_1_duration",
+  "call_1_outcome",
+  "call_1_column",
+  "call_1_by",
+  "call_1_interest",
+  "call_1_next_date",
+  "call_1_notes",
+  "call_2_section",
+  "call_2_scheduled_date",
+  "call_2_actual_date",
+  "call_2_duration",
+  "call_2_outcome",
+  "call_2_column",
+  "call_2_by",
+  "call_2_interest",
+  "call_2_next_date",
+  "call_2_notes",
+  "call_3_section",
+  "call_3_scheduled_date",
+  "call_3_actual_date",
+  "call_3_duration",
+  "call_3_outcome",
+  "call_3_column",
+  "call_3_by",
+  "call_3_notes",
+  "status_section",
+  "follow_up_status",
+  "column_break_st",
+  "next_call_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "caregiver_section",
+   "fieldtype": "Section Break",
+   "label": "Caregiver"
+  },
+  {
+   "fieldname": "caregiver_id",
+   "fieldtype": "Link",
+   "label": "Caregiver",
+   "options": "Patient",
+   "reqd": 1,
+   "read_only": 1,
+   "unique": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "caregiver_name",
+   "fieldtype": "Data",
+   "label": "Caregiver Name",
+   "fetch_from": "caregiver_id.patient_name",
+   "read_only": 1,
+   "bold": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "caregiver_mobile",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "fetch_from": "caregiver_id.mobile",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_cg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "baseline_ticket",
+   "fieldtype": "Link",
+   "label": "Visit",
+   "options": "Ticket",
+   "reqd": 1,
+   "read_only": 1,
+   "search_index": 1,
+   "description": "The caregiver's latest visit where they were interested in the programme or ready to make a change."
+  },
+  {
+   "fieldname": "counsellor",
+   "fieldtype": "Link",
+   "label": "Counsellor",
+   "options": "User",
+   "fetch_from": "baseline_ticket.counsellor_name",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "baseline_section",
+   "fieldtype": "Section Break",
+   "label": "Baseline State"
+  },
+  {
+   "fieldname": "prevention_level",
+   "fieldtype": "Data",
+   "label": "Prevention Level at Intake",
+   "fetch_from": "baseline_ticket.prevention_level",
+   "read_only": 1
+  },
+  {
+   "fieldname": "justification_of_risk_profiling",
+   "fieldtype": "Small Text",
+   "label": "Justification of Risk Profiling",
+   "fetch_from": "baseline_ticket.justification_of_risk_profiling",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_bl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "acceptance_to_change",
+   "fieldtype": "Data",
+   "label": "Caregiver's Acceptance to Change",
+   "fetch_from": "baseline_ticket.are_you_ready_to_make_a_change_for_a_healthy_you",
+   "read_only": 1
+  },
+  {
+   "fieldname": "big_step",
+   "fieldtype": "Small Text",
+   "label": "Caregiver's Big Step",
+   "fetch_from": "baseline_ticket.effort_to",
+   "read_only": 1
+  },
+  {
+   "fieldname": "call_1_section",
+   "fieldtype": "Section Break",
+   "label": "Follow-up Call 1"
+  },
+  {
+   "fieldname": "call_1_scheduled_date",
+   "fieldtype": "Date",
+   "label": "Scheduled Date",
+   "read_only": 1,
+   "fetch_from": "baseline_ticket.follow_up_date",
+   "description": "The visit's Follow-up Date."
+  },
+  {
+   "fieldname": "call_1_actual_date",
+   "fieldtype": "Date",
+   "label": "Actual Call Date"
+  },
+  {
+   "fieldname": "call_1_duration",
+   "fieldtype": "Duration",
+   "label": "Call Duration",
+   "hide_days": 1,
+   "hide_seconds": 1
+  },
+  {
+   "fieldname": "call_1_outcome",
+   "fieldtype": "Select",
+   "label": "Call Outcome",
+   "options": "\nConnected\nNo Answer After 3 Attempts\nWrong Number\nCaregiver Declined"
+  },
+  {
+   "fieldname": "call_1_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "call_1_by",
+   "fieldtype": "Link",
+   "label": "Follow-up By",
+   "options": "User"
+  },
+  {
+   "fieldname": "call_1_interest",
+   "fieldtype": "Select",
+   "label": "Caregiver's Interest for Next Follow-up",
+   "options": "\nYes\nNo\nMay be"
+  },
+  {
+   "fieldname": "call_1_next_date",
+   "fieldtype": "Date",
+   "label": "Next Follow-up Date",
+   "read_only_depends_on": "eval:!['Yes','May be'].includes(doc.call_1_interest)",
+   "description": "Only when the interest is Yes or May be. Becomes the next call's Scheduled Date."
+  },
+  {
+   "fieldname": "call_1_notes",
+   "fieldtype": "Small Text",
+   "label": "Call Notes"
+  },
+  {
+   "fieldname": "call_2_section",
+   "fieldtype": "Section Break",
+   "label": "Follow-up Call 2",
+   "depends_on": "eval:['Yes','May be'].includes(doc.call_1_interest)"
+  },
+  {
+   "fieldname": "call_2_scheduled_date",
+   "fieldtype": "Date",
+   "label": "Scheduled Date",
+   "read_only": 1,
+   "description": "Call 1's Next Follow-up Date."
+  },
+  {
+   "fieldname": "call_2_actual_date",
+   "fieldtype": "Date",
+   "label": "Actual Call Date"
+  },
+  {
+   "fieldname": "call_2_duration",
+   "fieldtype": "Duration",
+   "label": "Call Duration",
+   "hide_days": 1,
+   "hide_seconds": 1
+  },
+  {
+   "fieldname": "call_2_outcome",
+   "fieldtype": "Select",
+   "label": "Call Outcome",
+   "options": "\nConnected\nNo Answer After 3 Attempts\nWrong Number\nCaregiver Declined"
+  },
+  {
+   "fieldname": "call_2_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "call_2_by",
+   "fieldtype": "Link",
+   "label": "Follow-up By",
+   "options": "User"
+  },
+  {
+   "fieldname": "call_2_interest",
+   "fieldtype": "Select",
+   "label": "Caregiver's Interest for Next Follow-up",
+   "options": "\nYes\nNo\nMay be"
+  },
+  {
+   "fieldname": "call_2_next_date",
+   "fieldtype": "Date",
+   "label": "Next Follow-up Date",
+   "read_only_depends_on": "eval:!['Yes','May be'].includes(doc.call_2_interest)",
+   "description": "Only when the interest is Yes or May be. Becomes the next call's Scheduled Date."
+  },
+  {
+   "fieldname": "call_2_notes",
+   "fieldtype": "Small Text",
+   "label": "Call Notes"
+  },
+  {
+   "fieldname": "call_3_section",
+   "fieldtype": "Section Break",
+   "label": "Follow-up Call 3",
+   "depends_on": "eval:['Yes','May be'].includes(doc.call_2_interest)"
+  },
+  {
+   "fieldname": "call_3_scheduled_date",
+   "fieldtype": "Date",
+   "label": "Scheduled Date",
+   "read_only": 1,
+   "description": "Call 2's Next Follow-up Date."
+  },
+  {
+   "fieldname": "call_3_actual_date",
+   "fieldtype": "Date",
+   "label": "Actual Call Date"
+  },
+  {
+   "fieldname": "call_3_duration",
+   "fieldtype": "Duration",
+   "label": "Call Duration",
+   "hide_days": 1,
+   "hide_seconds": 1
+  },
+  {
+   "fieldname": "call_3_outcome",
+   "fieldtype": "Select",
+   "label": "Call Outcome",
+   "options": "\nConnected\nNo Answer After 3 Attempts\nWrong Number\nCaregiver Declined"
+  },
+  {
+   "fieldname": "call_3_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "call_3_by",
+   "fieldtype": "Link",
+   "label": "Follow-up By",
+   "options": "User"
+  },
+  {
+   "fieldname": "call_3_notes",
+   "fieldtype": "Small Text",
+   "label": "Call Notes"
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Follow-up Status"
+  },
+  {
+   "fieldname": "follow_up_status",
+   "fieldtype": "Select",
+   "label": "Follow-up Status",
+   "options": "Follow-up 1\nFollow-up 2\nFollow-up 3\nClosed",
+   "default": "Follow-up 1",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_st",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "next_call_date",
+   "fieldtype": "Date",
+   "label": "Next Call Due",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "The Scheduled Date of the first call not yet made. Blank once Closed."
+  }
+ ],
+ "is_submittable": 0,
+ "links": [],
+ "module": "Patient Reach",
+ "name": "Sparsh Follow-up Tracker",
+ "permissions": [
+  {
+   "role": "Volunteer",
+   "read": 1,
+   "write": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1
+  },
+  {
+   "role": "Staff",
+   "read": 1,
+   "write": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "Doctor",
+   "read": 1,
+   "write": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "export": 1,
+   "share": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "report": 1,
+   "print": 1,
+   "email": 1,
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "caregiver_name,caregiver_mobile,baseline_ticket,counsellor",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "caregiver_name",
+ "show_title_field_in_link": 1,
+ "track_changes": 1
+}
