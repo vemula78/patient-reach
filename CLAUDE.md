@@ -162,10 +162,14 @@ bulk.
 - `bp_reading` is free text and genuinely contains prose ("BP machine not
   working"), so anything unparseable classifies as `Needs Reference`, as does the
   120–139/80–89 band, since there is no "Elevated" option.
-- **Two BP Status rules, chosen per Ticket by `bp_rule`.** A Ticket is stamped
-  with `BP_RULE_CURRENT` (`2026-10`) when created, and graded by
-  `_bp_status_2026_10` (as corrected 06-Oct-2026: Normal to 140/90, High
-  141–160 / 91–100, outside 90/60–160/100 Needs Reference; no Low). Blank `bp_rule` = every Ticket before 05-Oct-2026, graded by the
+- **BP Status rules, chosen per Ticket by `bp_rule`.** A Ticket is stamped
+  with `BP_RULE_CURRENT` (`2026-10-07`) when created, and graded by
+  `bp_assessment`: Dr Nayanjeet Chaudhury's screening rule (Urgent ≥180/120, Low
+  <90/<60, High 140–179 / 90–119, Elevated 120–139 / 80–89, Normal; tested in that
+  order) plus his prompt or action in `bp_action`, from the repeat reading and the
+  concerning-symptoms tick. An escalation action warns on save until the visit is
+  forwarded. `2026-10` (Praveen's 06-Oct rule, `_bp_status_2026_10`) no longer
+  exists on care: patch v1_8 moved those visits to `2026-10-07`. Blank `bp_rule` = every Ticket before 05-Oct-2026, graded by the
   old `_bp_status` (High from 140/90) for ever — the save hook recomputes on
   every save and almost all Tickets are Drafts, so a new rule must never reach
   old visits. An amendment keeps the copied rule. The form shows the result
@@ -295,12 +299,11 @@ sparsh_intake_overview/` reads `Ticket` — there is no baseline to follow up
 until an intake exists, so an "intake overview" is necessarily a Ticket report,
 not a Sparsh Follow Up one.
 
-**Ticket dashboard.** `doctype/ticket/ticket_dashboard.py` is new and adds the
-"Sparsh Follow Up" connection to the Ticket form (`non_standard_fieldnames`
-mapping `baseline_ticket`). It is additive to `override_doctype_dashboards` in
-`hooks.py`, which previously had only a `Patient` entry
-(`patient_reach.api.get_data`) — the two are different functions on different
-doctypes reached by different hooks.py keys; do not merge them.
+**Ticket dashboard: removed 07-Oct-2026.** `doctype/ticket/ticket_dashboard.py`
+put a "Follow-up / Sparsh Follow Up" connections box at the top of every Visit;
+the counselling team asked twice (Visit v2 item 7, v3 item 1) for it to go, so
+the file was deleted. Frappe loads `<doctype>_dashboard.py` by file name, so do
+not recreate it, and do not add Ticket to `override_doctype_dashboards`.
 
 **Ops artefacts live in `sssihms-frappe-deploy`, not here** (this app stays
 source-only, per "Related repositories" above): the care.sssihms.org landing

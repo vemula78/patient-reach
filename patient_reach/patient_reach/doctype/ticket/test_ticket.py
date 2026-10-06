@@ -40,11 +40,18 @@ stubs passed: with no test methods, unittest never calls setUpClass.
 import frappe
 from frappe.tests import UnitTestCase
 
+from unittest.mock import patch
+
 from patient_reach.doc_events import (
+	BP_REPEAT_LOW,
+	BP_REPEAT_URGENT,
+	BP_RULE_2026_10,
 	BP_RULE_CURRENT,
 	_bp_status,
 	_bp_status_2026_10,
+	_bp_status_2026_10_07,
 	_string_test_result,
+	bp_assessment,
 	bp_status_for,
 	ticket_before_validate,
 )
@@ -161,8 +168,8 @@ class TestTicketBeforeValidate(UnitTestCase):
 		)
 		ticket_before_validate(doc)
 		self.assertEqual(doc.string_test_result, PASS_RESULT)
-		# A new Ticket is graded by the 2026-10 rule, under which 128/84 is Normal.
-		self.assertEqual(doc.bp_status, "Normal")
+		# A new Ticket is graded by Dr Nayanjeet's rule, under which 128/84 is Elevated.
+		self.assertEqual(doc.bp_status, "Elevated")
 
 	def test_recorded_verdicts_survive_when_there_is_nothing_to_derive(self):
 		"""Without measurements the hook must leave the counsellor's entry alone."""
@@ -255,9 +262,101 @@ class TestBPStatus2026_10(UnitTestCase):
 				self.assertIn(_bp_status_2026_10(reading), offered)
 
 	def test_rule_is_chosen_by_the_stamp(self):
-		self.assertEqual(bp_status_for("85/70", BP_RULE_CURRENT), NEEDS_REFERENCE)
+		self.assertEqual(bp_status_for("85/70", BP_RULE_2026_10), NEEDS_REFERENCE)
+		self.assertEqual(bp_status_for("85/70", BP_RULE_CURRENT), "Low")
+		self.assertEqual(bp_status_for("138/91", BP_RULE_2026_10), "High")
+		self.assertEqual(bp_status_for("128/84", BP_RULE_2026_10), "Normal")
+		self.assertEqual(bp_status_for("128/84", BP_RULE_CURRENT), "Elevated")
 		self.assertEqual(bp_status_for("85/70", None), "Low")
 		self.assertEqual(bp_status_for("85/70", ""), "Low")
+
+
+class TestBPStatus2026_10_07(UnitTestCase):
+	"""Dr Nayanjeet Chaudhury's rule of 07-Oct-2026: the higher-risk value decides,
+	tested Urgent, Low, High, Elevated, Normal in his order."""
+
+	def test_his_example(self):
+		self.assertEqual(_bp_status_2026_10_07("138/91"), "High")
+
+	def test_bands_at_their_edges(self):
+		cases = {
+			"119/79": "Normal",
+			"90/60": "Normal",
+			"120/79": "Elevated",
+			"119/80": "Elevated",
+			"139/89": "Elevated",
+			"140/80": "High",
+			"130/90": "High",
+			"179/119": "High",
+			"180/80": "Urgent",
+			"130/120": "Urgent",
+			"89/70": "Low",
+			"100/59": "Low",
+		}
+		for reading, expected in cases.items():
+			with self.subTest(reading=reading):
+				self.assertEqual(_bp_status_2026_10_07(reading), expected)
+
+	def test_his_order_decides_mixed_readings(self):
+		# Urgent is tested before Low, and Low before High.
+		self.assertEqual(_bp_status_2026_10_07("185/55"), "Urgent")
+		self.assertEqual(_bp_status_2026_10_07("150/50"), "Low")
+
+	def test_unreadable_and_absent(self):
+		self.assertEqual(_bp_status_2026_10_07("BP machine not working"), NEEDS_REFERENCE)
+		self.assertEqual(_bp_status_2026_10_07("400/80"), NEEDS_REFERENCE)
+		self.assertIsNone(_bp_status_2026_10_07(""))
+
+	def test_every_verdict_is_an_option_the_form_offers(self):
+		offered = _options("bp_status")
+		for reading in ("110/70", "125/82", "150/95", "190/100", "85/55", "nonsense"):
+			with self.subTest(reading=reading):
+				self.assertIn(_bp_status_2026_10_07(reading), offered)
+
+
+class TestBPAssessment(UnitTestCase):
+	"""His algorithm's prompts and actions, word for word."""
+
+	def test_urgent(self):
+		self.assertEqual(bp_assessment("190/100", "", 0), ("Urgent", BP_REPEAT_URGENT))
+		self.assertEqual(bp_assessment("190/100", "", 1), ("Urgent", "Immediate clinical escalation"))
+		self.assertEqual(bp_assessment("190/100", "182/100", 0), ("Urgent", "Urgent clinical review"))
+		self.assertEqual(bp_assessment("190/100", "170/100", 1), ("Urgent", "Immediate clinical escalation"))
+
+	def test_urgent_with_a_lower_repeat_uses_the_repeat_for_status(self):
+		self.assertEqual(
+			bp_assessment("190/100", "150/95", 0), ("High", "Use repeat reading for status; flag for review")
+		)
+
+	def test_an_unreadable_repeat_leaves_the_prompt(self):
+		self.assertEqual(bp_assessment("190/100", "not done", 0), ("Urgent", BP_REPEAT_URGENT))
+
+	def test_low(self):
+		self.assertEqual(bp_assessment("85/55", "", 0), ("Low", BP_REPEAT_LOW))
+		self.assertEqual(bp_assessment("85/55", "", 1), ("Low", "Clinical escalation"))
+		self.assertEqual(
+			bp_assessment("85/55", "88/58", 0), ("Low", "Record repeat BP; advise clinical review if persistently low")
+		)
+
+	def test_high_elevated_normal(self):
+		self.assertEqual(bp_assessment("150/95", "", 0), ("High", "Repeat BP after appropriate rest; record repeat reading"))
+		self.assertEqual(bp_assessment("125/82", "", 0), ("Elevated", "Record and continue preventive counselling"))
+		self.assertEqual(bp_assessment("110/70", "", 0), ("Normal", "No BP escalation"))
+
+	def test_no_reading_no_action(self):
+		self.assertEqual(bp_assessment("", "", 0), (None, None))
+
+	def test_escalation_warns_until_forwarded(self):
+		doc = frappe.new_doc("Ticket")
+		doc.update({"bp_reading": "190/100", "bp_concerning_symptoms": 1})
+		with patch("patient_reach.doc_events.frappe.msgprint") as msgprint:
+			ticket_before_validate(doc)
+		self.assertEqual(doc.bp_action, "Immediate clinical escalation")
+		msgprint.assert_called_once()
+		doc.forward_to = "doctor@example.org"
+		with patch("patient_reach.doc_events.frappe.msgprint") as msgprint:
+			ticket_before_validate(doc)
+		msgprint.assert_not_called()
 
 
 class TestBPRuleStamp(UnitTestCase):
@@ -266,7 +365,8 @@ class TestBPRuleStamp(UnitTestCase):
 		doc.bp_reading = "85/70"
 		ticket_before_validate(doc)
 		self.assertEqual(doc.bp_rule, BP_RULE_CURRENT)
-		self.assertEqual(doc.bp_status, NEEDS_REFERENCE)
+		self.assertEqual(doc.bp_status, "Low")
+		self.assertEqual(doc.bp_action, BP_REPEAT_LOW)
 
 	def test_amendment_keeps_the_rule_it_was_copied_with(self):
 		doc = frappe.new_doc("Ticket")

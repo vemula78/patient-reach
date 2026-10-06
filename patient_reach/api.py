@@ -70,19 +70,38 @@ def counsellor_query(doctype, txt, searchfield, start, page_len, filters):
 
 @frappe.whitelist()
 def classify_measurements(
-	waist_cm=None, height_cm=None, bp_reading=None, bp_rule=None, is_new=0, amended_from=None
+	waist_cm=None,
+	height_cm=None,
+	bp_reading=None,
+	bp_rule=None,
+	is_new=0,
+	amended_from=None,
+	bp_repeat_reading=None,
+	bp_concerning_symptoms=0,
 ):
 	"""The String Test result and BP Status the Ticket will get on save, so the
 	form can show them as soon as the numbers are typed. The same functions the
 	save hook uses -- one rule, one implementation."""
-	from patient_reach.doc_events import BP_RULE_CURRENT, _string_test_result, bp_status_for
+	from patient_reach.doc_events import (
+		BP_RULE_CURRENT,
+		_string_test_result,
+		bp_assessment,
+		bp_status_for,
+	)
 
 	# Pick the rule exactly as ticket_before_validate stamps it: a new visit gets
 	# the current rule; a saved visit or an amendment keeps its own (blank = the
 	# rule before 2026-10).
 	if frappe.utils.cint(is_new) and not amended_from:
 		bp_rule = BP_RULE_CURRENT
+	if bp_rule == BP_RULE_CURRENT:
+		bp_status, bp_action = bp_assessment(
+			bp_reading, bp_repeat_reading, frappe.utils.cint(bp_concerning_symptoms)
+		)
+	else:
+		bp_status, bp_action = bp_status_for(bp_reading, bp_rule), None
 	return {
 		"string_test_result": _string_test_result(waist_cm, height_cm),
-		"bp_status": bp_status_for(bp_reading, bp_rule),
+		"bp_status": bp_status,
+		"bp_action": bp_action,
 	}

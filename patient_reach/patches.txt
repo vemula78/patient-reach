@@ -17,3 +17,4 @@ patient_reach.patches.v1_5.readiness_checkboxes
 patient_reach.patches.v1_5.add_nepal_bangladesh_states
 patient_reach.patches.v1_5.workspace_counselling_shortcuts_first
 patient_reach.patches.v1_6.regrade_bp_status_2026_10
+patient_reach.patches.v1_8.bp_rule_2026_10_07

@@ -9,7 +9,7 @@ touched. Each changed Ticket gets a Comment. Idempotent.
 
 import frappe
 
-from patient_reach.doc_events import BP_RULE_CURRENT, bp_status_for
+from patient_reach.doc_events import BP_RULE_2026_10 as BP_RULE_CURRENT, bp_status_for
 
 
 def execute():

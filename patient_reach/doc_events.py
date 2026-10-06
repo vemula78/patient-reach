@@ -76,7 +76,10 @@ def _bp_status(bp_reading):
 # so a change of rule applies to visits entered from then on and never re-grades
 # an earlier one. That matters because this hook recomputes on every save and
 # almost every Ticket is a Draft that is still being saved. Blank = _bp_status.
-BP_RULE_CURRENT = "2026-10"
+# "2026-10" was Praveen's rule of 06-Oct; Dr Nayanjeet Chaudhury corrected it on
+# 07-Oct, and patch v1_8 moved every "2026-10" visit to his rule.
+BP_RULE_2026_10 = "2026-10"
+BP_RULE_CURRENT = "2026-10-07"
 
 
 def _bp_status_2026_10(bp_reading):
@@ -106,9 +109,98 @@ def _bp_status_2026_10(bp_reading):
 	return "Normal"
 
 
-def bp_status_for(bp_reading, bp_rule):
+def _bp_pair(bp_reading):
+	"""(systolic, diastolic), or None when the text is not a plausible reading."""
+	m = re.search(r"(\d{2,3})\s*[/\\-]\s*(\d{2,3})", str(bp_reading or ""))
+	if not m:
+		return None
+	systolic, diastolic = int(m.group(1)), int(m.group(2))
+	if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
+		return None
+	return systolic, diastolic
+
+
+def _bp_status_2026_10_07(bp_reading):
+	"""Dr Nayanjeet Chaudhury's SAI SPARSH screening classification (07-Oct-2026),
+	by the higher-risk of the two values, tested in his order:
+
+	- Urgent: systolic 180 or more, or diastolic 120 or more;
+	- Low: systolic below 90, or diastolic below 60;
+	- High: systolic 140-179, or diastolic 90-119;
+	- Elevated: systolic 120-139, or diastolic 80-89;
+	- Normal: systolic 90-119 and diastolic 60-79.
+
+	So 138/91 is High. His order puts Low before High, so a mixed reading such
+	as 150/50 is Low (the pre-05-Oct rule sent it to Needs Reference).
+	Unreadable text is Needs Reference.
+	"""
+	if not bp_reading:
+		return None
+	pair = _bp_pair(bp_reading)
+	if not pair:
+		return "Needs Reference"
+	systolic, diastolic = pair
+	if systolic >= 180 or diastolic >= 120:
+		return "Urgent"
+	if systolic < 90 or diastolic < 60:
+		return "Low"
+	if systolic >= 140 or diastolic >= 90:
+		return "High"
+	if systolic >= 120 or diastolic >= 80:
+		return "Elevated"
+	return "Normal"
+
+
+# What to do, in Dr Nayanjeet's words (07-Oct-2026).
+BP_REPEAT_URGENT = "Repeat BP after 5 minutes and check for concerning symptoms."
+BP_REPEAT_LOW = (
+	"Repeat BP and check for dizziness, fainting/near-fainting, unusual weakness, "
+	"confusion or other concerning symptoms."
+)
+BP_ESCALATE = ("Immediate clinical escalation", "Urgent clinical review", "Clinical escalation")
+
+
+def bp_assessment(bp_reading, repeat_reading, concerning_symptoms):
+	"""(status, action) under the 2026-10-07 rule, from the first reading, the
+	repeat reading and the concerning-symptoms tick.
+
+	The status is the first reading's, except where his algorithm says "use repeat
+	reading for status": an Urgent first reading, no symptoms, and a repeat below
+	180/120. The action is his prompt until a repeat reading or a symptom is
+	recorded. A repeat that cannot be read leaves the prompt standing.
+	"""
+	status = _bp_status_2026_10_07(bp_reading)
+	if status is None:
+		return None, None
+	repeat = _bp_pair(repeat_reading)
+	if status == "Urgent":
+		if concerning_symptoms:
+			return status, "Immediate clinical escalation"
+		if not repeat:
+			return status, BP_REPEAT_URGENT
+		if repeat[0] >= 180 or repeat[1] >= 120:
+			return status, "Urgent clinical review"
+		return _bp_status_2026_10_07(repeat_reading), "Use repeat reading for status; flag for review"
+	if status == "Low":
+		if concerning_symptoms:
+			return status, "Clinical escalation"
+		if not repeat:
+			return status, BP_REPEAT_LOW
+		return status, "Record repeat BP; advise clinical review if persistently low"
+	if status == "High":
+		return status, "Repeat BP after appropriate rest; record repeat reading"
+	if status == "Elevated":
+		return status, "Record and continue preventive counselling"
+	if status == "Normal":
+		return status, "No BP escalation"
+	return status, "The reading could not be read: check it and enter it as systolic/diastolic, e.g. 128/84."
+
+
+def bp_status_for(bp_reading, bp_rule, repeat_reading=None, concerning_symptoms=0):
 	"""Grade a reading by the rule the Ticket was created under."""
 	if bp_rule == BP_RULE_CURRENT:
+		return bp_assessment(bp_reading, repeat_reading, concerning_symptoms)[0]
+	if bp_rule == BP_RULE_2026_10:
 		return _bp_status_2026_10(bp_reading)
 	return _bp_status(bp_reading)
 
@@ -141,9 +233,16 @@ def ticket_before_validate(doc, method=None):
 	if result:
 		doc.string_test_result = result
 
-	status = bp_status_for(doc.get("bp_reading"), doc.get("bp_rule"))
+	if doc.get("bp_rule") == BP_RULE_CURRENT:
+		status, action = bp_assessment(
+			doc.get("bp_reading"), doc.get("bp_repeat_reading"), doc.get("bp_concerning_symptoms")
+		)
+		doc.bp_action = action
+	else:
+		status = bp_status_for(doc.get("bp_reading"), doc.get("bp_rule"))
 	if status:
 		doc.bp_status = status
+	_warn_if_bp_needs_escalation(doc)
 
 	stress_types = [row.stress_type for row in doc.get("stress_types") or []]
 	if NO_STRESS in stress_types and len(stress_types) > 1:
@@ -154,6 +253,22 @@ def ticket_before_validate(doc, method=None):
 
 	if doc.is_new():
 		_warn_if_caregiver_already_has_a_first_visit(doc)
+
+
+def _warn_if_bp_needs_escalation(doc):
+	"""Dr Nayanjeet: a reading of 180/120 or more, or a low reading with symptoms,
+	"should trigger the safety/escalation pathway". On the Visit that pathway is
+	Clinical Review > Forward To a doctor (ticket_on_update assigns it). Warn on
+	every save until the visit is forwarded; do not block, so the rest of the
+	visit can still be saved."""
+	if doc.get("bp_action") in BP_ESCALATE and not doc.get("forward_to"):
+		frappe.msgprint(
+			frappe._(
+				"Blood pressure: {0}. Forward this visit to a doctor under Clinical Review > Forward To."
+			).format(doc.bp_action),
+			title=frappe._("BP needs clinical review"),
+			indicator="red",
+		)
 
 
 def _warn_if_caregiver_already_has_a_first_visit(doc):

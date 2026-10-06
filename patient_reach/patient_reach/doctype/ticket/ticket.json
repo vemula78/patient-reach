@@ -35,8 +35,8 @@
   "parent_bp_history",
   "parent_cardiac_disease_history",
   "caregiver_medical_checkup_done_",
-  "column_break_ghst",
   "additional_information",
+  "column_break_ghst",
   "relationship",
   "actual_patient_id",
   "patient_name_of_the_original_patient",
@@ -52,6 +52,7 @@
   "any_other_habits",
   "risk_level_section",
   "prevention_level",
+  "risk_level_col",
   "justification_of_risk_profiling",
   "nutrition_heading",
   "green_plate",
@@ -90,6 +91,10 @@
   "bp_reading",
   "bp_status",
   "bp_status_other",
+  "bp_repeat_reading",
+  "bp_concerning_symptoms",
+  "bp_action",
+  "bp_note",
   "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
   "is_the_caregiver_ready_to_be_measured_for_weight",
   "is_the_caregiver_ready_to_be_measured_for_height",
@@ -339,17 +344,16 @@
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'"
   },
   {
-   "fieldname": "additional_information",
-   "fieldtype": "Small Text",
-   "label": "Caregiver - Additional Information"
-  },
-  {
    "description": "<ul><li>Level 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.</li><li>Level 1s: \"S\" modifier (Past surgeries and Structural illness) for Level 1.</li><li>Level 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.</li><li>Level 2s: \"S\" modifier (Past surgeries and Structural illness) for Level 2.</li><li>Level 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.</li><li>Level 3s: \"S\" modifier (Past surgeries and Structural illness) for Level 3.</li><li>Level 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke.</li><li>Level 4s: \"S\" modifier (Past surgeries and Structural illness) for Level 4.</li></ul>",
    "fieldname": "prevention_level",
    "fieldtype": "Select",
    "label": "Where does the Caregiver fit in the Levels of Prevention ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nLevel 1\nLevel 1s\nLevel 2\nLevel 2s\nLevel 3\nLevel 3s\nLevel 4\nLevel 4s"
+  },
+  {
+   "fieldname": "risk_level_col",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "nutrition_heading",
@@ -361,7 +365,7 @@
    "fieldtype": "Select",
    "label": "Green Plate: What % of the plate is vegetables?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\n< 25%\n25% - 50%\n\u2265 50%"
+   "options": "\n< 25%\n25% - 50%\n≥ 50%"
   },
   {
    "fieldname": "sunset_rule",
@@ -376,13 +380,18 @@
    "label": "Preventive Cardiology"
   },
   {
+   "fieldname": "additional_information",
+   "fieldtype": "Small Text",
+   "label": "Caregiver - Additional Information"
+  },
+  {
    "fieldname": "column_break_ghst",
    "fieldtype": "Column Break"
   },
   {
    "fieldname": "protein_intake",
    "fieldtype": "Select",
-   "label": "Protein: Is daily intake \u2265 25%?",
+   "label": "Protein: Is daily intake ≥ 25%?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -454,7 +463,7 @@
    "label": "The String Test Result (Visceral Fat)",
    "options": "\nPASS (Ends touch/ W:H < 0.5)\nFAIL (Gap exists - Central Obesity)",
    "read_only": 1,
-   "description": "Calculated from waist and height: PASS when the waist is less than half the height (waist \u00f7 height &lt; 0.5)."
+   "description": "Calculated from waist and height: PASS when the waist is less than half the height (waist ÷ height &lt; 0.5)."
   },
   {
    "fieldname": "bp_heading",
@@ -474,11 +483,11 @@
    "label": "Blood Pressure Reading (mmHg)"
   },
   {
-   "description": "Calculated from the reading. Normal: up to 140/90. High: systolic 141-160 or diastolic 91-100. Needs Reference: systolic below 90 or above 160, diastolic below 60 or above 100, or a reading that cannot be read.",
+   "description": "Calculated from the reading (Dr Nayanjeet Chaudhury, 07-Oct-2026), by the higher-risk value. Urgent: 180/120 or more. Low: systolic below 90 or diastolic below 60. High: systolic 140-179 or diastolic 90-119. Elevated: systolic 120-139 or diastolic 80-89. Normal: 90-119 and 60-79. Needs Reference: a reading that cannot be read.",
    "fieldname": "bp_status",
    "fieldtype": "Select",
    "label": "BP Status",
-   "options": "\nNormal\nHigh\nLow\nNeeds Reference",
+   "options": "\nNormal\nElevated\nHigh\nLow\nUrgent\nNeeds Reference",
    "read_only": 1
   },
   {
@@ -486,6 +495,32 @@
    "fieldname": "bp_status_other",
    "fieldtype": "Data",
    "label": "If Other, specify"
+  },
+  {
+   "fieldname": "bp_repeat_reading",
+   "fieldtype": "Data",
+   "label": "Repeat BP Reading (mmHg)",
+   "depends_on": "eval:doc.bp_action && (['Urgent','Low','High'].includes(doc.bp_status) || doc.bp_repeat_reading)",
+   "description": "After the caregiver has rested. For an Urgent first reading, after 5 minutes."
+  },
+  {
+   "fieldname": "bp_concerning_symptoms",
+   "fieldtype": "Check",
+   "depends_on": "eval:doc.bp_action && (['Urgent','Low','High'].includes(doc.bp_status) || doc.bp_repeat_reading)",
+   "label": "Concerning symptoms: dizziness/light-headedness, fainting/near-fainting, unusual weakness, confusion or other"
+  },
+  {
+   "fieldname": "bp_action",
+   "fieldtype": "Small Text",
+   "label": "BP Action",
+   "read_only": 1,
+   "depends_on": "eval:doc.bp_action"
+  },
+  {
+   "fieldname": "bp_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:doc.bp_action",
+   "options": "<p class=\"text-muted small\">This BP Status is a screening flag from a single reading, not a diagnosis of hypertension. If the reading is high, repeat it after the caregiver has rested. At 180/120 or above, or with concerning symptoms, follow the safety and escalation pathway: forward the visit to a doctor under Clinical Review.</p>"
   },
   {
    "description": "Co-create a \"Small Win\" Discuss a feasible goal.",
@@ -606,7 +641,7 @@
   {
    "fieldname": "adequate_sleep",
    "fieldtype": "Select",
-   "label": "Adequate Sleep: Does the caregiver have an adequate sleep of \u2265 7 hours ?",
+   "label": "Adequate Sleep: Does the caregiver have an adequate sleep of ≥ 7 hours ?",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
    "options": "\nYes\nNo"
   },
@@ -737,7 +772,7 @@
   {
    "fieldname": "counsellor_name",
    "fieldtype": "Link",
-   "label": "Counsellor-Coach\u2019s Name",
+   "label": "Counsellor-Coach’s Name",
    "read_only": 0,
    "options": "User"
   },
@@ -790,7 +825,8 @@
   },
   {
    "fieldname": "risk_level_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Risk Profiling"
   },
   {
    "fieldname": "stress_types",
@@ -859,7 +895,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-06 10:00:00.000000",
+ "modified": "2026-10-07 10:00:00",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Ticket",
