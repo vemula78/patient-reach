@@ -330,3 +330,5 @@ do not delete them — the team may bring the full form back.
   are pure functions in the controller, pinned by `test_sparsh_follow_up_tracker.py`.
 - `patches/v1_7/` filled the trackers for existing visits and repointed the
   Counselling workspace (a care-only record) at the tracker list.
+- `patches/v1_9/` added "My Follow-ups" beside it: the same list filtered to
+  `counsellor` = the logged-in user, Closed left out (the "My tickets" pattern).
