@@ -226,8 +226,16 @@ def ticket_before_validate(doc, method=None):
 	# A new visit is graded by the current BP rule. An amendment is a
 	# correction of an earlier visit, so it keeps that visit's rule (copied
 	# with the rest of the document).
-	if doc.is_new() and not doc.get("amended_from"):
-		doc.bp_rule = BP_RULE_CURRENT
+	# Once saved, the rule is the server's: a form left open across a regrade
+	# sends its old rule back, and the timestamp check does not catch a regrade
+	# made with update_modified=False (TKT-2026-01262, 07-Oct-2026).
+	if doc.is_new():
+		if not doc.get("amended_from"):
+			doc.bp_rule = BP_RULE_CURRENT
+	else:
+		stored = frappe.db.get_value("Ticket", doc.name, "bp_rule")
+		if (stored or "") != (doc.get("bp_rule") or ""):
+			doc.bp_rule = stored
 
 	result = _string_test_result(doc.get("waist_cm"), doc.get("height_cm"))
 	if result:

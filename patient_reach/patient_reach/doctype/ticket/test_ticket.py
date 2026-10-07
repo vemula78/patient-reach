@@ -384,6 +384,18 @@ class TestBPRuleStamp(UnitTestCase):
 		self.assertEqual(doc.bp_rule, "")
 		self.assertEqual(doc.bp_status, "Low")
 
+	def test_saved_visit_keeps_its_stored_rule(self):
+		"""A form opened before a regrade sends the old rule back on save."""
+		doc = frappe.new_doc("Ticket")
+		doc.update({"name": "TKT-2026-00002", "bp_rule": BP_RULE_2026_10, "bp_reading": "138/91"})
+		with (
+			patch.object(type(doc), "is_new", return_value=False),
+			patch("patient_reach.doc_events.frappe.db.get_value", return_value=BP_RULE_CURRENT),
+		):
+			ticket_before_validate(doc)
+		self.assertEqual(doc.bp_rule, BP_RULE_CURRENT)
+		self.assertEqual(doc.bp_status, "High")
+
 
 class TestStressTypes(UnitTestCase):
 	def test_none_cannot_be_combined(self):
