@@ -43,6 +43,7 @@ from frappe.tests import UnitTestCase
 from unittest.mock import patch
 
 from patient_reach.doc_events import (
+	BP_ESCALATE,
 	BP_REPEAT_LOW,
 	BP_REPEAT_URGENT,
 	BP_RULE_2026_10,
@@ -346,17 +347,25 @@ class TestBPAssessment(UnitTestCase):
 	def test_no_reading_no_action(self):
 		self.assertEqual(bp_assessment("", "", 0), (None, None))
 
-	def test_escalation_warns_until_forwarded(self):
+	def test_escalation_does_not_pop_up_on_save(self):
+		"""07-Oct-2026: the save-time popup made counsellors think the save had
+		failed (one visit saved 12 times in 33 minutes). The red note under BP
+		Action replaces it."""
 		doc = frappe.new_doc("Ticket")
 		doc.update({"bp_reading": "190/100", "bp_concerning_symptoms": 1})
 		with patch("patient_reach.doc_events.frappe.msgprint") as msgprint:
 			ticket_before_validate(doc)
 		self.assertEqual(doc.bp_action, "Immediate clinical escalation")
-		msgprint.assert_called_once()
-		doc.forward_to = "doctor@example.org"
-		with patch("patient_reach.doc_events.frappe.msgprint") as msgprint:
-			ticket_before_validate(doc)
 		msgprint.assert_not_called()
+
+	def test_red_note_under_bp_action_until_forwarded(self):
+		meta = frappe.get_meta("Ticket", cached=False)
+		names = [f.fieldname for f in meta.fields]
+		self.assertEqual(names[names.index("bp_action") + 1], "bp_escalation_note")
+		depends_on = meta.get_field("bp_escalation_note").depends_on
+		for action in BP_ESCALATE:
+			self.assertIn(f'"{action}"', depends_on)
+		self.assertIn("!doc.forward_to", depends_on)
 
 
 class TestBPRuleStamp(UnitTestCase):

@@ -94,6 +94,7 @@
   "bp_repeat_reading",
   "bp_concerning_symptoms",
   "bp_action",
+  "bp_escalation_note",
   "bp_note",
   "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
   "is_the_caregiver_ready_to_be_measured_for_weight",
@@ -517,6 +518,12 @@
    "depends_on": "eval:doc.bp_action"
   },
   {
+   "fieldname": "bp_escalation_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:[\"Immediate clinical escalation\", \"Urgent clinical review\", \"Clinical escalation\"].includes(doc.bp_action) && !doc.forward_to",
+   "options": "<p style=\"color: var(--red-600); font-weight: var(--weight-semibold); margin-bottom: 0;\">Needs clinical review: forward this visit to a doctor under Clinical Review &gt; Forward To.</p>"
+  },
+  {
    "fieldname": "bp_note",
    "fieldtype": "HTML",
    "depends_on": "eval:doc.bp_action",
@@ -895,7 +902,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-07 12:00:00",
+ "modified": "2026-10-07 18:00:00",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Ticket",

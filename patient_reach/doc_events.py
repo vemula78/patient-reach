@@ -242,7 +242,6 @@ def ticket_before_validate(doc, method=None):
 		status = bp_status_for(doc.get("bp_reading"), doc.get("bp_rule"))
 	if status:
 		doc.bp_status = status
-	_warn_if_bp_needs_escalation(doc)
 
 	stress_types = [row.stress_type for row in doc.get("stress_types") or []]
 	if NO_STRESS in stress_types and len(stress_types) > 1:
@@ -253,22 +252,6 @@ def ticket_before_validate(doc, method=None):
 
 	if doc.is_new():
 		_warn_if_caregiver_already_has_a_first_visit(doc)
-
-
-def _warn_if_bp_needs_escalation(doc):
-	"""Dr Nayanjeet: a reading of 180/120 or more, or a low reading with symptoms,
-	"should trigger the safety/escalation pathway". On the Visit that pathway is
-	Clinical Review > Forward To a doctor (ticket_on_update assigns it). Warn on
-	every save until the visit is forwarded; do not block, so the rest of the
-	visit can still be saved."""
-	if doc.get("bp_action") in BP_ESCALATE and not doc.get("forward_to"):
-		frappe.msgprint(
-			frappe._(
-				"Blood pressure: {0}. Forward this visit to a doctor under Clinical Review > Forward To."
-			).format(doc.bp_action),
-			title=frappe._("BP needs clinical review"),
-			indicator="red",
-		)
 
 
 def _warn_if_caregiver_already_has_a_first_visit(doc):

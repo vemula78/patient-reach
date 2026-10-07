@@ -167,8 +167,10 @@ bulk.
   `bp_assessment`: Dr Nayanjeet Chaudhury's screening rule (Urgent ≥180/120, Low
   <90/<60, High 140–179 / 90–119, Elevated 120–139 / 80–89, Normal; tested in that
   order) plus his prompt or action in `bp_action`, from the repeat reading and the
-  concerning-symptoms tick. An escalation action warns on save until the visit is
-  forwarded. `2026-10` (Praveen's 06-Oct rule, `_bp_status_2026_10`) no longer
+  concerning-symptoms tick. An escalation action (`BP_ESCALATE`) shows a red note
+  under BP Action (`bp_escalation_note`, `depends_on` only) until Forward To is
+  filled. Not a save-time popup: that was tried on 07-Oct-2026 and counsellors
+  took it for a failed save, re-saving one visit 12 times. `2026-10` (Praveen's 06-Oct rule, `_bp_status_2026_10`) no longer
   exists on care: patch v1_8 moved those visits to `2026-10-07`. Blank `bp_rule` = every Ticket before 05-Oct-2026, graded by the
   old `_bp_status` (High from 140/90) for ever — the save hook recomputes on
   every save and almost all Tickets are Drafts, so a new rule must never reach
