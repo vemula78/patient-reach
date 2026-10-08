@@ -22,3 +22,4 @@ patient_reach.patches.v1_7.counselling_workspace_follow_up_list
 patient_reach.patches.v1_8.bp_rule_2026_10_07
 patient_reach.patches.v1_9.counselling_my_follow_ups
 patient_reach.patches.v1_10.bp_rule_2026_10_07_again
+patient_reach.patches.v1_11.my_follow_ups_include_closed

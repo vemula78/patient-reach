@@ -333,4 +333,9 @@ do not delete them — the team may bring the full form back.
 - `patches/v1_7/` filled the trackers for existing visits and repointed the
   Counselling workspace (a care-only record) at the tracker list.
 - `patches/v1_9/` added "My Follow-ups" beside it: the same list filtered to
-  `counsellor` = the logged-in user, Closed left out (the "My tickets" pattern).
+  `counsellor` = the logged-in user (the "My tickets" pattern). `v1_11` dropped its
+  "Closed left out" condition at the team's request; Closed rows show in green.
+  The list keeps its ID column (SFT-...): counsellors copy it into Health4All.
+- Volunteers mostly land on the health app's **Healthcare** page, not Counselling.
+  Its follow-up shortcuts and sidebar item were added directly on care (07-Oct);
+  the re-apply script is in the ops repo, `releases/2026-10-08-bp-note-and-rule/`.

@@ -2,10 +2,10 @@
 // For license information, please see license.txt
 
 // The caregiver list counsellors land on. A call past its date shows red
-// whatever the status, so it stands out when scanning.
+// whatever the status, so it stands out when scanning. The ID column (SFT-...)
+// stays: counsellors copy it into the Health4All app (08-Oct-2026).
 frappe.listview_settings["Sparsh Follow-up Tracker"] = {
 	add_fields: ["follow_up_status", "next_call_date"],
-	hide_name_column: true,
 
 	get_indicator: function (doc) {
 		const today = frappe.datetime.get_today();

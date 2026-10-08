@@ -122,6 +122,11 @@ class TestJsonMatchesCode(UnitTestCase):
 	def test_one_tracker_per_caregiver(self):
 		self.assertEqual(FIELDS["caregiver_id"].get("unique"), 1)
 
+	def test_list_shows_the_follow_up_id(self):
+		"""Counsellors copy the SFT- ID into the Health4All app (08-Oct-2026)."""
+		list_js = (Path(__file__).parent / "sparsh_follow_up_tracker_list.js").read_text()
+		self.assertNotIn("hide_name_column", list_js)
+
 	def test_counsellors_cannot_create(self):
 		volunteer = next(p for p in META["permissions"] if p["role"] == "Volunteer")
 		self.assertFalse(volunteer.get("create"))
