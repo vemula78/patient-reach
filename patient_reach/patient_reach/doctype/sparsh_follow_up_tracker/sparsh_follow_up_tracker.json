@@ -4,7 +4,7 @@
  "autoname": "SFT-.#####",
  "naming_rule": "Expression",
  "creation": "2026-10-06 18:00:00",
- "modified": "2026-10-06 18:00:00",
+ "modified": "2026-10-09 18:00:00",
  "modified_by": "Administrator",
  "owner": "Administrator",
  "description": "Sai Sparsh follow-up of one caregiver over up to three calls. Created from the visit; replaces the Sparsh Follow Up form on the workspace (06-Oct-2026).",
@@ -327,11 +327,12 @@
    "fieldname": "follow_up_status",
    "fieldtype": "Select",
    "label": "Follow-up Status",
-   "options": "Follow-up 1\nFollow-up 2\nFollow-up 3\nClosed",
+   "options": "Follow-up 1\nFollow-up 2\nFollow-up 3\nNot Interested\nNo Response\nClosed",
    "default": "Follow-up 1",
    "reqd": 1,
    "in_list_view": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "description": "Not Interested: the caregiver clearly refuses to continue the conversation on the phone. No Response: the caregiver did not pick up when called 3 times, at different times."
   },
   {
    "fieldname": "column_break_st",
@@ -343,7 +344,7 @@
    "label": "Next Call Due",
    "read_only": 1,
    "in_list_view": 1,
-   "description": "The Scheduled Date of the first call not yet made. Blank once Closed."
+   "description": "The Scheduled Date of the first call not yet made. Blank once Closed, Not Interested or No Response."
   }
  ],
  "is_submittable": 0,

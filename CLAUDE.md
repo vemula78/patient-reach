@@ -336,6 +336,11 @@ do not delete them — the team may bring the full form back.
   `counsellor` = the logged-in user (the "My tickets" pattern). `v1_11` dropped its
   "Closed left out" condition at the team's request; Closed rows show in green.
   The list keeps its ID column (SFT-...): counsellors copy it into Health4All.
+- Follow-up Status is set by the counsellor. Not Interested and No Response
+  (09-Oct, the team's request) end the follow-up as Closed does: `FINISHED` in
+  the controller and the list JS, so no Next Call Due and never Overdue. They are
+  not set from Call Outcome, whose "No Answer After 3 Attempts" / "Caregiver
+  Declined" are close cousins: the counsellor picks the status.
 - Volunteers mostly land on the health app's **Healthcare** page, not Counselling.
   Its follow-up shortcuts and sidebar item were added directly on care (07-Oct);
   the re-apply script is in the ops repo, `releases/2026-10-08-bp-note-and-rule/`.

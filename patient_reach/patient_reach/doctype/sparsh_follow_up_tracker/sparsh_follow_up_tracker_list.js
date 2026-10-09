@@ -3,18 +3,26 @@
 
 // The caregiver list counsellors land on. A call past its date shows red
 // whatever the status, so it stands out when scanning. The ID column (SFT-...)
-// stays: counsellors copy it into the Health4All app (08-Oct-2026).
+// stays: counsellors copy it into the Health4All app (08-Oct-2026). A
+// finished follow-up has no Next Call Due, so it is never Overdue.
+const FINISHED = ["Not Interested", "No Response", "Closed"];
+
 frappe.listview_settings["Sparsh Follow-up Tracker"] = {
 	add_fields: ["follow_up_status", "next_call_date"],
 
 	get_indicator: function (doc) {
 		const today = frappe.datetime.get_today();
-		if (doc.follow_up_status !== "Closed" && doc.next_call_date && doc.next_call_date < today) {
+		if (!FINISHED.includes(doc.follow_up_status) && doc.next_call_date && doc.next_call_date < today) {
 			return [__("Overdue"), "red", "next_call_date,<," + today + "|follow_up_status,!=,Closed"];
 		}
-		const colour = { "Follow-up 1": "blue", "Follow-up 2": "orange", "Follow-up 3": "purple", Closed: "green" }[
-			doc.follow_up_status
-		];
+		const colour = {
+			"Follow-up 1": "blue",
+			"Follow-up 2": "orange",
+			"Follow-up 3": "purple",
+			"Not Interested": "gray",
+			"No Response": "yellow",
+			Closed: "green",
+		}[doc.follow_up_status];
 		return [__(doc.follow_up_status), colour || "gray", "follow_up_status,=," + doc.follow_up_status];
 	},
 };

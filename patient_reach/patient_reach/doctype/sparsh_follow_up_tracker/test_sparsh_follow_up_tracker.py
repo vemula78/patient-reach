@@ -25,6 +25,7 @@ from frappe.tests import UnitTestCase
 
 from patient_reach import hooks
 from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
+	FINISHED,
 	GOING_ON,
 	any_call_entry,
 	chained_schedule,
@@ -88,6 +89,12 @@ class TestNextCallDue(UnitTestCase):
 		self.assertIsNone(next_call_due({"call_1_actual_date": "2026-10-10", "call_1_interest": "No"}))
 		self.assertIsNone(next_call_due({"call_1_scheduled_date": "2026-10-10", "follow_up_status": "Closed"}))
 
+	def test_no_call_due_once_not_interested_or_no_response(self):
+		"""The counselling team's two statuses (09-Oct-2026) end the follow-up as Closed does."""
+		for status in ("Not Interested", "No Response"):
+			values = {"call_1_scheduled_date": "2026-10-10", "follow_up_status": status}
+			self.assertIsNone(next_call_due(values))
+
 	def test_blank_when_the_visit_has_no_follow_up_date(self):
 		self.assertIsNone(next_call_due({}))
 
@@ -113,6 +120,16 @@ class TestJsonMatchesCode(UnitTestCase):
 			options = FIELDS[f"call_{n}_outcome"]["options"].split("\n")
 			self.assertIn("No Answer After 3 Attempts", options)
 			self.assertNotIn("No Answer", options)
+
+	def test_status_options(self):
+		options = FIELDS["follow_up_status"]["options"].split("\n")
+		self.assertEqual(
+			options, ["Follow-up 1", "Follow-up 2", "Follow-up 3", "Not Interested", "No Response", "Closed"]
+		)
+		self.assertTrue(set(FINISHED) <= set(options))
+		list_js = (Path(__file__).parent / "sparsh_follow_up_tracker_list.js").read_text()
+		for status in FINISHED:
+			self.assertIn(f'"{status}"', list_js)
 
 	def test_scheduled_dates_are_not_editable(self):
 		for n in (1, 2, 3):

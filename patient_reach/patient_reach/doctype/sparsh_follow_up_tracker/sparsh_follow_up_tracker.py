@@ -29,6 +29,11 @@ CALLS = (1, 2, 3)
 # call's section and the editable Next Follow-up Date.
 GOING_ON = ("Yes", "May be")
 
+# Statuses that end the follow-up: no call is due after any of them. "Not
+# Interested" and "No Response" were added on 09-Oct-2026 at the counselling
+# team's request, from their experience of the calls made so far.
+FINISHED = ("Not Interested", "No Response", "Closed")
+
 # What a counsellor enters in a call. The Scheduled Date is not here: the
 # system sets it.
 CALL_ENTRY_FIELDS = ("actual_date", "duration", "outcome", "by", "interest", "next_date", "notes")
@@ -87,10 +92,10 @@ def chained_schedule(values):
 def next_call_due(values):
 	"""The Scheduled Date of the first open call not yet made, for the list.
 
-	None once Closed, once every open call has an Actual Call Date, or when the
+	None once the follow-up is finished (FINISHED), once every open call has an Actual Call Date, or when the
 	next call has no Scheduled Date (a visit without a Follow-up Date).
 	"""
-	if values.get("follow_up_status") == "Closed":
+	if values.get("follow_up_status") in FINISHED:
 		return None
 	for n in CALLS:
 		if not call_is_open(values, n):
