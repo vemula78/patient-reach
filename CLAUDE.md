@@ -336,6 +336,15 @@ do not delete them — the team may bring the full form back.
   `counsellor` = the logged-in user (the "My tickets" pattern). `v1_11` dropped its
   "Closed left out" condition at the team's request; Closed rows show in green.
   The list keeps its ID column (SFT-...): counsellors copy it into Health4All.
+- Changing a visit's caregiver releases the previous caregiver's tracker
+  (`_release_previous_caregivers_tracker`, 10-Oct): it moves to their latest other
+  eligible visit, calls and all; with none it is removed while it has no calls,
+  and kept if it has. Before this, SFT-00085 was left on another caregiver's visit
+  and the release check blocked the 09-Oct switch until it was repointed by hand.
+- Tracker tests can be run on the VM inside the care image, no database: mount
+  the working copy's `patient_reach/` over the app's and call `frappe.init` on an
+  empty site with `apps.txt` copied in. `test_ticket.py` needs a database (20 of
+  51 fail there on unchanged code too), so it stays CI-only.
 - Follow-up Status is set by the counsellor. Not Interested and No Response
   (09-Oct, the team's request) end the follow-up as Closed does: `FINISHED` in
   the controller and the list JS, so no Next Call Due and never Overdue. They are

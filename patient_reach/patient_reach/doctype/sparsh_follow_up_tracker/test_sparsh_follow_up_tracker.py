@@ -16,14 +16,20 @@
    Outcome carries the renamed option.
 5. **The Ticket hooks are registered** under document methods that exist: a
    `doc_events` key naming no method is ignored in silence.
+6. **A visit whose caregiver is changed releases the previous caregiver's
+   tracker** (SFT-00085, 09-Oct-2026), with the database calls patched out.
 """
 
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import frappe
 
 from frappe.tests import UnitTestCase
 
 from patient_reach import hooks
+from patient_reach.doc_events import _release_previous_caregivers_tracker, ticket_sync_follow_up_tracker
 from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
 	FINISHED,
 	GOING_ON,
@@ -31,6 +37,7 @@ from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_
 	chained_schedule,
 	check_calls,
 	is_eligible,
+	latest_eligible_visit,
 	next_call_due,
 )
 
@@ -154,3 +161,71 @@ class TestHooks(UnitTestCase):
 		ticket = hooks.doc_events["Ticket"]
 		self.assertIn("patient_reach.doc_events.ticket_sync_follow_up_tracker", ticket["on_update"])
 		self.assertEqual(ticket["on_trash"], "patient_reach.doc_events.ticket_on_trash")
+
+
+def _visit(name, interested="", ready=""):
+	return {"name": name, "caregiver_interested": interested, "are_you_ready_to_make_a_change_for_a_healthy_you": ready}
+
+
+def _tracker(calls=None):
+	tracker = MagicMock(caregiver_id="CG-A", baseline_ticket="TKT-2")
+	tracker.as_dict.return_value = {"caregiver_id": "CG-A", **(calls or {})}
+	return tracker
+
+
+class TestCaregiverChanged(UnitTestCase):
+	"""TKT-2 belonged to caregiver CG-A; a volunteer changed it to CG-B."""
+
+	visit = frappe._dict(name="TKT-2", patient_id="CG-B", docstatus=0)
+
+	def release(self, tracker, visits):
+		with (
+			patch("patient_reach.doc_events.frappe.get_all", side_effect=[["SFT-1"], visits]) as get_all,
+			patch("patient_reach.doc_events.frappe.get_doc", return_value=tracker),
+			patch("patient_reach.doc_events.frappe.delete_doc") as delete_doc,
+		):
+			_release_previous_caregivers_tracker(self.visit)
+		return get_all, delete_doc
+
+	def test_latest_eligible_visit_newest_first(self):
+		visits = [_visit("TKT-9", "No", "No"), _visit("TKT-5", ready="May be"), _visit("TKT-1", "Yes")]
+		self.assertEqual(latest_eligible_visit(visits), "TKT-5")
+		self.assertIsNone(latest_eligible_visit([_visit("TKT-9", "No", "No")]))
+		self.assertIsNone(latest_eligible_visit([]))
+
+	def test_looks_only_for_other_caregivers_trackers_on_this_visit(self):
+		get_all, _ = self.release(_tracker(), [_visit("TKT-1", "Yes")])
+		filters = get_all.call_args_list[0].kwargs["filters"]
+		self.assertEqual(filters, {"baseline_ticket": "TKT-2", "caregiver_id": ["!=", "CG-B"]})
+		visit_filters = get_all.call_args_list[1].kwargs["filters"]
+		self.assertEqual(visit_filters["patient_id"], "CG-A")
+		self.assertEqual(visit_filters["name"], ["!=", "TKT-2"])
+
+	def test_moves_to_the_previous_caregivers_own_visit(self):
+		tracker = _tracker()
+		_, delete_doc = self.release(tracker, [_visit("TKT-1", "Yes")])
+		self.assertEqual(tracker.baseline_ticket, "TKT-1")
+		tracker.save.assert_called_once()
+		delete_doc.assert_not_called()
+
+	def test_moves_with_its_calls(self):
+		tracker = _tracker({"call_1_actual_date": "2026-10-08"})
+		self.release(tracker, [_visit("TKT-1", ready="Yes")])
+		self.assertEqual(tracker.baseline_ticket, "TKT-1")
+
+	def test_removed_when_no_other_visit_and_no_calls(self):
+		tracker = _tracker()
+		_, delete_doc = self.release(tracker, [_visit("TKT-1", "No", "No")])
+		delete_doc.assert_called_once()
+		tracker.save.assert_not_called()
+
+	def test_kept_when_no_other_visit_but_calls_entered(self):
+		tracker = _tracker({"call_1_notes": "spoke"})
+		_, delete_doc = self.release(tracker, [])
+		delete_doc.assert_not_called()
+		tracker.save.assert_not_called()
+
+	def test_sync_releases_even_when_the_caregiver_is_cleared(self):
+		with patch("patient_reach.doc_events._release_previous_caregivers_tracker") as release:
+			ticket_sync_follow_up_tracker(frappe._dict(name="TKT-2", patient_id="", docstatus=0))
+		release.assert_called_once()

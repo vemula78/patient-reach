@@ -471,14 +471,18 @@ def ticket_sync_follow_up_tracker(doc, method=None):
 	entered yet -- the list follows the latest assessment until follow-up
 	starts. Otherwise a save of the tracker's own visit re-fetches its Baseline
 	State and Call 1 Scheduled Date. A visit that stops being eligible leaves
-	an existing tracker alone: the team closes it by its Status.
+	an existing tracker alone: the team closes it by its Status. A visit whose
+	caregiver was changed first releases the previous caregiver's tracker.
 	"""
 	from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
 		any_call_entry,
 		is_eligible,
 	)
 
-	if doc.docstatus == 2 or not doc.get("patient_id"):
+	if doc.docstatus == 2:
+		return
+	_release_previous_caregivers_tracker(doc)
+	if not doc.get("patient_id"):
 		return
 	eligible = is_eligible(doc.get("caregiver_interested"), doc.get("are_you_ready_to_make_a_change_for_a_healthy_you"))
 	name = frappe.db.get_value(TRACKER, {"caregiver_id": doc.patient_id})
@@ -508,6 +512,40 @@ def ticket_sync_follow_up_tracker(doc, method=None):
 	elif all(str(tracker.get(t) or "") == str(doc.get(v) or "") for t, v in TRACKER_FROM_VISIT.items()):
 		return
 	tracker.save(ignore_permissions=True)
+
+
+def _release_previous_caregivers_tracker(doc):
+	"""A visit whose caregiver was changed leaves the previous caregiver's
+	tracker pointing at it, showing the new caregiver's baseline and Call 1 date
+	(SFT-00085 on 09-Oct-2026, repointed by hand). Move that tracker to the
+	previous caregiver's latest other eligible visit, calls and all: the calls
+	were with that caregiver. With no such visit, remove it while no call has
+	been entered, as deleting the visit would; one holding calls is left alone.
+	"""
+	from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
+		any_call_entry,
+		latest_eligible_visit,
+	)
+
+	stranded = frappe.get_all(
+		TRACKER,
+		filters={"baseline_ticket": doc.name, "caregiver_id": ["!=", doc.get("patient_id") or ""]},
+		pluck="name",
+	)
+	for name in stranded:
+		tracker = frappe.get_doc(TRACKER, name)
+		visits = frappe.get_all(
+			"Ticket",
+			filters={"patient_id": tracker.caregiver_id, "docstatus": ["<", 2], "name": ["!=", doc.name]},
+			fields=["name", "caregiver_interested", "are_you_ready_to_make_a_change_for_a_healthy_you"],
+			order_by="creation desc, name desc",
+		)
+		visit = latest_eligible_visit(visits)
+		if visit:
+			tracker.baseline_ticket = visit
+			tracker.save(ignore_permissions=True)
+		elif not any_call_entry(tracker.as_dict()):
+			frappe.delete_doc(TRACKER, name, ignore_permissions=True)
 
 
 def ticket_on_trash(doc, method=None):

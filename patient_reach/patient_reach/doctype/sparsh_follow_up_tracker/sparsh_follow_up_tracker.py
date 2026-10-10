@@ -47,6 +47,17 @@ def is_eligible(caregiver_interested, ready_to_change):
 	return caregiver_interested == "Yes" or ready_to_change in GOING_ON
 
 
+def latest_eligible_visit(visits):
+	"""The name of the first eligible visit in `visits` (newest first), or None.
+
+	Each visit carries `name`, `caregiver_interested` and
+	`are_you_ready_to_make_a_change_for_a_healthy_you`."""
+	for v in visits:
+		if is_eligible(v.get("caregiver_interested"), v.get("are_you_ready_to_make_a_change_for_a_healthy_you")):
+			return v["name"]
+	return None
+
+
 def call_has_entry(values, n):
 	"""True when anything has been entered for call `n`."""
 	return any(values.get(f"call_{n}_{field}") for field in CALL_ENTRY_FIELDS)
