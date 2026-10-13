@@ -353,3 +353,14 @@ do not delete them — the team may bring the full form back.
 - Volunteers mostly land on the health app's **Healthcare** page, not Counselling.
   Its follow-up shortcuts and sidebar item were added directly on care (07-Oct);
   the re-apply script is in the ops repo, `releases/2026-10-08-bp-note-and-rule/`.
+
+## Sparsh Clinical Safety Review (13-Oct-2026)
+
+`report/sparsh_clinical_safety_review/` is Dr Nayanjeet's one-time review list
+(his answer to Q12 of the BP and stroke rules proposal): visits whose first BP is
+160/100 or above, and visits whose "Any other medical conditions?" text mentions
+stroke or paralysis. Read-only, and it grades nothing by the new rules. Only the
+`Sparsh Clinical Reviewer` role (`fixtures/role.json`) opens it; Frappe also
+requires report access to Ticket, which a reviewer gets through Doctor. Who holds
+the role is set on care, not here. On 13-Oct it listed 69 visits: 13 severe, 51
+high-priority, 5 stroke or paralysis (2 below Level 4).

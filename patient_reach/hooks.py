@@ -24,6 +24,7 @@ add_to_apps_screen = [
 # Includes in <head>
 # ------------------
 
+
 # include js, css files in header of desk.html
 # Plain files, not bundles: /assets/patient_reach is a symlink to this app's
 # public/ in the image, so they ship with the routine release, unbuilt.
@@ -340,6 +341,9 @@ fixtures = [
 		"filters": [["name", "in", []]],
 	},
 	{"dt": "Translation", "filters": [["source_text", "in", ["Ticket", "Patient"]]]},
+	# 13-Oct-2026: opens Sparsh Clinical Safety Review, Dr Nayanjeet's review list.
+	# Who holds it is site data, given on care, not shipped here.
+	{"dt": "Role", "filters": [["name", "in", ["Sparsh Clinical Reviewer"]]]},
 ]
 
 doc_events = {
