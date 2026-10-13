@@ -14,6 +14,8 @@ import re
 
 import frappe
 
+from patient_reach import drl_v14 as drl
+
 # --------------------------------------------------------------------------
 # Derived measurements
 # --------------------------------------------------------------------------
@@ -77,9 +79,12 @@ def _bp_status(bp_reading):
 # an earlier one. That matters because this hook recomputes on every save and
 # almost every Ticket is a Draft that is still being saved. Blank = _bp_status.
 # "2026-10" was Praveen's rule of 06-Oct; Dr Nayanjeet Chaudhury corrected it on
-# 07-Oct, and patch v1_8 moved every "2026-10" visit to his rule.
+# 07-Oct, and patch v1_8 moved every "2026-10" visit to his rule. "DRL v1.4"
+# (drl_v14.py) is his rule set of 13-Oct-2026: red flags, BP tiers, referral,
+# events and the Level 4 lock, all stamped by this one field.
 BP_RULE_2026_10 = "2026-10"
-BP_RULE_CURRENT = "2026-10-07"
+BP_RULE_2026_10_07 = "2026-10-07"
+BP_RULE_CURRENT = drl.RULE
 
 
 def _bp_status_2026_10(bp_reading):
@@ -111,13 +116,7 @@ def _bp_status_2026_10(bp_reading):
 
 def _bp_pair(bp_reading):
 	"""(systolic, diastolic), or None when the text is not a plausible reading."""
-	m = re.search(r"(\d{2,3})\s*[/\\-]\s*(\d{2,3})", str(bp_reading or ""))
-	if not m:
-		return None
-	systolic, diastolic = int(m.group(1)), int(m.group(2))
-	if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
-		return None
-	return systolic, diastolic
+	return drl.bp_pair(bp_reading)
 
 
 def _bp_status_2026_10_07(bp_reading):
@@ -197,8 +196,12 @@ def bp_assessment(bp_reading, repeat_reading, concerning_symptoms):
 
 
 def bp_status_for(bp_reading, bp_rule, repeat_reading=None, concerning_symptoms=0):
-	"""Grade a reading by the rule the Ticket was created under."""
-	if bp_rule == BP_RULE_CURRENT:
+	"""Grade a reading by the rule the Ticket was created under. A DRL v1.4
+	visit is graded by ticket_before_validate itself, which needs the whole
+	visit (red flags, events); this is the BP alone."""
+	if bp_rule == drl.RULE:
+		return drl.assess_bp(bp_reading, repeat_reading)["status"]
+	if bp_rule == BP_RULE_2026_10_07:
 		return bp_assessment(bp_reading, repeat_reading, concerning_symptoms)[0]
 	if bp_rule == BP_RULE_2026_10:
 		return _bp_status_2026_10(bp_reading)
@@ -241,15 +244,18 @@ def ticket_before_validate(doc, method=None):
 	if result:
 		doc.string_test_result = result
 
-	if doc.get("bp_rule") == BP_RULE_CURRENT:
-		status, action = bp_assessment(
-			doc.get("bp_reading"), doc.get("bp_repeat_reading"), doc.get("bp_concerning_symptoms")
-		)
-		doc.bp_action = action
+	if doc.get("bp_rule") == drl.RULE:
+		_apply_drl_v14(doc)
 	else:
-		status = bp_status_for(doc.get("bp_reading"), doc.get("bp_rule"))
-	if status:
-		doc.bp_status = status
+		if doc.get("bp_rule") == BP_RULE_2026_10_07:
+			status, action = bp_assessment(
+				doc.get("bp_reading"), doc.get("bp_repeat_reading"), doc.get("bp_concerning_symptoms")
+			)
+			doc.bp_action = action
+		else:
+			status = bp_status_for(doc.get("bp_reading"), doc.get("bp_rule"))
+		if status:
+			doc.bp_status = status
 
 	stress_types = [row.stress_type for row in doc.get("stress_types") or []]
 	if NO_STRESS in stress_types and len(stress_types) > 1:
@@ -260,6 +266,166 @@ def ticket_before_validate(doc, method=None):
 
 	if doc.is_new():
 		_warn_if_caregiver_already_has_a_first_visit(doc)
+
+
+def _event_rows(rows):
+	return [
+		{f: row.get(f) for f in ("event_type", "source", "tia_diagnosis", "timing", "parent")}
+		for row in rows or []
+	]
+
+
+def assess_drl_v14(doc):
+	"""drl.assess_visit for a Ticket or the form's unsaved values."""
+	return drl.assess_visit(doc, _event_rows(doc.get("health_events")))
+
+
+def _apply_drl_v14(doc):
+	"""Grade a DRL v1.4 visit: red flags, BP, referral priority, the Level 4
+	lock and the reasons it goes to the clinical reviewer. Every field written
+	here is derived and read-only on the form; a blank input leaves its result
+	blank, never Normal or No (Dr Nayanjeet's instruction D)."""
+	errors = drl.red_flag_errors(doc)
+	if errors:
+		frappe.throw("<br>".join(frappe._(e) for e in errors), title=frappe._("Red-flag symptoms"))
+
+	for row in doc.get("health_events") or []:
+		row.level_4_status = drl.event_level_4(row)
+	result = assess_drl_v14(doc)
+	doc.red_flag_status = result["red_flag_status"]
+	doc.bp_status = result["status"]
+	doc.bp_alerts = "\n".join(result["alerts"]) or None
+	doc.bp_action = "\n".join(result["actions"]) or None
+	doc.referral_priority = result["priority"]
+	if doc.get("referral_advised") == "Yes" and not doc.get("referral_date"):
+		doc.referral_date = doc.get("counselled_date") or frappe.utils.today()
+
+	reasons = level_4_reasons(doc.get("patient_id"), doc.doctype, doc.name, doc.get("health_events"))
+	if reasons:
+		doc.level = "Level 4"
+	doc.level_4_lock = drl.level_4_note(reasons)
+	doc.prevention_level = drl.prevention_code(doc.get("level"), doc.get("s_modifier"))
+
+	doc.review_reasons = (
+		"\n".join(
+			drl.review_reasons(
+				{
+					"red_flag_status": doc.red_flag_status,
+					"bp_status": doc.bp_status,
+					"bp_alerts": result["alerts"],
+					"low_bp_symptoms": doc.get("low_bp_symptoms"),
+					"any_other_medical_condition": doc.get("any_other_medical_condition"),
+				},
+				_event_rows(doc.get("health_events")),
+				[
+					{"condition": c.condition, "has_disease": c.has_disease}
+					for c in doc.get("medical_condition") or []
+				],
+			)
+		)
+		or None
+	)
+
+
+CORRECTION = "Sparsh Level 4 Correction"
+HEALTH_EVENT = "Sparsh Health Event"
+
+
+def level_4_reasons(caregiver, doctype, name, own_events):
+	"""Why the caregiver is held at Level 4: drl.level_4_sources over their
+	other visits, their follow-up row and this record's own event rows, less
+	whatever the clinical reviewer has corrected."""
+	own = {"name": name, "prevention_level": None, "events": _event_rows(own_events)}
+	if not caregiver:
+		return drl.level_4_sources([own], [], set())
+	corrected = set(
+		frappe.get_all(CORRECTION, filters={"caregiver": caregiver, "docstatus": 1}, pluck="source_name")
+	)
+	visits = frappe.get_all(
+		"Ticket",
+		filters={"patient_id": caregiver, "docstatus": ["<", 2], "name": ["!=", name or ""]},
+		fields=["name", "prevention_level"],
+		order_by="creation",
+	)
+	fields = ["parent", "event_type", "source", "tia_diagnosis"]
+	rows = (
+		frappe.get_all(
+			HEALTH_EVENT,
+			filters={"parenttype": "Ticket", "parent": ["in", [v.name for v in visits]]},
+			fields=fields,
+			order_by="parent, idx",
+		)
+		if visits
+		else []
+	)
+	for v in visits:
+		v["events"] = [row for row in rows if row.parent == v.name]
+	trackers = [
+		t for t in frappe.get_all(TRACKER, filters={"caregiver_id": caregiver}, pluck="name") if t != name
+	]
+	tracker_events = (
+		frappe.get_all(
+			HEALTH_EVENT,
+			filters={"parenttype": TRACKER, "parent": ["in", trackers]},
+			fields=fields,
+			order_by="idx",
+		)
+		if trackers
+		else []
+	)
+	if doctype == TRACKER:
+		tracker_events += [dict(row, parent=name) for row in own["events"]]
+		sources = visits
+	else:
+		sources = [own, *visits]
+	return drl.level_4_sources(sources, tracker_events, corrected)
+
+
+REVIEWER_ROLE = "Sparsh Clinical Reviewer"
+
+
+def assign_for_review(doc, method=None):
+	"""Put a visit or follow-up row on the clinical reviewer's assignment list
+	when it first gets a reason, or a new one (Dr Nayanjeet, Q9: "cases may be
+	assigned to me through the application").
+
+	Every enabled holder of the Sparsh Clinical Reviewer role who can read the
+	record, so a second reviewer is added by giving the role. Nothing waits on
+	this: the emergency instruction is on the form already.
+	"""
+	reasons = doc.get("review_reasons")
+	if not reasons:
+		return
+	before = doc.get_doc_before_save()
+	if before and (before.get("review_reasons") or "") == reasons:
+		return
+
+	from frappe.desk.form.assign_to import add as assign_add
+
+	description = f"Clinical safety review of {doc.name}: " + "; ".join(reasons.splitlines())
+	reviewers = frappe.get_all(
+		"Has Role", filters={"role": REVIEWER_ROLE, "parenttype": "User"}, pluck="parent", distinct=True
+	)
+	for user in reviewers:
+		if user in ("Administrator", "Guest") or not frappe.db.get_value("User", user, "enabled"):
+			continue
+		if not frappe.has_permission(doc.doctype, "read", doc, user=user):
+			continue
+		existing = frappe.db.get_value(
+			"ToDo",
+			{
+				"reference_type": doc.doctype,
+				"reference_name": doc.name,
+				"allocated_to": user,
+				"status": "Open",
+			},
+		)
+		if existing:
+			frappe.db.set_value("ToDo", existing, "description", description, update_modified=False)
+			continue
+		assign_add(
+			{"doctype": doc.doctype, "name": doc.name, "assign_to": [user], "description": description}
+		)
 
 
 def _warn_if_caregiver_already_has_a_first_visit(doc):
@@ -459,6 +625,8 @@ TRACKER_FROM_VISIT = {
 	"acceptance_to_change": "are_you_ready_to_make_a_change_for_a_healthy_you",
 	"big_step": "effort_to",
 	"call_1_scheduled_date": "follow_up_date",
+	"referral_priority": "referral_priority",
+	"referral_date": "referral_date",
 }
 
 
@@ -469,8 +637,9 @@ def ticket_sync_follow_up_tracker(doc, method=None):
 	caregiver). An existing tracker moves to this visit when its own visit was
 	cancelled (an amendment), or when this visit is newer and no call has been
 	entered yet -- the list follows the latest assessment until follow-up
-	starts. Otherwise a save of the tracker's own visit re-fetches its Baseline
-	State and Call 1 Scheduled Date. A visit that stops being eligible leaves
+	starts, or while the tracker holds an open DRL v1.4 referral. Otherwise a
+	save of the tracker's own visit re-fetches its Baseline State and Call 1
+	Scheduled Date. A visit that stops being eligible leaves
 	an existing tracker alone: the team closes it by its Status. A visit whose
 	caregiver was changed first releases the previous caregiver's tracker.
 	"""
@@ -484,7 +653,11 @@ def ticket_sync_follow_up_tracker(doc, method=None):
 	_release_previous_caregivers_tracker(doc)
 	if not doc.get("patient_id"):
 		return
-	eligible = is_eligible(doc.get("caregiver_interested"), doc.get("are_you_ready_to_make_a_change_for_a_healthy_you"))
+	eligible = is_eligible(
+		doc.get("caregiver_interested"),
+		doc.get("are_you_ready_to_make_a_change_for_a_healthy_you"),
+		doc.get("referral_priority"),
+	)
 	name = frappe.db.get_value(TRACKER, {"caregiver_id": doc.patient_id})
 	if not name:
 		if eligible:
@@ -500,10 +673,17 @@ def ticket_sync_follow_up_tracker(doc, method=None):
 		current = frappe.db.get_value("Ticket", tracker.baseline_ticket, ["docstatus", "creation"], as_dict=True)
 		replaced = not current or current.docstatus == 2
 		get_datetime = frappe.utils.get_datetime
+		# An open DRL v1.4 referral keeps the row on its visit until the referral
+		# is closed: moving it would refetch the newer visit's referral fields
+		# and the open one would no longer be followed through.
+		open_referral = tracker.get("referral_priority") in drl.REFERRAL_PRIORITIES and not tracker.get(
+			"referral_disposition"
+		)
 		newer = (
 			current
 			and get_datetime(doc.creation) > get_datetime(current.creation)
 			and not any_call_entry(tracker.as_dict())
+			and not open_referral
 		)
 		if not (replaced or newer):
 			return
@@ -537,7 +717,12 @@ def _release_previous_caregivers_tracker(doc):
 		visits = frappe.get_all(
 			"Ticket",
 			filters={"patient_id": tracker.caregiver_id, "docstatus": ["<", 2], "name": ["!=", doc.name]},
-			fields=["name", "caregiver_interested", "are_you_ready_to_make_a_change_for_a_healthy_you"],
+			fields=[
+				"name",
+				"caregiver_interested",
+				"are_you_ready_to_make_a_change_for_a_healthy_you",
+				"referral_priority",
+			],
 			order_by="creation desc, name desc",
 		)
 		visit = latest_eligible_visit(visits)

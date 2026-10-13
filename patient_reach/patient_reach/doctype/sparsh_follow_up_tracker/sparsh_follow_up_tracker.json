@@ -4,7 +4,7 @@
  "autoname": "SFT-.#####",
  "naming_rule": "Expression",
  "creation": "2026-10-06 18:00:00",
- "modified": "2026-10-09 18:00:00",
+ "modified": "2026-10-13 18:00:00",
  "modified_by": "Administrator",
  "owner": "Administrator",
  "description": "Sai Sparsh follow-up of one caregiver over up to three calls. Created from the visit; replaces the Sparsh Follow Up form on the workspace (06-Oct-2026).",
@@ -26,6 +26,18 @@
   "column_break_bl",
   "acceptance_to_change",
   "big_step",
+  "level_4_lock",
+  "referral_section",
+  "referral_priority",
+  "referral_date",
+  "referral_call_date",
+  "consultation_status",
+  "consultation_date",
+  "referral_col",
+  "treatment_status",
+  "treatment_start_date",
+  "referral_disposition",
+  "disposition_note",
   "call_1_section",
   "call_1_scheduled_date",
   "call_1_actual_date",
@@ -54,10 +66,22 @@
   "call_3_column",
   "call_3_by",
   "call_3_notes",
+  "call_red_flag_section",
+  "call_red_flag_list",
+  "call_red_flag_col",
+  "call_red_flag",
+  "call_red_flag_note",
+  "call_red_flag_date",
+  "call_red_flag_details",
+  "call_red_flag_action",
+  "events_section",
+  "events_note",
+  "health_events",
   "status_section",
   "follow_up_status",
   "column_break_st",
-  "next_call_date"
+  "next_call_date",
+  "review_reasons"
  ],
  "fields": [
   {
@@ -345,6 +369,153 @@
    "read_only": 1,
    "in_list_view": 1,
    "description": "The Scheduled Date of the first call not yet made. Blank once Closed, Not Interested or No Response."
+  },
+  {
+   "fieldname": "level_4_lock",
+   "fieldtype": "Small Text",
+   "label": "Level 4 Lock",
+   "read_only": 1,
+   "depends_on": "eval:doc.level_4_lock"
+  },
+  {
+   "fieldname": "referral_section",
+   "fieldtype": "Section Break",
+   "label": "Physician referral",
+   "depends_on": "eval:doc.referral_priority"
+  },
+  {
+   "fieldname": "referral_priority",
+   "fieldtype": "Data",
+   "label": "Referral Priority",
+   "read_only": 1,
+   "fetch_from": "baseline_ticket.referral_priority",
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "referral_date",
+   "fieldtype": "Date",
+   "label": "Referral Date",
+   "read_only": 1,
+   "fetch_from": "baseline_ticket.referral_date"
+  },
+  {
+   "fieldname": "referral_call_date",
+   "fieldtype": "Date",
+   "label": "First Call Due (day 3)",
+   "read_only": 1,
+   "depends_on": "eval:doc.referral_call_date"
+  },
+  {
+   "fieldname": "consultation_status",
+   "fieldtype": "Select",
+   "label": "Physician Consultation",
+   "options": "\nConsulted a physician\nNot yet consulted\nNot known"
+  },
+  {
+   "fieldname": "consultation_date",
+   "fieldtype": "Date",
+   "label": "Consultation Date",
+   "depends_on": "eval:doc.consultation_status=='Consulted a physician'"
+  },
+  {
+   "fieldname": "referral_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "treatment_status",
+   "fieldtype": "Select",
+   "label": "Treatment",
+   "options": "\nNot prescribed\nPrescribed, not started\nTaking as prescribed\nPartially taking\nStopped\nNot known",
+   "description": "Ask at each connected call once a treatment is prescribed. Volunteers do not start or change medication."
+  },
+  {
+   "fieldname": "treatment_start_date",
+   "fieldtype": "Date",
+   "label": "Treatment Started On",
+   "depends_on": "eval:['Taking as prescribed', 'Partially taking', 'Stopped'].includes(doc.treatment_status)"
+  },
+  {
+   "fieldname": "referral_disposition",
+   "fieldtype": "Select",
+   "label": "Referral Closed As",
+   "options": "\nCompleted: consultation done\nCaregiver declined the referral\nClosed by the clinical reviewer",
+   "description": "Leave blank while the referral is open. An unanswered call or a finished follow-up never closes it."
+  },
+  {
+   "fieldname": "disposition_note",
+   "fieldtype": "Small Text",
+   "label": "Referral Note"
+  },
+  {
+   "fieldname": "call_red_flag_section",
+   "fieldtype": "Section Break",
+   "label": "Red-flag symptom on a call",
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:doc.call_red_flag"
+  },
+  {
+   "fieldname": "call_red_flag_list",
+   "fieldtype": "HTML",
+   "options": "<p class=\"small\">Any one of these, at any point in a call, is an emergency whatever the BP:</p><ul class=\"small\"><li>B: Sudden loss of balance or coordination</li><li>E: Sudden visual disturbance</li><li>F: Sudden facial drooping</li><li>A: Sudden limb weakness or numbness</li><li>S: New speech difficulty</li><li>Acute chest pain or pressure</li><li>Severe breathlessness at rest</li><li>Loss of consciousness</li><li>Seizure</li><li>Severe new confusion</li><li>Severe hypoglycaemia with unsafe swallowing</li><li>Sudden severe headache, particularly thunderclap headache</li><li>Any other sudden severe or potentially life-threatening symptom</li></ul>"
+  },
+  {
+   "fieldname": "call_red_flag_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "call_red_flag",
+   "fieldtype": "Check",
+   "label": "A red-flag symptom was reported on a call"
+  },
+  {
+   "fieldname": "call_red_flag_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:doc.call_red_flag",
+   "options": "<p style=\"color: var(--red-600); font-weight: var(--weight-semibold); margin-bottom: 0;\">EMERGENCY: call 112, or take the caregiver to the nearest Emergency Department, or use the hospital's emergency process, now. Stop routine counselling. Do not wait for a repeat BP, a doctor's review or the clinical reviewer.</p>"
+  },
+  {
+   "fieldname": "call_red_flag_date",
+   "fieldtype": "Date",
+   "label": "Date Reported",
+   "depends_on": "eval:doc.call_red_flag"
+  },
+  {
+   "fieldname": "call_red_flag_details",
+   "fieldtype": "Small Text",
+   "label": "Symptom, in the caregiver's words",
+   "depends_on": "eval:doc.call_red_flag"
+  },
+  {
+   "fieldname": "call_red_flag_action",
+   "fieldtype": "Select",
+   "label": "Emergency action taken",
+   "options": "\nCalled 112 or an ambulance\nSent to the nearest Emergency Department\nUsed the hospital's emergency process\nCaregiver declined emergency care",
+   "depends_on": "eval:doc.call_red_flag"
+  },
+  {
+   "fieldname": "events_section",
+   "fieldtype": "Section Break",
+   "label": "Heart and brain events reported on calls",
+   "collapsible": 1,
+   "collapsible_depends_on": "eval:(doc.health_events || []).length"
+  },
+  {
+   "fieldname": "events_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">A new heart attack, stroke, TIA, angioplasty or bypass reported on a call. Record each detail as it becomes known; a later call can add to it. A qualifying event makes the caregiver Level 4 for good and goes to the clinical reviewer. If symptoms are happening now, follow the emergency pathway first.</p>"
+  },
+  {
+   "fieldname": "health_events",
+   "fieldtype": "Table",
+   "label": "Events",
+   "options": "Sparsh Health Event"
+  },
+  {
+   "fieldname": "review_reasons",
+   "fieldtype": "Small Text",
+   "label": "Clinical Safety Review",
+   "read_only": 1,
+   "depends_on": "eval:doc.review_reasons"
   }
  ],
  "is_submittable": 0,

@@ -28,6 +28,7 @@ import frappe
 
 from frappe.tests import UnitTestCase
 
+from patient_reach import drl_v14 as drl
 from patient_reach import hooks
 from patient_reach.doc_events import _release_previous_caregivers_tracker, ticket_sync_follow_up_tracker
 from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
@@ -39,6 +40,7 @@ from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_
 	is_eligible,
 	latest_eligible_visit,
 	next_call_due,
+	review_reasons,
 )
 
 META = json.loads((Path(__file__).parent / "sparsh_follow_up_tracker.json").read_text())
@@ -56,6 +58,71 @@ class TestEligibility(UnitTestCase):
 		self.assertFalse(is_eligible("No", "No"))
 		self.assertFalse(is_eligible("", ""))
 		self.assertFalse(is_eligible(None, None))
+
+	def test_a_referral_puts_the_caregiver_on_the_list_whatever_their_interest(self):
+		"""DRL v1.4: a referral is followed through (Dr Nayanjeet, 13-Oct-2026, C)."""
+		for priority in drl.REFERRAL_PRIORITIES:
+			with self.subTest(priority=priority):
+				self.assertTrue(is_eligible("No", "No", priority))
+		self.assertFalse(is_eligible("No", "No", drl.P_REPEAT))
+		self.assertFalse(is_eligible("No", "No", drl.P_NONE))
+		self.assertTrue(
+			latest_eligible_visit([dict(_visit("TKT-3", "No", "No"), referral_priority=drl.P_HIGH)])
+		)
+
+	def test_finished_statuses_agree_with_the_rules(self):
+		self.assertEqual(FINISHED, drl.FINISHED_STATUSES)
+
+
+class TestDay3Call(UnitTestCase):
+	def test_day_3_comes_first_when_earlier(self):
+		values = {"call_1_scheduled_date": "2026-11-20", "referral_call_date": "2026-11-04"}
+		self.assertEqual(next_call_due(values), "2026-11-04")
+
+	def test_scheduled_date_when_earlier(self):
+		values = {"call_1_scheduled_date": "2026-11-02", "referral_call_date": "2026-11-04"}
+		self.assertEqual(next_call_due(values), "2026-11-02")
+
+	def test_day_3_without_a_follow_up_date(self):
+		self.assertEqual(next_call_due({"referral_call_date": "2026-11-04"}), "2026-11-04")
+
+	def test_only_call_1(self):
+		values = {
+			"call_1_actual_date": "2026-11-04",
+			"call_1_interest": "Yes",
+			"call_2_scheduled_date": "2026-11-30",
+			"referral_call_date": "2026-11-04",
+		}
+		self.assertEqual(next_call_due(values), "2026-11-30")
+
+
+STROKE = {"event_type": drl.EV_STROKE, "source": drl.SRC_REPORTED}
+
+
+class TestTrackerReviewReasons(UnitTestCase):
+
+	def test_event_on_a_call_and_a_level_4_discrepancy(self):
+		self.assertEqual(
+			review_reasons({}, [STROKE], "Level 2"),
+			[
+				f"Stroke reported on follow-up: {drl.QUALIFIES}",
+				"Level 4 event on the follow-up list; the visit shows Level 2",
+			],
+		)
+
+	def test_no_discrepancy_when_the_visit_is_level_4(self):
+		self.assertEqual(
+			review_reasons({}, [STROKE], "Level 4s"), [f"Stroke reported on follow-up: {drl.QUALIFIES}"]
+		)
+
+	def test_red_flag_on_a_call(self):
+		self.assertEqual(
+			review_reasons({"call_red_flag": 1}, [], "Level 1"),
+			["Red-flag symptom reported on a follow-up call"],
+		)
+
+	def test_nothing(self):
+		self.assertEqual(review_reasons({}, [], None), [])
 
 
 class TestCallRules(UnitTestCase):
@@ -160,6 +227,7 @@ class TestHooks(UnitTestCase):
 	def test_ticket_hooks_registered(self):
 		ticket = hooks.doc_events["Ticket"]
 		self.assertIn("patient_reach.doc_events.ticket_sync_follow_up_tracker", ticket["on_update"])
+		self.assertIn("patient_reach.doc_events.assign_for_review", ticket["on_update"])
 		self.assertEqual(ticket["on_trash"], "patient_reach.doc_events.ticket_on_trash")
 
 

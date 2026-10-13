@@ -364,3 +364,35 @@ stroke or paralysis. Read-only, and it grades nothing by the new rules. Only the
 requires report access to Ticket, which a reviewer gets through Doctor. Who holds
 the role is set on care, not here. On 13-Oct it listed 69 visits: 13 severe, 51
 high-priority, 5 stroke or paralysis (2 below Level 4).
+
+## DRL v1.4 rules (branch `drl-v1.4`, 13-Oct-2026) — not on care
+
+Dr Nayanjeet's answers of 13-Oct-2026 to the 13 questions of "BP and Stroke
+Rules, Draft 0.1" built as code. **He approved development and testing, not
+production**: the branch stays off `main` (care releases are built from `main`)
+until he signs off the logic and the test results.
+
+- `patient_reach/drl_v14.py` holds every rule, with no `import frappe`, and
+  `test_drl_v14.py` pins it (`python3 -m unittest patient_reach.test_drl_v14`
+  runs on this machine). It also checks the Select options in the JSON files
+  and that every Ticket field is in `Ticket-main-field_order`.
+- A new visit is stamped `bp_rule = "DRL v1.4"` (now also the field's
+  default); `_apply_drl_v14` in `doc_events.py` grades it: the 13 red flags
+  (blank boxes are "not asked", only "Asked: none" is a No), BP tiers Severe /
+  High Priority / High / Elevated / Normal by the higher of the two readings,
+  Low shown beside them under `bp_alerts`, `referral_priority`, heart and brain
+  events (child table `Sparsh Health Event`, also on the tracker), Level and S
+  modifier as two fields with `prevention_level` derived from them, the
+  permanent Level 4 lock (`level_4_reasons`) and `review_reasons`. Visits on
+  older rules are graded as before and never see the new fields.
+- The lock counts an earlier visit at Level 4 as well as a qualifying event.
+  Only a submitted `Sparsh Level 4 Correction` (reviewer role only) lifts it; the
+  visit itself is never edited.
+- `assign_for_review` assigns a visit or follow-up row to every holder of
+  `Sparsh Clinical Reviewer` who can read it, when it first gets a reason.
+  It sends Frappe's assignment notification, so check staging's outgoing mail
+  before testing it on a restore of care.
+- A referral puts the caregiver on the follow-up list whatever their interest,
+  keeps the row on its visit until the referral is closed, and brings Call 1
+  forward to day 3 for the urgent priorities. `Sparsh Clinical Review Queue`
+  works the flags out on the day it is run.

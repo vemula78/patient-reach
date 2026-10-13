@@ -363,6 +363,7 @@ doc_events = {
 		"on_update": [
 			"patient_reach.doc_events.ticket_on_update",
 			"patient_reach.doc_events.ticket_sync_follow_up_tracker",
+			"patient_reach.doc_events.assign_for_review",
 		],
 		"on_trash": "patient_reach.doc_events.ticket_on_trash",
 	},

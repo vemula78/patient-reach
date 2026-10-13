@@ -11,7 +11,7 @@ Prints counts in and out; IDs only. Idempotent: a second run finds none.
 
 import frappe
 
-from patient_reach.doc_events import BP_RULE_2026_10, BP_RULE_CURRENT, bp_assessment
+from patient_reach.doc_events import BP_RULE_2026_10, BP_RULE_2026_10_07, bp_assessment
 
 
 def execute():
@@ -23,7 +23,7 @@ def execute():
 	changed, escalate = 0, []
 	for name, reading, old, repeat, symptoms in rows:
 		new, action = bp_assessment(reading, repeat, symptoms)
-		values = {"bp_rule": BP_RULE_CURRENT, "bp_action": action}
+		values = {"bp_rule": BP_RULE_2026_10_07, "bp_action": action}
 		if new:
 			values["bp_status"] = new
 		frappe.db.set_value("Ticket", name, values, update_modified=False)

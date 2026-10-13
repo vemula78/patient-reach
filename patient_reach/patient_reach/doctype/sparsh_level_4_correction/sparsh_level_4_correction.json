@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "autoname": "L4C-.#####",
+ "creation": "2026-10-13 18:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "caregiver",
+  "source_doctype",
+  "source_name",
+  "original_classification",
+  "column_break_c",
+  "reason",
+  "explanation",
+  "reviewer",
+  "corrected_on",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "caregiver",
+   "fieldtype": "Link",
+   "label": "Caregiver",
+   "options": "Patient",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source_doctype",
+   "fieldtype": "Select",
+   "label": "Recorded On",
+   "options": "Ticket\nSparsh Follow-up Tracker",
+   "reqd": 1,
+   "default": "Ticket"
+  },
+  {
+   "fieldname": "source_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Visit or Follow-up Row",
+   "options": "source_doctype",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "The record that holds the Level 4 or the event being corrected. It is not changed: this correction is kept beside it."
+  },
+  {
+   "fieldname": "original_classification",
+   "fieldtype": "Small Text",
+   "label": "Original Classification",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_c",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "label": "Reason",
+   "options": "\nEntered on the wrong caregiver\nData-entry error: the event did not happen\nEvent does not meet DRL A8 on clinical review\nOther (explain below)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "explanation",
+   "fieldtype": "Small Text",
+   "label": "Explanation",
+   "reqd": 1,
+   "description": "Clinical recovery is not a valid reason: Level 4 is permanent after a qualifying event (DRL A8)."
+  },
+  {
+   "fieldname": "reviewer",
+   "fieldtype": "Link",
+   "label": "Reviewer",
+   "options": "User",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "corrected_on",
+   "fieldtype": "Datetime",
+   "label": "Corrected On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Sparsh Level 4 Correction",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-13 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Sparsh Level 4 Correction",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "Sparsh Clinical Reviewer",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "print": 1,
+   "email": 0,
+   "share": 0,
+   "export": 1
+  },
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "caregiver",
+ "track_changes": 1
+}
