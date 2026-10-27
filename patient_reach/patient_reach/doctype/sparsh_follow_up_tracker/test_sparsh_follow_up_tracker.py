@@ -33,12 +33,16 @@ from patient_reach.doc_events import _release_previous_caregivers_tracker, ticke
 from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
 	FINISHED,
 	GOING_ON,
+	NOT_CONNECTED_FIELDS,
 	any_call_entry,
 	chained_schedule,
+	check_acceptance,
 	check_calls,
 	is_eligible,
 	latest_eligible_visit,
+	missing_when_not_connected,
 	next_call_due,
+	prepopulate_prevention_levels,
 )
 
 META = json.loads((Path(__file__).parent / "sparsh_follow_up_tracker.json").read_text())
@@ -84,6 +88,68 @@ class TestCallRules(UnitTestCase):
 		self.assertTrue(any_call_entry({"call_2_duration": 300}))
 
 
+class TestChangeRequest2026_10_23(UnitTestCase):
+	"""The counselling team's change request of 23-Oct-2026 for the follow-up
+	sections: acceptance No closes them, each call carries a Current Prevention
+	Level, and a call not connected (or a No) needs every field but the Next
+	Follow-up Date."""
+
+	def test_acceptance_no_closes_every_call(self):
+		values = {"acceptance_to_change": "No", "call_1_scheduled_date": "2026-10-20"}
+		self.assertIsNone(next_call_due(values))
+		self.assertEqual(check_acceptance(values), [])
+		values["call_1_notes"] = "spoke"
+		self.assertEqual(len(check_acceptance(values)), 1)
+		self.assertEqual(check_calls(values), [], "no second, misleading interest message")
+		self.assertEqual(check_acceptance({"acceptance_to_change": "May be", "call_1_notes": "spoke"}), [])
+
+	def test_prevention_level_carries_forward(self):
+		values = {"prevention_level": "Level 2", "call_1_interest": "Yes", "call_2_prevention_level": "Level 3"}
+		self.assertEqual(
+			prepopulate_prevention_levels(values),
+			{"call_1_prevention_level": "Level 2", "call_2_prevention_level": "Level 3"},
+		)
+		values["call_2_interest"] = "May be"
+		self.assertEqual(prepopulate_prevention_levels(values)["call_3_prevention_level"], "Level 3")
+		self.assertEqual(prepopulate_prevention_levels({"acceptance_to_change": "No", "prevention_level": "Level 1"}), {})
+
+	def test_connected_and_interested_needs_nothing_more(self):
+		self.assertEqual(missing_when_not_connected({"call_1_outcome": "Connected", "call_1_interest": "Yes"}), [])
+		self.assertEqual(missing_when_not_connected({}), [], "a blank outcome is not yet entered")
+
+	def test_not_connected_needs_every_field_but_the_next_date(self):
+		errors = missing_when_not_connected({"call_1_outcome": "Wrong Number"})
+		self.assertEqual(len(errors), 1)
+		for field in NOT_CONNECTED_FIELDS:
+			self.assertIn(field, errors[0])
+		self.assertNotIn("next_date", errors[0])
+		full = {f"call_1_{f}": "x" for f in NOT_CONNECTED_FIELDS}
+		self.assertEqual(missing_when_not_connected({**full, "call_1_outcome": "Wrong Number"}), [])
+
+	def test_a_no_needs_every_field_even_when_connected(self):
+		self.assertEqual(len(missing_when_not_connected({"call_1_outcome": "Connected", "call_1_interest": "No"})), 1)
+
+	def test_call_three_has_no_interest_to_require(self):
+		values = {"call_1_interest": "Yes", "call_2_interest": "Yes", "call_3_outcome": "Caregiver Declined"}
+		errors = missing_when_not_connected(values)
+		self.assertEqual(len(errors), 1)
+		self.assertNotIn("interest", errors[0])
+
+	def test_closed_calls_are_not_checked(self):
+		full = {f"call_1_{f}": "x" for f in NOT_CONNECTED_FIELDS}
+		values = {**full, "call_1_interest": "No", "call_2_outcome": "Wrong Number"}
+		self.assertEqual(missing_when_not_connected(values), [])
+
+	def test_json_requires_the_same_fields(self):
+		for n in (1, 2, 3):
+			self.assertEqual(FIELDS[f"call_{n}_prevention_level"]["label"], "Current Prevention Level")
+			for f in NOT_CONNECTED_FIELDS:
+				if n == 3 and f == "interest":
+					continue
+				self.assertIn(f"doc.call_{n}_outcome != 'Connected'", FIELDS[f"call_{n}_{f}"]["mandatory_depends_on"])
+			self.assertNotIn("mandatory_depends_on", FIELDS.get(f"call_{n}_next_date", {}))
+
+
 class TestNextCallDue(UnitTestCase):
 	def test_first_call_not_made(self):
 		self.assertEqual(next_call_due({"call_1_scheduled_date": "2026-10-10"}), "2026-10-10")
@@ -116,9 +182,10 @@ class TestJsonMatchesCode(UnitTestCase):
 		self.assertNotIn("call_3_next_date", FIELDS)
 
 	def test_sections_open_on_the_previous_interest(self):
-		self.assertNotIn("depends_on", FIELDS["call_1_section"])
+		self.assertEqual(FIELDS["call_1_section"]["depends_on"], "eval:doc.acceptance_to_change != 'No'")
 		for n in (2, 3):
 			self.assertIn(f"doc.call_{n - 1}_interest", FIELDS[f"call_{n}_section"]["depends_on"])
+			self.assertIn("doc.acceptance_to_change != 'No'", FIELDS[f"call_{n}_section"]["depends_on"])
 		for n in (1, 2):
 			self.assertIn(f"doc.call_{n}_interest", FIELDS[f"call_{n}_next_date"]["read_only_depends_on"])
 

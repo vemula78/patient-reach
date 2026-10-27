@@ -456,7 +456,8 @@
   {
    "fieldname": "height_cm",
    "fieldtype": "Float",
-   "label": "Height (in cm)"
+   "label": "Height (in cm)",
+   "mandatory_depends_on": "eval:doc.ready_for_height"
   },
   {
    "fieldname": "string_test_result",
@@ -481,7 +482,8 @@
    "description": "Example: 120/80",
    "fieldname": "bp_reading",
    "fieldtype": "Data",
-   "label": "Blood Pressure Reading (mmHg)"
+   "label": "Blood Pressure Reading (mmHg)",
+   "mandatory_depends_on": "eval:doc.ready_for_bp"
   },
   {
    "description": "Calculated from the reading (Dr Nayanjeet Chaudhury, 07-Oct-2026), by the higher-risk value. Urgent: 180/120 or more. Low: systolic below 90 or diastolic below 60. High: systolic 140-179 or diastolic 90-119. Elevated: systolic 120-139 or diastolic 80-89. Normal: 90-119 and 60-79. Needs Reference: a reading that cannot be read.",
@@ -700,7 +702,8 @@
   {
    "fieldname": "weight",
    "fieldtype": "Float",
-   "label": "Weight (in kg)"
+   "label": "Weight (in kg)",
+   "mandatory_depends_on": "eval:doc.ready_for_weight"
   },
   {
    "fieldname": "are_you_ready_to_make_a_change_for_a_healthy_you",

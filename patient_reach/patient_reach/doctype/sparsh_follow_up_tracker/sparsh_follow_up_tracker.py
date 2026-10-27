@@ -69,8 +69,64 @@ def any_call_entry(values):
 
 def call_is_open(values, n):
 	"""Call 1 always; call 2 or 3 only when the previous call's interest is
-	Yes or May be. The same test as the sections' `depends_on`."""
+	Yes or May be. None of the calls is open when the caregiver's acceptance to
+	change is No (the change request, 23-Oct-2026). The same test as the
+	sections' `depends_on`."""
+	if values.get("acceptance_to_change") == "No":
+		return False
 	return n == 1 or values.get(f"call_{n - 1}_interest") in GOING_ON
+
+
+# What a counsellor must fill in a call that was not connected, or where the
+# caregiver said No. Interest is only on calls 1 and 2; call 3 has no interest.
+NOT_CONNECTED_FIELDS = ("prevention_level", "actual_date", "duration", "by", "interest", "notes")
+
+
+def is_not_connected(values, n):
+	"""True when call `n` has an outcome other than Connected, or the caregiver
+	said No. A blank outcome is not yet entered, so it does not count."""
+	outcome = values.get(f"call_{n}_outcome")
+	interest = values.get(f"call_{n}_interest") if n < 3 else None
+	return bool((outcome and outcome != "Connected") or interest == "No")
+
+
+def missing_when_not_connected(values):
+	"""The errors for an open call that was not connected, or where the caregiver
+	said No, with a field left blank. Everything in the call is required except
+	the Next Follow-up Date. `mandatory_depends_on` is client-side only, so an
+	API save or an import would get past it without this."""
+	errors = []
+	for n in CALLS:
+		if not call_is_open(values, n) or not is_not_connected(values, n):
+			continue
+		fields = NOT_CONNECTED_FIELDS if n < 3 else tuple(f for f in NOT_CONNECTED_FIELDS if f != "interest")
+		missing = [f for f in fields if not values.get(f"call_{n}_{f}")]
+		if missing:
+			errors.append(
+				f"Call {n}: fill in {', '.join(missing)}, because the call was not connected or the caregiver said No."
+			)
+	return errors
+
+
+def check_acceptance(values):
+	"""No call may be entered when the caregiver's acceptance to change is No."""
+	if values.get("acceptance_to_change") == "No" and any_call_entry(values):
+		return ["The caregiver's acceptance to change is No, so no follow-up call can be entered."]
+	return []
+
+
+def prepopulate_prevention_levels(values):
+	"""Each open call's Current Prevention Level: the one entered, else the level
+	before it (the intake level for call 1). Only the calls shown on the form."""
+	fill = {}
+	previous = values.get("prevention_level")
+	for n in CALLS:
+		if not call_is_open(values, n):
+			continue
+		level = values.get(f"call_{n}_prevention_level") or previous
+		fill[f"call_{n}_prevention_level"] = level
+		previous = level
+	return fill
 
 
 def check_calls(values):
@@ -84,7 +140,8 @@ def check_calls(values):
 				f"Call {n}: a Next Follow-up Date needs the caregiver's interest to be Yes or May be."
 			)
 	for n in (2, 3):
-		if call_has_entry(values, n) and not call_is_open(values, n):
+		not_refused = values.get("acceptance_to_change") != "No"
+		if call_has_entry(values, n) and not call_is_open(values, n) and not_refused:
 			errors.append(
 				f"Call {n} has entries, but call {n - 1}'s interest is not Yes or May be. "
 				f"Change call {n - 1}'s interest back, or clear call {n}."
@@ -118,8 +175,14 @@ def next_call_due(values):
 
 class SparshFollowupTracker(Document):
 	def validate(self):
+		self.update(prepopulate_prevention_levels(self.as_dict()))
 		values = self.as_dict()
 		errors = check_calls(values)
+		# The 23-Oct-2026 rules apply when a counsellor saves the calls. A visit's
+		# save also re-saves its tracker (doc_events), and a tracker entered before
+		# these rules must not stop that visit from saving.
+		if not self.flags.get("synced_from_visit"):
+			errors += check_acceptance(values) + missing_when_not_connected(values)
 		if errors:
 			frappe.throw("<br>".join(_(e) for e in errors))
 		self.update(chained_schedule(values))

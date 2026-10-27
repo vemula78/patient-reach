@@ -6,7 +6,7 @@
 // - drops Blood Group, Email, Invite as User and the Primary Address section,
 //   none of which the counselling team uses (Invite as User would give a
 //   caregiver a login);
-// - adds District under State, filtered to the chosen State;
+// - puts District (mandatory) under State, filtered to the chosen State;
 // - adds Other known language under Language.
 //
 // Re-check after every health upgrade: this relies on Health's class name,
@@ -60,13 +60,18 @@
 					this.mandatory.splice(language_at + 1, 0, Object.assign({}, other_language));
 				}
 
-				const state_at = this.mandatory.findIndex((df) => df.fieldname === "custom_state");
+				// District is mandatory (23-Oct-2026), so Health already puts it in the
+				// popup, but without the State filter: every district in India showed.
+				// Take it out wherever it is and put it back under State, filtered.
 				const district = frappe.meta.get_docfield("Patient", "custom_district");
-				if (state_at >= 0 && district && !this.mandatory.some((df) => df.fieldname === "custom_district")) {
+				if (district && this.mandatory.some((df) => df.fieldname === "custom_state")) {
+					const district_at = this.mandatory.findIndex((df) => df.fieldname === "custom_district");
+					const base = district_at >= 0 ? this.mandatory.splice(district_at, 1)[0] : district;
+					const state_at = this.mandatory.findIndex((df) => df.fieldname === "custom_state");
 					this.mandatory.splice(
 						state_at + 1,
 						0,
-						Object.assign({}, district, {
+						Object.assign({}, base, {
 							get_query: () => ({ filters: { state: this.dialog.get_value("custom_state") } }),
 						})
 					);

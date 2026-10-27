@@ -5,6 +5,13 @@ frappe.ui.form.on("Ticket", {
 	refresh: function (frm) {
 		toggle_sections(frm);
 
+		// Follow-up calls are recorded on the Sai Sparsh follow-up list, not as a
+		// second visit (change request, 23-Oct-2026). The option stays in the
+		// DocType so the visits already saved as Follow-up remain valid.
+		if (frm.doc.visit_type !== "Follow-up") {
+			frm.set_df_property("visit_type", "options", ["", "First Visit"]);
+		}
+
 		// Only counsellors' logins; a Link cannot hold a typed name.
 		frm.set_query("counsellor_name", function () {
 			return { query: "patient_reach.api.counsellor_query" };
