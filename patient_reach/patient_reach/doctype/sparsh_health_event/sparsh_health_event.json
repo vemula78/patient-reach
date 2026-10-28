@@ -1,0 +1,148 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 18:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "event_type",
+  "source",
+  "timing",
+  "level_4_status",
+  "column_break_ev",
+  "tia_diagnosis",
+  "event_date",
+  "date_note",
+  "hospital_section",
+  "hospitalised",
+  "hospital",
+  "discharge_date",
+  "discharge_status",
+  "column_break_tr",
+  "treatment",
+  "rehabilitation",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_type",
+   "fieldtype": "Select",
+   "label": "Event",
+   "options": "\nHeart attack (myocardial infarction)\nStroke\nTIA (transient ischaemic attack)\nAngioplasty or stent\nBypass surgery (CABG)\nOther major heart or brain event\nParalysis or weakness, not yet clarified",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "How it is known",
+   "options": "\nDocumented (medical record or discharge summary)\nReported by caregiver or family",
+   "in_list_view": 1,
+   "columns": 3,
+   "description": "Written records are not required (DRL A8). Leave blank until known: an event without a source stays pending."
+  },
+  {
+   "fieldname": "timing",
+   "fieldtype": "Select",
+   "label": "When",
+   "options": "\nHappening now\nRecent, symptoms resolved\nPast history",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Happening now is an emergency: tick the red-flag symptom and follow the emergency pathway."
+  },
+  {
+   "fieldname": "level_4_status",
+   "fieldtype": "Data",
+   "label": "Level 4",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "column_break_ev",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tia_diagnosis",
+   "fieldtype": "Select",
+   "label": "TIA diagnosis",
+   "options": "\nClinically diagnosed\nTransient symptoms, not verified",
+   "depends_on": "eval:doc.event_type=='TIA (transient ischaemic attack)'",
+   "description": "A clinically diagnosed TIA counts towards Level 4 (an addition to DRL A8, pending rule validation). Transient symptoms that no doctor has diagnosed stay pending."
+  },
+  {
+   "fieldname": "event_date",
+   "fieldtype": "Date",
+   "label": "Event Date"
+  },
+  {
+   "fieldname": "date_note",
+   "fieldtype": "Data",
+   "label": "If the date is approximate",
+   "description": "For example: early 2024, or about 3 years ago."
+  },
+  {
+   "fieldname": "hospital_section",
+   "fieldtype": "Section Break",
+   "label": "Hospital and treatment, where known"
+  },
+  {
+   "fieldname": "hospitalised",
+   "fieldtype": "Select",
+   "label": "Hospitalised",
+   "options": "\nYes\nNo\nNot known"
+  },
+  {
+   "fieldname": "hospital",
+   "fieldtype": "Data",
+   "label": "Hospital",
+   "depends_on": "eval:doc.hospitalised=='Yes'"
+  },
+  {
+   "fieldname": "discharge_date",
+   "fieldtype": "Date",
+   "label": "Discharge Date",
+   "depends_on": "eval:doc.hospitalised=='Yes'"
+  },
+  {
+   "fieldname": "discharge_status",
+   "fieldtype": "Select",
+   "label": "Discharge Status",
+   "depends_on": "eval:doc.hospitalised=='Yes'",
+   "options": "\nStill in hospital\nDischarged home\nDischarged to rehabilitation or a care facility\nNot known"
+  },
+  {
+   "fieldname": "column_break_tr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "treatment",
+   "fieldtype": "Small Text",
+   "label": "Treatment, where known"
+  },
+  {
+   "fieldname": "rehabilitation",
+   "fieldtype": "Small Text",
+   "label": "Rehabilitation needs, where known",
+   "description": "For example physiotherapy, speech or occupational therapy. No disability grading is asked for."
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Sparsh Health Event",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

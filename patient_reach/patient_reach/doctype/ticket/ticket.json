@@ -50,8 +50,14 @@
   "personal_habits",
   "addictions_col",
   "any_other_habits",
+  "health_events_section",
+  "health_events_note",
+  "health_events",
   "risk_level_section",
   "prevention_level",
+  "level",
+  "s_modifier",
+  "level_4_lock",
   "risk_level_col",
   "justification_of_risk_profiling",
   "nutrition_heading",
@@ -70,6 +76,31 @@
   "stress_types",
   "type_of_stress",
   "stress_additional_information",
+  "red_flag_section",
+  "red_flag_intro",
+  "be_fast_heading",
+  "rf_balance",
+  "rf_vision",
+  "rf_face",
+  "rf_limb",
+  "rf_speech",
+  "red_flag_col",
+  "other_emergencies_heading",
+  "rf_chest_pain",
+  "rf_breathless",
+  "rf_unconscious",
+  "rf_seizure",
+  "rf_confusion",
+  "rf_hypoglycaemia",
+  "rf_headache",
+  "rf_other",
+  "rf_other_detail",
+  "red_flag_answer_section",
+  "rf_none_asked",
+  "red_flag_status",
+  "red_flag_col_2",
+  "emergency_action",
+  "emergency_note",
   "section_d",
   "ready_for_weight",
   "weight_col",
@@ -87,20 +118,32 @@
   "bp_heading",
   "ready_for_bp",
   "rested_5_min",
+  "bp_technique_note",
   "bp_col",
   "bp_reading",
   "bp_status",
+  "bp_alerts",
   "bp_status_other",
   "bp_repeat_reading",
   "bp_concerning_symptoms",
+  "low_bp_symptoms",
   "bp_action",
   "bp_escalation_note",
   "bp_note",
+  "drl_bp_note",
   "is_the_caregiver_ready_to_be_measured_for_blood_pressure",
   "is_the_caregiver_ready_to_be_measured_for_weight",
   "is_the_caregiver_ready_to_be_measured_for_height",
   "is_the_caregiver_ready_for_the_string_test",
   "bp_rule",
+  "referral_section",
+  "referral_priority",
+  "referral_advised",
+  "referral_review_note",
+  "referral_col",
+  "referral_date",
+  "referred_to",
+  "referral_note",
   "section_title",
   "are_you_ready_to_make_a_change_for_a_healthy_you",
   "effort_to",
@@ -128,6 +171,7 @@
   "column_break_iuue",
   "follow_up_by",
   "forward_section",
+  "review_reasons",
   "forward_to",
   "forward_reason",
   "feedback",
@@ -349,8 +393,9 @@
    "fieldname": "prevention_level",
    "fieldtype": "Select",
    "label": "Where does the Caregiver fit in the Levels of Prevention ?",
-   "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nLevel 1\nLevel 1s\nLevel 2\nLevel 2s\nLevel 3\nLevel 3s\nLevel 4\nLevel 4s"
+   "mandatory_depends_on": "eval:doc.bp_rule!='DRL v1.4' && doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "options": "\nLevel 1\nLevel 1s\nLevel 2\nLevel 2s\nLevel 3\nLevel 3s\nLevel 4\nLevel 4s",
+   "depends_on": "eval:doc.bp_rule!='DRL v1.4'"
   },
   {
    "fieldname": "risk_level_col",
@@ -484,11 +529,11 @@
    "label": "Blood Pressure Reading (mmHg)"
   },
   {
-   "description": "Calculated from the reading (Dr Nayanjeet Chaudhury, 07-Oct-2026), by the higher-risk value. Urgent: 180/120 or more. Low: systolic below 90 or diastolic below 60. High: systolic 140-179 or diastolic 90-119. Elevated: systolic 120-139 or diastolic 80-89. Normal: 90-119 and 60-79. Needs Reference: a reading that cannot be read.",
+   "description": "Calculated from the readings. DRL v1.4 (visits from its release): Severe 180/120 or above; High Priority 160/100 or above; High 140/90 or above; Elevated 120/80 or above; Normal below 120/80; Low below 90/60, shown beside any high tier under BP Alerts. The higher of the two readings counts. Earlier visits keep the rule they were graded by (Dr Nayanjeet Chaudhury's rule of 07-Oct-2026: Urgent 180/120 or more, Low below 90/60, High 140/90 or more, Elevated 120/80 or more). Needs Reference: a reading that cannot be read. Invalid Reading: the diastolic is at or above the systolic; remeasure.",
    "fieldname": "bp_status",
    "fieldtype": "Select",
    "label": "BP Status",
-   "options": "\nNormal\nElevated\nHigh\nLow\nUrgent\nNeeds Reference",
+   "options": "\nNormal\nElevated\nHigh\nHigh Priority\nSevere\nLow\nUrgent\nNeeds Reference\nInvalid Reading",
    "read_only": 1
   },
   {
@@ -501,13 +546,13 @@
    "fieldname": "bp_repeat_reading",
    "fieldtype": "Data",
    "label": "Repeat BP Reading (mmHg)",
-   "depends_on": "eval:doc.bp_action && (['Urgent','Low','High'].includes(doc.bp_status) || doc.bp_repeat_reading)",
-   "description": "After the caregiver has rested. For an Urgent first reading, after 5 minutes."
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4' ? (['Severe','High Priority','High','Low'].includes(doc.bp_status) || doc.bp_repeat_reading) : (doc.bp_action && (['Urgent','Low','High'].includes(doc.bp_status) || doc.bp_repeat_reading))",
+   "description": "After 1-2 minutes, on the same arm. Earlier visits: after the caregiver has rested; for an Urgent first reading, after 5 minutes."
   },
   {
    "fieldname": "bp_concerning_symptoms",
    "fieldtype": "Check",
-   "depends_on": "eval:doc.bp_action && (['Urgent','Low','High'].includes(doc.bp_status) || doc.bp_repeat_reading)",
+   "depends_on": "eval:doc.bp_rule!='DRL v1.4' && (doc.bp_action && (['Urgent','Low','High'].includes(doc.bp_status) || doc.bp_repeat_reading))",
    "label": "Concerning symptoms: dizziness/light-headedness, fainting/near-fainting, unusual weakness, confusion or other"
   },
   {
@@ -520,13 +565,13 @@
   {
    "fieldname": "bp_escalation_note",
    "fieldtype": "HTML",
-   "depends_on": "eval:[\"Immediate clinical escalation\", \"Urgent clinical review\", \"Clinical escalation\"].includes(doc.bp_action) && !doc.forward_to",
+   "depends_on": "eval:doc.bp_rule!='DRL v1.4' && ([\"Immediate clinical escalation\", \"Urgent clinical review\", \"Clinical escalation\"].includes(doc.bp_action) && !doc.forward_to)",
    "options": "<p style=\"color: var(--red-600); font-weight: var(--weight-semibold); margin-bottom: 0;\">Needs clinical review: forward this visit to a doctor under Clinical Review &gt; Forward To.</p>"
   },
   {
    "fieldname": "bp_note",
    "fieldtype": "HTML",
-   "depends_on": "eval:doc.bp_action",
+   "depends_on": "eval:doc.bp_rule!='DRL v1.4' && (doc.bp_action)",
    "options": "<p class=\"text-muted small\">This BP Status is a screening flag from a single reading, not a diagnosis of hypertension. If the reading is high, repeat it after the caregiver has rested. At 180/120 or above, or with concerning symptoms, follow the safety and escalation pathway: forward the visit to a doctor under Clinical Review.</p>"
   },
   {
@@ -894,15 +939,274 @@
   {
    "fieldname": "bp_rule",
    "fieldtype": "Data",
-   "label": "BP Status rule",
+   "label": "Rule set",
    "hidden": 1,
    "read_only": 1,
-   "description": "Which BP Status rule this visit is graded by. Blank: the rule in use before 05-Oct-2026 (High from 140/90). 2026-10-07: Dr Nayanjeet Chaudhury's rule (Urgent 180/120 or above, Low below 90/60, High 140/90 or above, Elevated 120/80 or above). The 06-Oct rule (2026-10) is no longer used."
+   "description": "Which rules this visit is graded by, stamped when it is created and never changed. DRL v1.4: red flags, BP tiers, referral, events and the Level 4 lock (Dr Nayanjeet Chaudhury, 13-Oct-2026). 2026-10-07: his BP rule of 07-Oct. Blank: the rule before 05-Oct-2026 (High from 140/90). 2026-10 (06-Oct) is no longer used.",
+   "default": "DRL v1.4"
+  },
+  {
+   "fieldname": "health_events_section",
+   "fieldtype": "Section Break",
+   "label": "Heart and brain events (DRL A8)",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+  },
+  {
+   "fieldname": "health_events_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted small\">Record each heart attack, stroke, TIA, angioplasty or stent, or bypass the caregiver has had, and how it is known. A qualifying event makes the caregiver Level 4 for good. If the caregiver mentions paralysis, choose \"Paralysis or weakness, not yet clarified\" and ask what happened: it is not recorded as a stroke until that is known.</p>"
+  },
+  {
+   "fieldname": "health_events",
+   "fieldtype": "Table",
+   "label": "Events",
+   "options": "Sparsh Health Event"
+  },
+  {
+   "fieldname": "level",
+   "fieldtype": "Select",
+   "label": "Prevention Level",
+   "options": "\nLevel 1\nLevel 2\nLevel 3\nLevel 4",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
+   "mandatory_depends_on": "eval:doc.bp_rule=='DRL v1.4' && doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
+   "description": "Level 1 Primordial, 2 Primary (at risk), 3 Secondary (has the disease), 4 Tertiary (survivor of a heart attack, stroke or other DRL A8 event). The S modifier is recorded separately below, and neither it nor the BP changes the Level."
+  },
+  {
+   "fieldname": "s_modifier",
+   "fieldtype": "Select",
+   "label": "S modifier: past surgery or structural illness",
+   "options": "\nYes\nNo",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+  },
+  {
+   "fieldname": "level_4_lock",
+   "fieldtype": "Small Text",
+   "label": "Level 4 Lock",
+   "read_only": 1,
+   "depends_on": "eval:doc.level_4_lock"
+  },
+  {
+   "fieldname": "red_flag_section",
+   "fieldtype": "Section Break",
+   "label": "Red-flag symptoms: ask before measuring BP",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+  },
+  {
+   "fieldname": "red_flag_intro",
+   "fieldtype": "HTML",
+   "options": "<p class=\"small\">Ask about each now, and again whenever a symptom comes up later (the <b>Red flags</b> button at the top brings you back here). <b>Any one is an emergency, whatever the BP.</b></p>"
+  },
+  {
+   "fieldname": "be_fast_heading",
+   "fieldtype": "Heading",
+   "label": "BE-FAST: stroke signs"
+  },
+  {
+   "fieldname": "rf_balance",
+   "fieldtype": "Check",
+   "label": "B: Sudden loss of balance or coordination"
+  },
+  {
+   "fieldname": "rf_vision",
+   "fieldtype": "Check",
+   "label": "E: Sudden visual disturbance"
+  },
+  {
+   "fieldname": "rf_face",
+   "fieldtype": "Check",
+   "label": "F: Sudden facial drooping"
+  },
+  {
+   "fieldname": "rf_limb",
+   "fieldtype": "Check",
+   "label": "A: Sudden limb weakness or numbness"
+  },
+  {
+   "fieldname": "rf_speech",
+   "fieldtype": "Check",
+   "label": "S: New speech difficulty"
+  },
+  {
+   "fieldname": "red_flag_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "other_emergencies_heading",
+   "fieldtype": "Heading",
+   "label": "Other emergencies"
+  },
+  {
+   "fieldname": "rf_chest_pain",
+   "fieldtype": "Check",
+   "label": "Acute chest pain or pressure"
+  },
+  {
+   "fieldname": "rf_breathless",
+   "fieldtype": "Check",
+   "label": "Severe breathlessness at rest"
+  },
+  {
+   "fieldname": "rf_unconscious",
+   "fieldtype": "Check",
+   "label": "Loss of consciousness"
+  },
+  {
+   "fieldname": "rf_seizure",
+   "fieldtype": "Check",
+   "label": "Seizure"
+  },
+  {
+   "fieldname": "rf_confusion",
+   "fieldtype": "Check",
+   "label": "Severe new confusion"
+  },
+  {
+   "fieldname": "rf_hypoglycaemia",
+   "fieldtype": "Check",
+   "label": "Severe hypoglycaemia with unsafe swallowing"
+  },
+  {
+   "fieldname": "rf_headache",
+   "fieldtype": "Check",
+   "label": "Sudden severe headache, particularly thunderclap headache"
+  },
+  {
+   "fieldname": "rf_other",
+   "fieldtype": "Check",
+   "label": "Any other sudden severe or potentially life-threatening symptom"
+  },
+  {
+   "fieldname": "rf_other_detail",
+   "fieldtype": "Small Text",
+   "label": "Describe the other symptom",
+   "depends_on": "eval:doc.rf_other",
+   "mandatory_depends_on": "eval:doc.rf_other"
+  },
+  {
+   "fieldname": "red_flag_answer_section",
+   "fieldtype": "Section Break",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+  },
+  {
+   "fieldname": "rf_none_asked",
+   "fieldtype": "Check",
+   "label": "Asked: none of these symptoms",
+   "description": "Tick only after asking. Left blank, the questions count as not asked, not as a No."
+  },
+  {
+   "fieldname": "red_flag_status",
+   "fieldtype": "Select",
+   "label": "Red-Flag Status",
+   "options": "\nRed-flag symptom present\nAsked: none present",
+   "read_only": 1
+  },
+  {
+   "fieldname": "red_flag_col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "emergency_action",
+   "fieldtype": "Select",
+   "label": "Emergency action taken",
+   "depends_on": "eval:doc.red_flag_status=='Red-flag symptom present'",
+   "options": "\nCalled 112 or an ambulance\nSent to the nearest Emergency Department\nUsed the hospital's emergency process\nCaregiver declined emergency care"
+  },
+  {
+   "fieldname": "emergency_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:doc.red_flag_status=='Red-flag symptom present'",
+   "options": "<p style=\"color: var(--red-600); font-weight: var(--weight-semibold); margin-bottom: 0;\">EMERGENCY: call 112, or take the caregiver to the nearest Emergency Department, or use the hospital's emergency process, now. Stop routine counselling. Do not wait for a repeat BP, a doctor's review or the clinical reviewer.</p>"
+  },
+  {
+   "fieldname": "bp_technique_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
+   "options": "<p class=\"text-muted small\">Rest quietly for 5 minutes before the first reading. Use the right cuff size, with the back and arm supported and no talking. Repeat after 1-2 minutes on the same arm, and record both readings. Never delay an emergency to repeat the BP.</p>"
+  },
+  {
+   "fieldname": "bp_alerts",
+   "fieldtype": "Small Text",
+   "label": "BP Alerts",
+   "read_only": 1,
+   "depends_on": "eval:doc.bp_alerts",
+   "description": "Every abnormal finding from the two readings. A lower repeat does not remove one."
+  },
+  {
+   "fieldname": "low_bp_symptoms",
+   "fieldtype": "Select",
+   "label": "Low BP symptoms: dizziness or light-headedness, fainting or near-fainting, unusual weakness, confusion",
+   "options": "\nYes\nNo",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4' && (doc.bp_alerts || '').includes('Low')"
+  },
+  {
+   "fieldname": "drl_bp_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4' && doc.bp_status",
+   "options": "<p class=\"text-muted small\">BP Status is a screening flag from one or two readings, not a diagnosis. Volunteers do not diagnose hypertension or stroke, and do not start or change medication.</p>"
+  },
+  {
+   "fieldname": "referral_section",
+   "fieldtype": "Section Break",
+   "label": "Physician referral",
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+  },
+  {
+   "fieldname": "referral_priority",
+   "fieldtype": "Select",
+   "label": "Referral Priority",
+   "options": "\nEmergency\nImmediate clinical assessment\nPhysician within 24-48 hours\nClinical review (low BP)\nPhysician within 4 weeks\nRepeat BP needed\nNo referral needed",
+   "read_only": 1,
+   "description": "Worked out from the red flags, the BP readings and the events. Blank: not enough recorded to tell."
+  },
+  {
+   "fieldname": "referral_advised",
+   "fieldtype": "Select",
+   "label": "Referral advised to the caregiver?",
+   "depends_on": "eval:['Emergency', 'Immediate clinical assessment', 'Physician within 24-48 hours', 'Clinical review (low BP)', 'Physician within 4 weeks'].includes(doc.referral_priority)",
+   "options": "\nYes\nNo: caregiver declined\nNo: other reason (note below)"
+  },
+  {
+   "fieldname": "referral_review_note",
+   "fieldtype": "HTML",
+   "depends_on": "eval:['Emergency', 'Immediate clinical assessment'].includes(doc.referral_priority) && !doc.forward_to",
+   "options": "<p style=\"color: var(--red-600); font-weight: var(--weight-semibold); margin-bottom: 0;\">Needs clinical review: forward this visit to a doctor (Forward To). Any emergency action comes first and never waits for this.</p>"
+  },
+  {
+   "fieldname": "referral_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "referral_date",
+   "fieldtype": "Date",
+   "label": "Referral Date",
+   "depends_on": "eval:doc.referral_advised=='Yes'",
+   "description": "Filled with the Counselled Date on save if left blank."
+  },
+  {
+   "fieldname": "referred_to",
+   "fieldtype": "Select",
+   "label": "Referred To",
+   "depends_on": "eval:doc.referral_advised=='Yes'",
+   "options": "\nSSSIHMS clinical review (Forward To)\nCaregiver's own doctor\nEmergency Department\nOther (note below)"
+  },
+  {
+   "fieldname": "referral_note",
+   "fieldtype": "Small Text",
+   "label": "Referral Note",
+   "depends_on": "eval:['Emergency', 'Immediate clinical assessment', 'Physician within 24-48 hours', 'Clinical review (low BP)', 'Physician within 4 weeks'].includes(doc.referral_priority)"
+  },
+  {
+   "fieldname": "review_reasons",
+   "fieldtype": "Small Text",
+   "label": "Clinical Safety Review",
+   "read_only": 1,
+   "depends_on": "eval:doc.review_reasons",
+   "description": "Why this visit is on the clinical reviewer's list. The reviewer never holds up an emergency."
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-07 18:00:00",
+ "modified": "2026-10-13 18:00:00",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Ticket",

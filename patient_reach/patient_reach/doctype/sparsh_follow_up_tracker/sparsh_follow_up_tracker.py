@@ -23,6 +23,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from patient_reach import drl_v14 as drl
+
 CALLS = (1, 2, 3)
 
 # "May be" counts as going on, as the change request says for both the next
@@ -34,26 +36,39 @@ GOING_ON = ("Yes", "May be")
 # team's request, from their experience of the calls made so far.
 FINISHED = ("Not Interested", "No Response", "Closed")
 
+REVIEWER_ROLE = "Sparsh Clinical Reviewer"
+
 # What a counsellor enters in a call. The Scheduled Date is not here: the
 # system sets it.
 CALL_ENTRY_FIELDS = ("actual_date", "duration", "outcome", "by", "interest", "next_date", "notes")
 
 
-def is_eligible(caregiver_interested, ready_to_change):
+def is_eligible(caregiver_interested, ready_to_change, referral_priority=None):
 	"""A visit puts its caregiver on the follow-up list when the caregiver is
 	interested in the programme OR ready to make a change ("those that are
 	interested in the program and those that are interested in making a
-	change" -- both groups)."""
-	return caregiver_interested == "Yes" or ready_to_change in GOING_ON
+	change" -- both groups). Under DRL v1.4 a visit that needs a physician
+	referral does too, whatever the caregiver's interest: the referral has to
+	be followed through (Dr Nayanjeet, 13-Oct-2026, C)."""
+	return (
+		caregiver_interested == "Yes"
+		or ready_to_change in GOING_ON
+		or referral_priority in drl.REFERRAL_PRIORITIES
+	)
 
 
 def latest_eligible_visit(visits):
 	"""The name of the first eligible visit in `visits` (newest first), or None.
 
 	Each visit carries `name`, `caregiver_interested` and
-	`are_you_ready_to_make_a_change_for_a_healthy_you`."""
+	`are_you_ready_to_make_a_change_for_a_healthy_you`, and may carry
+	`referral_priority`."""
 	for v in visits:
-		if is_eligible(v.get("caregiver_interested"), v.get("are_you_ready_to_make_a_change_for_a_healthy_you")):
+		if is_eligible(
+			v.get("caregiver_interested"),
+			v.get("are_you_ready_to_make_a_change_for_a_healthy_you"),
+			v.get("referral_priority"),
+		):
 			return v["name"]
 	return None
 
@@ -105,6 +120,10 @@ def next_call_due(values):
 
 	None once the follow-up is finished (FINISHED), once every open call has an Actual Call Date, or when the
 	next call has no Scheduled Date (a visit without a Follow-up Date).
+
+	Call 1 of a referral that gets the day-3 call (`referral_call_date`) is due
+	on day 3 when that comes before its Scheduled Date, or when it has none.
+	The counsellor's Follow-up Date is kept as it was entered.
 	"""
 	if values.get("follow_up_status") in FINISHED:
 		return None
@@ -112,15 +131,49 @@ def next_call_due(values):
 		if not call_is_open(values, n):
 			return None
 		if not values.get(f"call_{n}_actual_date"):
-			return values.get(f"call_{n}_scheduled_date") or None
+			dates = [str(values.get(f"call_{n}_scheduled_date") or "")[:10]]
+			if n == 1:
+				dates.append(str(values.get("referral_call_date") or "")[:10])
+			return min((d for d in dates if d), default=None)
 	return None
+
+
+def review_reasons(values, events, baseline_level):
+	"""Why a follow-up row goes to the clinical reviewer, or []: a red flag on
+	a call, an event reported on a call, and a qualifying event the baseline
+	visit's Prevention Level does not show (a Level 4 discrepancy)."""
+	reasons = []
+	if values.get("call_red_flag"):
+		reasons.append("Red-flag symptom reported on a follow-up call")
+	for row in events:
+		if row.get("event_type"):
+			reasons.append(f"{row['event_type']} reported on follow-up: {drl.event_level_4(row)}")
+	qualifying = any(drl.event_qualifies(row) for row in events)
+	if qualifying and not str(baseline_level or "").startswith("Level 4"):
+		reasons.append(f"Level 4 event on the follow-up list; the visit shows {baseline_level or 'no Level'}")
+	return reasons
 
 
 class SparshFollowupTracker(Document):
 	def validate(self):
+		from patient_reach.doc_events import _event_rows, level_4_reasons
+
 		values = self.as_dict()
-		errors = check_calls(values)
+		errors = check_calls(values) + drl.disposition_errors(values, REVIEWER_ROLE in frappe.get_roles())
 		if errors:
 			frappe.throw("<br>".join(_(e) for e in errors))
 		self.update(chained_schedule(values))
+		self.referral_call_date = drl.referral_call_date(self.referral_priority, self.referral_date)
 		self.next_call_date = next_call_due(self.as_dict())
+		for row in self.get("health_events") or []:
+			row.level_4_status = drl.event_level_4(row)
+		self.level_4_lock = drl.level_4_note(
+			level_4_reasons(self.caregiver_id, self.doctype, self.name, self.get("health_events"))
+		)
+		events = _event_rows(self.get("health_events"))
+		self.review_reasons = "\n".join(review_reasons(self.as_dict(), events, self.prevention_level)) or None
+
+	def on_update(self):
+		from patient_reach.doc_events import assign_for_review
+
+		assign_for_review(self)

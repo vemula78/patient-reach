@@ -78,13 +78,20 @@ def classify_measurements(
 	amended_from=None,
 	bp_repeat_reading=None,
 	bp_concerning_symptoms=0,
+	drl_values=None,
 ):
 	"""The String Test result and BP Status the Ticket will get on save, so the
 	form can show them as soon as the numbers are typed. The same functions the
-	save hook uses -- one rule, one implementation."""
+	save hook uses -- one rule, one implementation.
+
+	`drl_values` (JSON) carries what a DRL v1.4 visit is also graded on: the
+	red-flag boxes, the low-BP symptoms answer and the event rows."""
+	from patient_reach import drl_v14 as drl
 	from patient_reach.doc_events import (
+		BP_RULE_2026_10_07,
 		BP_RULE_CURRENT,
 		_string_test_result,
+		assess_drl_v14,
 		bp_assessment,
 		bp_status_for,
 	)
@@ -94,14 +101,22 @@ def classify_measurements(
 	# rule before 2026-10).
 	if frappe.utils.cint(is_new) and not amended_from:
 		bp_rule = BP_RULE_CURRENT
-	if bp_rule == BP_RULE_CURRENT:
-		bp_status, bp_action = bp_assessment(
+	result = {"string_test_result": _string_test_result(waist_cm, height_cm)}
+	if bp_rule == drl.RULE:
+		values = frappe._dict(frappe.parse_json(drl_values) or {})
+		values.update(bp_reading=bp_reading, bp_repeat_reading=bp_repeat_reading)
+		graded = assess_drl_v14(values)
+		result.update(
+			bp_status=graded["status"],
+			bp_action="\n".join(graded["actions"]) or None,
+			bp_alerts="\n".join(graded["alerts"]) or None,
+			referral_priority=graded["priority"],
+			red_flag_status=graded["red_flag_status"],
+		)
+	elif bp_rule == BP_RULE_2026_10_07:
+		result["bp_status"], result["bp_action"] = bp_assessment(
 			bp_reading, bp_repeat_reading, frappe.utils.cint(bp_concerning_symptoms)
 		)
 	else:
-		bp_status, bp_action = bp_status_for(bp_reading, bp_rule), None
-	return {
-		"string_test_result": _string_test_result(waist_cm, height_cm),
-		"bp_status": bp_status,
-		"bp_action": bp_action,
-	}
+		result["bp_status"], result["bp_action"] = bp_status_for(bp_reading, bp_rule), None
+	return result

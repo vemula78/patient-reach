@@ -47,6 +47,7 @@ from patient_reach.doc_events import (
 	BP_REPEAT_LOW,
 	BP_REPEAT_URGENT,
 	BP_RULE_2026_10,
+	BP_RULE_2026_10_07,
 	BP_RULE_CURRENT,
 	_bp_status,
 	_bp_status_2026_10,
@@ -264,10 +265,10 @@ class TestBPStatus2026_10(UnitTestCase):
 
 	def test_rule_is_chosen_by_the_stamp(self):
 		self.assertEqual(bp_status_for("85/70", BP_RULE_2026_10), NEEDS_REFERENCE)
-		self.assertEqual(bp_status_for("85/70", BP_RULE_CURRENT), "Low")
+		self.assertEqual(bp_status_for("85/70", BP_RULE_2026_10_07), "Low")
 		self.assertEqual(bp_status_for("138/91", BP_RULE_2026_10), "High")
 		self.assertEqual(bp_status_for("128/84", BP_RULE_2026_10), "Normal")
-		self.assertEqual(bp_status_for("128/84", BP_RULE_CURRENT), "Elevated")
+		self.assertEqual(bp_status_for("128/84", BP_RULE_2026_10_07), "Elevated")
 		self.assertEqual(bp_status_for("85/70", None), "Low")
 		self.assertEqual(bp_status_for("85/70", ""), "Low")
 
@@ -350,12 +351,15 @@ class TestBPAssessment(UnitTestCase):
 	def test_escalation_does_not_pop_up_on_save(self):
 		"""07-Oct-2026: the save-time popup made counsellors think the save had
 		failed (one visit saved 12 times in 33 minutes). The red note under BP
-		Action replaces it."""
+		Action replaces it. Still so under DRL v1.4 (13-Oct-2026): a red flag
+		with a severe reading gives the emergency instruction on the form, and
+		no popup."""
 		doc = frappe.new_doc("Ticket")
-		doc.update({"bp_reading": "190/100", "bp_concerning_symptoms": 1})
+		doc.update({"bp_reading": "190/100", "rf_chest_pain": 1})
 		with patch("patient_reach.doc_events.frappe.msgprint") as msgprint:
 			ticket_before_validate(doc)
-		self.assertEqual(doc.bp_action, "Immediate clinical escalation")
+		self.assertTrue(doc.bp_action.startswith("EMERGENCY"))
+		self.assertEqual(doc.referral_priority, "Emergency")
 		msgprint.assert_not_called()
 
 	def test_red_note_under_bp_action_until_forwarded(self):
@@ -374,8 +378,10 @@ class TestBPRuleStamp(UnitTestCase):
 		doc.bp_reading = "85/70"
 		ticket_before_validate(doc)
 		self.assertEqual(doc.bp_rule, BP_RULE_CURRENT)
+		self.assertEqual(BP_RULE_CURRENT, "DRL v1.4")
 		self.assertEqual(doc.bp_status, "Low")
-		self.assertEqual(doc.bp_action, BP_REPEAT_LOW)
+		self.assertEqual(doc.bp_alerts, "Low Systolic BP")
+		self.assertEqual(doc.referral_priority, "Repeat BP needed")
 
 	def test_amendment_keeps_the_rule_it_was_copied_with(self):
 		doc = frappe.new_doc("Ticket")
