@@ -135,7 +135,8 @@ class TestQueueRows(unittest.TestCase):
 					"T1",
 					referral_priority=drl.P_IMMEDIATE,
 					review_reasons="Red-flag symptom reported on a follow-up call",
-					referral_date="2026-11-19",
+					# Same day: an Immediate referral is flagged after 24 hours (27-Oct, b).
+					referral_date="2026-11-20",
 				)
 			],
 			TODAY,

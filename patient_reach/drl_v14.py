@@ -2,9 +2,10 @@
 and brain events (A8), the permanent Level 4 and the referral follow-through.
 
 Built from Dr Nayanjeet Chaudhury's answers of 13-Oct-2026 to the 13 questions
-of "BP and Stroke Rules, Draft 0.1" (11-Oct-2026). He approved development and
-testing, not production: nothing here reaches care until he signs off the
-logic and the test results.
+of "BP and Stroke Rules, Draft 0.1" (11-Oct-2026), with his clarifications of
+27-Oct-2026 (a-h): invalid readings, same-day assessment after an emergency
+referral, no fixed deadline after a low-BP review, role-based Level 4
+correction, and a confirmed TIA under A8.
 
 No `import frappe`: the rules are pinned by test_drl_v14.py, which runs with
 plain Python. doc_events.py and the follow-up tracker hand plain values in and
@@ -102,6 +103,7 @@ ELEVATED = "Elevated"
 NORMAL = "Normal"
 LOW = "Low"
 NEEDS_REFERENCE = "Needs Reference"
+INVALID = "Invalid Reading"
 
 # Highest first. Low is not a tier: it is checked separately and shown beside
 # whichever tier the reading reaches (Q2).
@@ -120,6 +122,20 @@ def bp_pair(text) -> tuple[int, int] | None:
 	if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
 		return None
 	return systolic, diastolic
+
+
+def is_invalid(pair) -> bool:
+	"""Diastolic at or above systolic (90/100) cannot be a true reading: it is
+	never graded, and the BP is remeasured at once (27-Oct, a). A narrow but
+	valid pulse pressure (110/100) is graded as usual: he set no threshold for
+	flagging it, pending clinical validation."""
+	return bool(pair) and pair[1] >= pair[0]
+
+
+INVALID_ACTION = (
+	"Invalid reading: the diastolic is at or above the systolic. Remeasure the BP now; "
+	"no BP category is given from this reading."
+)
 
 
 def high_tier(pair: tuple[int, int]) -> str:
@@ -208,7 +224,20 @@ def _assess_bp(first, repeat, red_flags, low_symptoms) -> dict:
 	first_text = str(first or "").strip()
 	p1 = bp_pair(first_text)
 	p2 = bp_pair(repeat)
+	# An invalid reading is kept as entered, for audit, but graded as if absent:
+	# a valid repeat after an invalid first reading is graded on its own.
+	if is_invalid(p1) or is_invalid(p2):
+		result["alerts"].append("Invalid reading")
+		todo.append((P_REPEAT, INVALID_ACTION))
+		if is_invalid(p2):
+			p2 = None
+		if is_invalid(p1):
+			p1, p2 = p2, None
+			if not p1:
+				result["status"] = INVALID
 	if not first_text:
+		pass
+	elif result["status"] == INVALID:
 		pass
 	elif not p1:
 		result["status"] = NEEDS_REFERENCE
@@ -337,7 +366,7 @@ RECENT = "Recent, symptoms resolved"
 PAST = "Past history"
 
 QUALIFIES = "Qualifies for Level 4 (DRL A8)"
-QUALIFIES_TIA = "Qualifies for Level 4 (clinically diagnosed TIA: A8 addition, pending rule validation)"
+QUALIFIES_TIA = "Qualifies for Level 4 (clinically confirmed TIA, DRL A8)"
 PENDING = "Pending clarification"
 
 
@@ -346,8 +375,9 @@ def event_level_4(row: dict) -> str | None:
 
 	- A documented or caregiver-reported heart attack, stroke, angioplasty or
 	  bypass qualifies (A8; written records are not mandatory).
-	- A TIA qualifies only when clinically diagnosed: his explicit addition to
-	  A8, still awaiting validation. Unverified transient symptoms stay pending.
+	- A TIA qualifies only when clinically confirmed: his explicit addition to
+	  A8 (27-Oct, d). A suspected TIA gives no provisional level: the existing
+	  level stands until a doctor confirms it.
 	- "Paralysis" alone, an "other" event, or any event without a source stays
 	  pending: it prompts questions, not a diagnosis.
 	"""
@@ -373,11 +403,14 @@ def event_actions(row: dict) -> list[tuple[str, str]]:
 	todo = []
 	if row.get("timing") == NOW:
 		todo.append((P_EMERGENCY, EMERGENCY_ACTION))
-	elif kind == EV_TIA and row.get("timing") == RECENT:
+	elif kind in (EV_TIA, EV_UNCLEAR) and row.get("timing") == RECENT:
+		# Transient focal symptoms that have resolved are a suspected TIA: an
+		# emergency whatever the Prevention Level (27-Oct, d).
 		todo.append(
 			(
-				P_IMMEDIATE,
-				"Suspected recent TIA: arrange urgent medical evaluation, even though the symptoms have resolved.",
+				P_EMERGENCY,
+				"Suspected recent TIA: emergency clinical assessment now, even though the symptoms "
+				"have resolved. Do not change the Prevention Level until a doctor confirms it.",
 			)
 		)
 	if kind == EV_UNCLEAR:
@@ -460,7 +493,8 @@ def level_4_note(reasons: list[str]) -> str | None:
 	return (
 		"Level 4 is permanent (DRL A8): "
 		+ "; ".join(reasons)
-		+ ". Only the clinical reviewer can remove it, and only if it was entered in error."
+		+ ". Only an authorised clinical supervisor (Sparsh Clinical Reviewer role) can correct it, "
+		"with a reason, and only if it was entered in error."
 	)
 
 
@@ -528,10 +562,12 @@ D_DECLINED = "Caregiver declined the referral"
 D_REVIEWER = "Closed by the clinical reviewer"
 DISPOSITIONS = (D_COMPLETED, D_DECLINED, D_REVIEWER)
 
-# Days after the referral date. P_HIGH's 2 days is his "24-48 hours". The
-# Emergency and Immediate 1 day, and the 28 days for a low-BP clinical review,
-# are proposed for his sign-off: he gave no time frame for those.
-CONSULT_DUE_DAYS = {P_EMERGENCY: 1, P_IMMEDIATE: 1, P_HIGH: 2, P_REVIEW: 28, P_ROUTINE: 28}
+# Days after the referral date before a missing consultation is flagged
+# (27-Oct, b). Emergency and Immediate are seen the same day, so the flag comes
+# after 24 hours; that does not make a day's delay acceptable. P_HIGH's 2 days
+# is his "24-48 hours". A low-BP clinical review has no deadline: the next
+# review follows the treating clinician's advice.
+CONSULT_DUE_DAYS = {P_EMERGENCY: 0, P_IMMEDIATE: 0, P_HIGH: 2, P_ROUTINE: 28}
 # He asked for the day-3 call for high-priority referrals; the more urgent ones get it too.
 DAY_3_PRIORITIES = (P_EMERGENCY, P_IMMEDIATE, P_HIGH)
 DAY_3 = 3
@@ -586,7 +622,8 @@ def referral_flags(values: dict, today: date) -> list[str]:
 	if not start:
 		return ["Referral date not recorded"]
 	days = (today - start).days
-	if values.get("consultation_status") != CONSULTED and days > CONSULT_DUE_DAYS[priority]:
+	due = CONSULT_DUE_DAYS.get(priority)
+	if due is not None and values.get("consultation_status") != CONSULTED and days > due:
 		flags.append(f"Consultation not recorded {days} days after referral")
 	if priority in DAY_3_PRIORITIES and not values.get("call_1_actual_date") and days > DAY_3:
 		flags.append("Day-3 call not made")

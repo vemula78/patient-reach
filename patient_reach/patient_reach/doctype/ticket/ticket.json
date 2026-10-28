@@ -529,11 +529,11 @@
    "label": "Blood Pressure Reading (mmHg)"
   },
   {
-   "description": "Calculated from the readings. DRL v1.4 (visits from its release): Severe 180/120 or above; High Priority 160/100 or above; High 140/90 or above; Elevated 120/80 or above; Normal below 120/80; Low below 90/60, shown beside any high tier under BP Alerts. The higher of the two readings counts. Earlier visits keep the rule they were graded by (Dr Nayanjeet Chaudhury's rule of 07-Oct-2026: Urgent 180/120 or more, Low below 90/60, High 140/90 or more, Elevated 120/80 or more). Needs Reference: a reading that cannot be read.",
+   "description": "Calculated from the readings. DRL v1.4 (visits from its release): Severe 180/120 or above; High Priority 160/100 or above; High 140/90 or above; Elevated 120/80 or above; Normal below 120/80; Low below 90/60, shown beside any high tier under BP Alerts. The higher of the two readings counts. Earlier visits keep the rule they were graded by (Dr Nayanjeet Chaudhury's rule of 07-Oct-2026: Urgent 180/120 or more, Low below 90/60, High 140/90 or more, Elevated 120/80 or more). Needs Reference: a reading that cannot be read. Invalid Reading: the diastolic is at or above the systolic; remeasure.",
    "fieldname": "bp_status",
    "fieldtype": "Select",
    "label": "BP Status",
-   "options": "\nNormal\nElevated\nHigh\nHigh Priority\nSevere\nLow\nUrgent\nNeeds Reference",
+   "options": "\nNormal\nElevated\nHigh\nHigh Priority\nSevere\nLow\nUrgent\nNeeds Reference\nInvalid Reading",
    "read_only": 1
   },
   {

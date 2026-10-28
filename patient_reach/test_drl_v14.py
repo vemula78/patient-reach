@@ -78,7 +78,7 @@ class TestMixedReadings(unittest.TestCase):
 		for reading, alerts in (
 			("150/55", ["High BP", "Low Diastolic BP"]),
 			("185/55", ["Severe BP", "Low Diastolic BP"]),
-			("85/95", ["High BP", "Low Systolic BP"]),
+			# 85/95 was here: diastolic above systolic is now an invalid reading (27-Oct, a).
 		):
 			with self.subTest(reading=reading):
 				self.assertEqual(bp(reading)["alerts"], alerts)
@@ -214,9 +214,13 @@ class TestEvents(unittest.TestCase):
 		self.assertEqual(r.event_level_4(unverified), r.PENDING)
 		self.assertEqual(r.event_level_4(dict(diagnosed, tia_diagnosis=None)), r.PENDING)
 
-	def test_recent_tia_needs_urgent_evaluation(self):
-		actions = r.event_actions({"event_type": r.EV_TIA, "timing": r.RECENT})
-		self.assertEqual(actions[0][0], r.P_IMMEDIATE)
+	def test_suspected_recent_tia_is_an_emergency(self):
+		# 27-Oct (d): whatever the Prevention Level, and also for resolved
+		# weakness not yet clarified.
+		for kind in (r.EV_TIA, r.EV_UNCLEAR):
+			actions = r.event_actions({"event_type": kind, "timing": r.RECENT})
+			self.assertEqual(actions[0][0], r.P_EMERGENCY)
+			self.assertIn("Do not change the Prevention Level", actions[0][1])
 
 	def test_symptoms_happening_now_are_an_emergency(self):
 		actions = r.event_actions({"event_type": r.EV_STROKE, "timing": r.NOW, "source": r.SRC_REPORTED})
@@ -231,7 +235,7 @@ class TestVisit(unittest.TestCase):
 	def test_events_add_their_actions_and_priority(self):
 		values = {"bp_reading": "118/76", "rf_none_asked": 1}
 		got = r.assess_visit(values, [{"event_type": r.EV_TIA, "timing": r.RECENT}])
-		self.assertEqual(got["priority"], r.P_IMMEDIATE)
+		self.assertEqual(got["priority"], r.P_EMERGENCY)
 		self.assertEqual(got["status"], r.NORMAL)
 		self.assertTrue(got["actions"][0].startswith("Suspected recent TIA"))
 		self.assertEqual(got["red_flag_status"], r.RF_NONE)
@@ -292,7 +296,7 @@ class TestLevel4(unittest.TestCase):
 		self.assertIsNone(r.prevention_code(None, "Yes"))
 
 	def test_note_names_the_reviewer(self):
-		self.assertIn("Only the clinical reviewer", r.level_4_note(["Stroke recorded on TKT-1"]))
+		self.assertIn("Sparsh Clinical Reviewer role", r.level_4_note(["Stroke recorded on TKT-1"]))
 		self.assertIsNone(r.level_4_note([]))
 
 
@@ -420,6 +424,109 @@ HERE = Path(__file__).parent
 DOCTYPE = HERE / "patient_reach" / "doctype"
 
 
+class TestClarifications27Oct(unittest.TestCase):
+	"""Dr Nayanjeet's test list of 27-Oct-2026 (h), one test per item."""
+
+	TODAY = date(2026, 11, 20)
+
+	def test_independent_or_logic(self):
+		self.assertEqual(bp("160/90")["status"], r.HIGH_PRIORITY)
+		self.assertEqual(bp("150/100")["status"], r.HIGH_PRIORITY)
+		self.assertEqual(bp("180/110")["status"], r.SEVERE)
+		self.assertEqual(bp("170/120")["status"], r.SEVERE)
+
+	def test_low_bp(self):
+		self.assertEqual((bp("89/70")["status"], bp("89/70")["alerts"]), (r.LOW, ["Low Systolic BP"]))
+		got = bp("100/59")
+		self.assertEqual((got["status"], got["alerts"]), (r.LOW, ["Low Diastolic BP"]))
+
+	def test_150_50_is_low_headline(self):
+		self.assertEqual(bp("150/50")["status"], r.LOW)
+
+	def test_mixed_categories_more_urgent_leads(self):
+		got = bp("170/50")
+		self.assertEqual((got["status"], got["alerts"]), (r.HIGH_PRIORITY, ["High Priority BP", "Low Diastolic BP"]))
+		got = bp("185/50")
+		self.assertEqual((got["status"], got["alerts"]), (r.SEVERE, ["Severe BP", "Low Diastolic BP"]))
+
+	def test_diastolic_at_or_above_systolic_is_invalid(self):
+		for reading in ("90/100", "100/100"):
+			got = bp(reading)
+			self.assertEqual(got["status"], r.INVALID)
+			self.assertEqual(got["alerts"], ["Invalid reading"])
+			self.assertEqual(got["priority"], r.P_REPEAT)
+			self.assertIn("Remeasure the BP now", got["actions"][0])
+
+	def test_invalid_first_reading_grades_the_valid_repeat(self):
+		got = bp("90/100", "182/100")
+		self.assertEqual(got["status"], r.SEVERE)
+		self.assertIn("Invalid reading", got["alerts"])
+
+	def test_invalid_repeat_is_not_graded(self):
+		got = bp("128/84", "80/95")
+		self.assertEqual(got["status"], r.ELEVATED)
+		self.assertIn("Invalid reading", got["alerts"])
+
+	def test_invalid_reading_with_red_flag_is_still_emergency(self):
+		got = bp("90/100", red_flags=r.RF_PRESENT)
+		self.assertEqual((got["status"], got["priority"]), (r.INVALID, r.P_EMERGENCY))
+
+	def test_narrow_pulse_pressure_is_graded(self):
+		# No threshold for "narrow" until validated: 110/100 is a valid reading.
+		got = bp("110/100")
+		self.assertEqual(got["status"], r.HIGH_PRIORITY)
+		self.assertNotIn("Invalid reading", got["alerts"])
+
+	def test_red_flag_with_normal_bp(self):
+		got = bp("118/76", "116/74", red_flags=r.RF_PRESENT)
+		self.assertEqual((got["status"], got["priority"]), (r.NORMAL, r.P_EMERGENCY))
+		self.assertEqual(got["actions"][0], r.EMERGENCY_ACTION)
+
+	def test_severe_then_lower_repeat_stays_visible(self):
+		got = bp("184/112", "150/92")
+		self.assertEqual((got["status"], got["priority"]), (r.SEVERE, r.P_IMMEDIATE))
+		self.assertIn("A lower repeat reading does not lift this alert", got["actions"][0])
+
+	def test_confirmed_versus_suspected_tia(self):
+		confirmed = {"event_type": r.EV_TIA, "source": r.SRC_DOCUMENTED, "tia_diagnosis": r.TIA_DIAGNOSED}
+		self.assertTrue(r.event_qualifies(confirmed))
+		self.assertNotIn("pending", r.event_level_4(confirmed).lower())
+		suspected = dict(confirmed, tia_diagnosis=r.TIA_UNVERIFIED, timing=r.RECENT)
+		self.assertFalse(r.event_qualifies(suspected))
+		self.assertEqual(r.level_4_sources([{"name": "TKT-1", "events": [suspected]}], [], set()), [])
+		self.assertEqual(r.event_actions(suspected)[0][0], r.P_EMERGENCY)
+
+	def test_level_4_persists_and_authorised_correction_lifts_it(self):
+		visits = [{"name": "TKT-1", "prevention_level": "Level 4", "events": []}]
+		self.assertEqual(r.level_4_sources(visits, [], set()), ["Level 4 recorded on TKT-1"])
+		self.assertEqual(r.level_4_sources(visits, [], {"TKT-1"}), [])
+
+	def test_emergency_and_immediate_consultation_flag_after_24_hours(self):
+		for priority in (r.P_EMERGENCY, r.P_IMMEDIATE):
+			row = {"referral_priority": priority, "referral_date": "2026-11-20"}
+			self.assertEqual(r.referral_flags(row, self.TODAY), [])
+			row["referral_date"] = "2026-11-19"
+			self.assertEqual(r.referral_flags(row, self.TODAY), ["Consultation not recorded 1 days after referral"])
+
+	def test_low_bp_review_has_no_fixed_deadline(self):
+		row = {"referral_priority": r.P_REVIEW, "referral_date": "2026-09-01"}
+		self.assertEqual(r.referral_flags(row, self.TODAY), [])
+		self.assertEqual(r.referral_flags(dict(row, follow_up_status="Closed"), self.TODAY),
+			["Follow-up ended (Closed) with the referral still open"])
+
+	def test_missing_follow_up_documentation(self):
+		row = {"referral_priority": r.P_HIGH, "referral_date": "2026-11-01"}
+		self.assertEqual(
+			r.referral_flags(row, self.TODAY),
+			[
+				"Consultation not recorded 19 days after referral",
+				"Day-3 call not made",
+				"Treatment not recorded as started after 14 days",
+			],
+		)
+		self.assertEqual(r.referral_flags(dict(row, referral_date=None), self.TODAY), ["Referral date not recorded"])
+
+
 def _fields(doctype):
 	folder = doctype.lower().replace(" ", "_").replace("-", "_")
 	data = json.loads((DOCTYPE / folder / f"{folder}.json").read_text())
@@ -436,7 +543,7 @@ class TestFormsAgreeWithTheRules(unittest.TestCase):
 
 	def test_ticket_selects(self):
 		_data, f = _fields("Ticket")
-		for status in (r.SEVERE, r.HIGH_PRIORITY, r.HIGH, r.ELEVATED, r.NORMAL, r.LOW, r.NEEDS_REFERENCE):
+		for status in (r.SEVERE, r.HIGH_PRIORITY, r.HIGH, r.ELEVATED, r.NORMAL, r.LOW, r.NEEDS_REFERENCE, r.INVALID):
 			self.assertIn(status, _options(f["bp_status"]))
 		self.assertEqual(_options(f["referral_priority"]), list(r.PRIORITIES))
 		self.assertEqual(_options(f["red_flag_status"]), [r.RF_PRESENT, r.RF_NONE])
