@@ -39,6 +39,7 @@
   "referral_disposition",
   "disposition_note",
   "call_1_section",
+  "call_1_prevention_level",
   "call_1_scheduled_date",
   "call_1_actual_date",
   "call_1_duration",
@@ -49,6 +50,7 @@
   "call_1_next_date",
   "call_1_notes",
   "call_2_section",
+  "call_2_prevention_level",
   "call_2_scheduled_date",
   "call_2_actual_date",
   "call_2_duration",
@@ -59,6 +61,7 @@
   "call_2_next_date",
   "call_2_notes",
   "call_3_section",
+  "call_3_prevention_level",
   "call_3_scheduled_date",
   "call_3_actual_date",
   "call_3_duration",
@@ -181,7 +184,14 @@
   {
    "fieldname": "call_1_section",
    "fieldtype": "Section Break",
-   "label": "Follow-up Call 1"
+   "label": "Follow-up Call 1",
+   "depends_on": "eval:doc.acceptance_to_change != 'No'"
+  },
+  {
+   "fieldname": "call_1_prevention_level",
+   "fieldtype": "Data",
+   "label": "Current Prevention Level",
+   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
   },
   {
    "fieldname": "call_1_scheduled_date",
@@ -194,14 +204,16 @@
   {
    "fieldname": "call_1_actual_date",
    "fieldtype": "Date",
-   "label": "Actual Call Date"
+   "label": "Actual Call Date",
+   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
   },
   {
    "fieldname": "call_1_duration",
    "fieldtype": "Duration",
    "label": "Call Duration",
    "hide_days": 1,
-   "hide_seconds": 1
+   "hide_seconds": 1,
+   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
   },
   {
    "fieldname": "call_1_outcome",
@@ -217,13 +229,15 @@
    "fieldname": "call_1_by",
    "fieldtype": "Link",
    "label": "Follow-up By",
-   "options": "User"
+   "options": "User",
+   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
   },
   {
    "fieldname": "call_1_interest",
    "fieldtype": "Select",
    "label": "Caregiver's Interest for Next Follow-up",
-   "options": "\nYes\nNo\nMay be"
+   "options": "\nYes\nNo\nMay be",
+   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
   },
   {
    "fieldname": "call_1_next_date",
@@ -235,13 +249,20 @@
   {
    "fieldname": "call_1_notes",
    "fieldtype": "Small Text",
-   "label": "Call Notes"
+   "label": "Call Notes",
+   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
   },
   {
    "fieldname": "call_2_section",
    "fieldtype": "Section Break",
    "label": "Follow-up Call 2",
-   "depends_on": "eval:['Yes','May be'].includes(doc.call_1_interest)"
+   "depends_on": "eval:doc.acceptance_to_change != 'No' && ['Yes','May be'].includes(doc.call_1_interest)"
+  },
+  {
+   "fieldname": "call_2_prevention_level",
+   "fieldtype": "Data",
+   "label": "Current Prevention Level",
+   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
   },
   {
    "fieldname": "call_2_scheduled_date",
@@ -253,14 +274,16 @@
   {
    "fieldname": "call_2_actual_date",
    "fieldtype": "Date",
-   "label": "Actual Call Date"
+   "label": "Actual Call Date",
+   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
   },
   {
    "fieldname": "call_2_duration",
    "fieldtype": "Duration",
    "label": "Call Duration",
    "hide_days": 1,
-   "hide_seconds": 1
+   "hide_seconds": 1,
+   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
   },
   {
    "fieldname": "call_2_outcome",
@@ -276,13 +299,15 @@
    "fieldname": "call_2_by",
    "fieldtype": "Link",
    "label": "Follow-up By",
-   "options": "User"
+   "options": "User",
+   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
   },
   {
    "fieldname": "call_2_interest",
    "fieldtype": "Select",
    "label": "Caregiver's Interest for Next Follow-up",
-   "options": "\nYes\nNo\nMay be"
+   "options": "\nYes\nNo\nMay be",
+   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
   },
   {
    "fieldname": "call_2_next_date",
@@ -294,13 +319,20 @@
   {
    "fieldname": "call_2_notes",
    "fieldtype": "Small Text",
-   "label": "Call Notes"
+   "label": "Call Notes",
+   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
   },
   {
    "fieldname": "call_3_section",
    "fieldtype": "Section Break",
    "label": "Follow-up Call 3",
-   "depends_on": "eval:['Yes','May be'].includes(doc.call_2_interest)"
+   "depends_on": "eval:doc.acceptance_to_change != 'No' && ['Yes','May be'].includes(doc.call_2_interest)"
+  },
+  {
+   "fieldname": "call_3_prevention_level",
+   "fieldtype": "Data",
+   "label": "Current Prevention Level",
+   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
   },
   {
    "fieldname": "call_3_scheduled_date",
@@ -312,14 +344,16 @@
   {
    "fieldname": "call_3_actual_date",
    "fieldtype": "Date",
-   "label": "Actual Call Date"
+   "label": "Actual Call Date",
+   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
   },
   {
    "fieldname": "call_3_duration",
    "fieldtype": "Duration",
    "label": "Call Duration",
    "hide_days": 1,
-   "hide_seconds": 1
+   "hide_seconds": 1,
+   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
   },
   {
    "fieldname": "call_3_outcome",
@@ -335,12 +369,14 @@
    "fieldname": "call_3_by",
    "fieldtype": "Link",
    "label": "Follow-up By",
-   "options": "User"
+   "options": "User",
+   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
   },
   {
    "fieldname": "call_3_notes",
    "fieldtype": "Small Text",
-   "label": "Call Notes"
+   "label": "Call Notes",
+   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
   },
   {
    "fieldname": "status_section",

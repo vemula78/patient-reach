@@ -501,7 +501,8 @@
   {
    "fieldname": "height_cm",
    "fieldtype": "Float",
-   "label": "Height (in cm)"
+   "label": "Height (in cm)",
+   "mandatory_depends_on": "eval:doc.ready_for_height"
   },
   {
    "fieldname": "string_test_result",
@@ -526,7 +527,8 @@
    "description": "Example: 120/80",
    "fieldname": "bp_reading",
    "fieldtype": "Data",
-   "label": "Blood Pressure Reading (mmHg)"
+   "label": "Blood Pressure Reading (mmHg)",
+   "mandatory_depends_on": "eval:doc.ready_for_bp"
   },
   {
    "description": "Calculated from the readings. DRL v1.4 (visits from its release): Severe 180/120 or above; High Priority 160/100 or above; High 140/90 or above; Elevated 120/80 or above; Normal below 120/80; Low below 90/60, shown beside any high tier under BP Alerts. The higher of the two readings counts. Earlier visits keep the rule they were graded by (Dr Nayanjeet Chaudhury's rule of 07-Oct-2026: Urgent 180/120 or more, Low below 90/60, High 140/90 or more, Elevated 120/80 or more). Needs Reference: a reading that cannot be read. Invalid Reading: the diastolic is at or above the systolic; remeasure.",
@@ -745,7 +747,8 @@
   {
    "fieldname": "weight",
    "fieldtype": "Float",
-   "label": "Weight (in kg)"
+   "label": "Weight (in kg)",
+   "mandatory_depends_on": "eval:doc.ready_for_weight"
   },
   {
    "fieldname": "are_you_ready_to_make_a_change_for_a_healthy_you",

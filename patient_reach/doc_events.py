@@ -36,6 +36,24 @@ def _string_test_result(waist_cm, height_cm):
 	return "PASS (Ends touch/ W:H < 0.5)" if waist < 0.5 * height else "FAIL (Gap exists - Central Obesity)"
 
 
+# A ticked "Caregiver ready to be measured for ..." box needs its value
+# (change request, 23-Oct-2026). The same pairs as the fields'
+# mandatory_depends_on in ticket.json, which the form alone enforces.
+MEASURED_WHEN_TICKED = (
+	("ready_for_weight", "weight", "Weight (in kg)"),
+	("ready_for_height", "height_cm", "Height (in cm)"),
+	("ready_for_bp", "bp_reading", "Blood Pressure Reading (mmHg)"),
+)
+
+
+def measurements_missing(values):
+	"""Labels of the measurements ticked as ready but left blank. A Float column
+	cannot be null, so 0 here means not entered."""
+	return [
+		label for check, field, label in MEASURED_WHEN_TICKED if values.get(check) and not values.get(field)
+	]
+
+
 def _bp_status(bp_reading):
 	"""Classify a free-text BP reading such as "128/84".
 
@@ -222,6 +240,21 @@ def ticket_before_validate(doc, method=None):
 	# Save" server script.)
 	if doc.docstatus == 0:
 		doc.flags.ignore_mandatory = True
+	elif doc.docstatus == 1:
+		missing = measurements_missing(doc.as_dict())
+		if missing:
+			frappe.throw(
+				frappe._("Ticked as ready to be measured, but not filled in: {0}").format(", ".join(missing)),
+				title=frappe._("Missing Measurements"),
+			)
+
+	# Follow-up calls belong on the Sai Sparsh follow-up list (change request,
+	# 23-Oct-2026). Visits already saved as Follow-up, and their amendments, stay valid.
+	if doc.is_new() and not doc.get("amended_from") and doc.get("visit_type") == "Follow-up":
+		frappe.throw(
+			frappe._("Visit Type Follow-up is no longer used. Record the call on the Sai Sparsh follow-up list."),
+			title=frappe._("Visit Type"),
+		)
 
 	# Derive the measurements the counselling team asked to have calculated
 	# rather than chosen by hand. These are descriptive summaries of values the
@@ -691,6 +724,7 @@ def ticket_sync_follow_up_tracker(doc, method=None):
 	# str(): a visit saved from the form holds dates as text, a loaded tracker as dates.
 	elif all(str(tracker.get(t) or "") == str(doc.get(v) or "") for t, v in TRACKER_FROM_VISIT.items()):
 		return
+	tracker.flags.synced_from_visit = True
 	tracker.save(ignore_permissions=True)
 
 
@@ -728,6 +762,7 @@ def _release_previous_caregivers_tracker(doc):
 		visit = latest_eligible_visit(visits)
 		if visit:
 			tracker.baseline_ticket = visit
+			tracker.flags.synced_from_visit = True
 			tracker.save(ignore_permissions=True)
 		elif not any_call_entry(tracker.as_dict()):
 			frappe.delete_doc(TRACKER, name, ignore_permissions=True)
