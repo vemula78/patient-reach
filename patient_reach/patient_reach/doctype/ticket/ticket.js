@@ -53,6 +53,28 @@ frappe.ui.form.on("Ticket", {
 	visit_type: function (frm) {
 		toggle_sections(frm);
 	},
+	// One visit per caregiver (change request, 29-Oct-2026). The server refuses
+	// the save; this says so as soon as the caregiver is picked, before the rest
+	// of the form is filled in.
+	patient_id: function (frm) {
+		if (!frm.is_new() || frm.doc.amended_from || !frm.doc.patient_id) return;
+		frappe.db
+			.get_list("Ticket", {
+				filters: { patient_id: frm.doc.patient_id, docstatus: ["<", 2] },
+				limit: 5,
+			})
+			.then((rows) => {
+				if (!rows.length) return;
+				frappe.msgprint({
+					title: __("Caregiver already has a visit"),
+					indicator: "orange",
+					message: __(
+						"This caregiver already has a visit: {0}. There can be only one visit per caregiver; open that visit instead.",
+						[rows.map((r) => r.name).join(", ")]
+					),
+				});
+			});
+	},
 	waist_cm: classify_measurements,
 	height_cm: classify_measurements,
 	bp_reading: classify_measurements,

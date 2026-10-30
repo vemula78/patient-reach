@@ -373,10 +373,11 @@
   "doctype_or_field": "DocField",
   "field_name": "department",
   "is_system_generated": 1,
+  "modified": "2026-10-30 12:00:00.000000",
   "name": "Ticket-department-in_list_view",
   "property": "in_list_view",
   "property_type": "Check",
-  "value": "1"
+  "value": "0"
  },
  {
   "doc_type": "Ticket",
@@ -406,10 +407,11 @@
   "doctype_or_field": "DocField",
   "field_name": "follow_up_by",
   "is_system_generated": 0,
+  "modified": "2026-10-30 12:00:00.000000",
   "name": "Ticket-follow_up_by-in_list_view",
   "property": "in_list_view",
   "property_type": "Check",
-  "value": "1"
+  "value": "0"
  },
  {
   "doc_type": "Ticket",
@@ -417,10 +419,11 @@
   "doctype_or_field": "DocField",
   "field_name": "follow_up_by",
   "is_system_generated": 0,
+  "modified": "2026-10-30 12:00:00.000000",
   "name": "Ticket-follow_up_by-in_standard_filter",
   "property": "in_standard_filter",
   "property_type": "Check",
-  "value": "1"
+  "value": "0"
  },
  {
   "doc_type": "Ticket",
@@ -428,10 +431,11 @@
   "doctype_or_field": "DocField",
   "field_name": "follow_up_date",
   "is_system_generated": 0,
+  "modified": "2026-10-30 12:00:00.000000",
   "name": "Ticket-follow_up_date-in_list_view",
   "property": "in_list_view",
   "property_type": "Check",
-  "value": "1"
+  "value": "0"
  },
  {
   "doc_type": "Ticket",
@@ -439,10 +443,11 @@
   "doctype_or_field": "DocField",
   "field_name": "follow_up_date",
   "is_system_generated": 0,
+  "modified": "2026-10-30 12:00:00.000000",
   "name": "Ticket-follow_up_date-in_standard_filter",
   "property": "in_standard_filter",
   "property_type": "Check",
-  "value": "1"
+  "value": "0"
  },
  {
   "doc_type": "Ticket",
@@ -625,10 +630,11 @@
   "doctype_or_field": "DocField",
   "field_name": "visit_type",
   "is_system_generated": 1,
+  "modified": "2026-10-30 12:00:00.000000",
   "name": "Ticket-visit_type-in_list_view",
   "property": "in_list_view",
   "property_type": "Check",
-  "value": "1"
+  "value": "0"
  },
  {
   "doc_type": "Ticket",
@@ -1079,6 +1085,22 @@
   "modified": "2026-10-05 10:00:00.000000",
   "module": null,
   "name": "Patient-marital_status-hidden",
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Patient",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "dashboard_tab",
+  "is_system_generated": 0,
+  "modified": "2026-10-30 12:00:00.000000",
+  "module": null,
+  "name": "Patient-dashboard_tab-hidden",
   "property": "hidden",
   "property_type": "Check",
   "row_name": null,

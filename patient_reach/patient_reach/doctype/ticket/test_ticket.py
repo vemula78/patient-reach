@@ -52,6 +52,7 @@ from patient_reach.doc_events import (
 	_bp_status,
 	_bp_status_2026_10,
 	_bp_status_2026_10_07,
+	_refuse_a_second_visit,
 	_string_test_result,
 	bp_assessment,
 	bp_status_for,
@@ -467,3 +468,25 @@ class TestDocEventRegistration(UnitTestCase):
 		for target in ours:
 			with self.subTest(target=target):
 				self.assertTrue(callable(frappe.get_attr(target)), f"{target} is not callable")
+
+
+class TestOneVisitPerCaregiver(UnitTestCase):
+	"""One visit per SWF-SPARSH Id (change request, 29-Oct-2026)."""
+
+	def test_a_second_visit_is_refused(self):
+		doc = frappe._dict(patient_id="SWF-SPARSH-0001")
+		with patch("patient_reach.doc_events.frappe.get_all", return_value=["TKT-2026-00001"]):
+			self.assertRaises(frappe.ValidationError, _refuse_a_second_visit, doc)
+
+	def test_the_first_visit_and_an_amendment_are_allowed(self):
+		with patch("patient_reach.doc_events.frappe.get_all", return_value=[]):
+			_refuse_a_second_visit(frappe._dict(patient_id="SWF-SPARSH-0001"))
+		with patch("patient_reach.doc_events.frappe.get_all", return_value=["TKT-2026-00001"]) as get_all:
+			_refuse_a_second_visit(frappe._dict(patient_id="SWF-SPARSH-0001", amended_from="TKT-2026-00001"))
+			_refuse_a_second_visit(frappe._dict(patient_id=""))
+		get_all.assert_not_called()
+
+	def test_cancelled_visits_do_not_count(self):
+		with patch("patient_reach.doc_events.frappe.get_all", return_value=[]) as get_all:
+			_refuse_a_second_visit(frappe._dict(patient_id="SWF-SPARSH-0001"))
+		self.assertEqual(get_all.call_args.kwargs["filters"]["docstatus"], ["<", 2])

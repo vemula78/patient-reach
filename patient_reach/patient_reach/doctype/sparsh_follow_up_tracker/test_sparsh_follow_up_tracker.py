@@ -36,6 +36,7 @@ from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_
 	GOING_ON,
 	NOT_CONNECTED_FIELDS,
 	any_call_entry,
+	call_is_open,
 	chained_schedule,
 	check_acceptance,
 	check_calls,
@@ -215,6 +216,47 @@ class TestChangeRequest2026_10_23(UnitTestCase):
 					continue
 				self.assertIn(f"doc.call_{n}_outcome != 'Connected'", FIELDS[f"call_{n}_{f}"]["mandatory_depends_on"])
 			self.assertNotIn("mandatory_depends_on", FIELDS.get(f"call_{n}_next_date", {}))
+
+
+class TestChangeRequest2026_10_29(UnitTestCase):
+	"""The change request of 29-Oct-2026: a call that did not connect opens no
+	further call, even with a Yes or May be; the list shows Status once."""
+
+	def test_a_call_that_did_not_connect_opens_no_further_call(self):
+		values = {"call_1_outcome": "No Answer After 3 Attempts", "call_1_interest": "May be"}
+		self.assertFalse(call_is_open(values, 2))
+		self.assertIsNone(next_call_due({**values, "call_1_actual_date": "2026-10-10", "call_2_scheduled_date": "2026-10-24"}))
+		self.assertEqual(prepopulate_prevention_levels({**values, "prevention_level": "Level 2"}), {"call_1_prevention_level": "Level 2"})
+		values = {"call_1_interest": "Yes", "call_2_outcome": "Wrong Number", "call_2_interest": "Yes"}
+		self.assertTrue(call_is_open(values, 2))
+		self.assertFalse(call_is_open(values, 3))
+
+	def test_connected_or_not_yet_entered_opens_the_next_call(self):
+		self.assertTrue(call_is_open({"call_1_outcome": "Connected", "call_1_interest": "Yes"}, 2))
+		self.assertTrue(call_is_open({"call_1_interest": "May be"}, 2))
+		self.assertFalse(call_is_open({"call_1_outcome": "Connected", "call_1_interest": "No"}, 2))
+
+	def test_a_call_already_entered_stays_open(self):
+		"""SFT-00616, -00652, -00955 on care, 30-Oct-2026."""
+		values = {"call_1_outcome": "No Answer After 3 Attempts", "call_1_interest": "Yes", "call_2_notes": "spoke"}
+		self.assertTrue(call_is_open(values, 2))
+		self.assertEqual(check_calls(values), [])
+
+	def test_json_sections_follow_the_outcome(self):
+		for n in (2, 3):
+			depends_on = FIELDS[f"call_{n}_section"]["depends_on"]
+			self.assertIn(f"doc.call_{n - 1}_outcome == 'Connected'", depends_on)
+			for f in ("actual_date", "duration", "outcome", "by", "notes"):
+				self.assertIn(f"'{f}'", depends_on)
+			self.assertIn(f"doc['call_{n}_' + f]", depends_on)
+
+	def test_status_is_shown_once_on_the_list(self):
+		"""The coloured Status column stays; the Follow-up Status column goes, and
+		the field is filtered and sorted as Status."""
+		self.assertEqual(FIELDS["follow_up_status"]["label"], "Status")
+		self.assertFalse(FIELDS["follow_up_status"].get("in_list_view"))
+		self.assertEqual(FIELDS["follow_up_status"].get("in_standard_filter"), 1)
+		self.assertEqual(FIELDS["follow_up_status"].get("reqd"), 1, "a reqd field is offered by the sort selector")
 
 
 class TestNextCallDue(UnitTestCase):

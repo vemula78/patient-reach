@@ -298,7 +298,7 @@ def ticket_before_validate(doc, method=None):
 		)
 
 	if doc.is_new():
-		_warn_if_caregiver_already_has_a_first_visit(doc)
+		_refuse_a_second_visit(doc)
 
 
 def _event_rows(rows):
@@ -461,26 +461,26 @@ def assign_for_review(doc, method=None):
 		)
 
 
-def _warn_if_caregiver_already_has_a_first_visit(doc):
-	"""Warn, do not block: a second First Visit is usually a duplicate entry,
-	but the counsellor is the one who can tell. 7 caregivers on care had one
-	on 05-Oct-2026. Only on the first save, so a Draft does not nag on every
-	save afterwards."""
-	if not doc.get("patient_id") or doc.get("visit_type") != "First Visit":
+def _refuse_a_second_visit(doc):
+	"""One visit per caregiver (SWF-SPARSH Id), whatever its Visit Type: the
+	change request of 29-Oct-2026. Until then a second visit was only warned
+	about. Only for a new visit, so the 8 caregivers who had two on 30-Oct-2026
+	can still save them; an amendment replaces its cancelled original."""
+	if not doc.get("patient_id") or doc.get("amended_from"):
 		return
 	existing = frappe.get_all(
 		"Ticket",
-		filters={"patient_id": doc.patient_id, "visit_type": "First Visit", "docstatus": ["<", 2]},
+		filters={"patient_id": doc.patient_id, "docstatus": ["<", 2]},
 		pluck="name",
 		limit=5,
 	)
 	if existing:
-		frappe.msgprint(
+		frappe.throw(
 			frappe._(
-				"This caregiver already has a First Visit: {0}. Check that this is not a duplicate entry."
+				"This caregiver already has a visit: {0}. There can be only one visit per caregiver; "
+				"open that visit instead, and record follow-up calls on the Sai Sparsh follow-up list."
 			).format(", ".join(existing)),
-			title=frappe._("Possible duplicate visit"),
-			indicator="orange",
+			title=frappe._("Caregiver already has a visit"),
 		)
 
 

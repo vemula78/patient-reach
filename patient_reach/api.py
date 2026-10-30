@@ -44,8 +44,9 @@ def get_data(data=None):
 	data["heatmap"] = False
 	data.pop("heatmap_message", None)
 
-	data["transactions"].append({"label": frappe._("Support"), "items": ["Ticket"]})
-	data["transactions"].append({"label": frappe._("Sai Sparsh"), "items": ["Sparsh Follow Up"]})
+	# The Support (Visit) and Sai Sparsh (Sparsh Follow Up) boxes are gone too:
+	# the counselling team asked for the caregiver's Dashboard tab to go, or be
+	# left empty (29-Oct-2026). The tab itself is hidden by a Property Setter.
 
 	return data
 

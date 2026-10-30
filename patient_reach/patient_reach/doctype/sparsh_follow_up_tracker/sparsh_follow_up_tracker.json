@@ -4,7 +4,7 @@
  "autoname": "SFT-.#####",
  "naming_rule": "Expression",
  "creation": "2026-10-06 18:00:00",
- "modified": "2026-10-13 18:00:00",
+ "modified": "2026-10-30 12:00:00",
  "modified_by": "Administrator",
  "owner": "Administrator",
  "description": "Sai Sparsh follow-up of one caregiver over up to three calls. Created from the visit; replaces the Sparsh Follow Up form on the workspace (06-Oct-2026).",
@@ -256,7 +256,7 @@
    "fieldname": "call_2_section",
    "fieldtype": "Section Break",
    "label": "Follow-up Call 2",
-   "depends_on": "eval:doc.acceptance_to_change != 'No' && ['Yes','May be'].includes(doc.call_1_interest)"
+   "depends_on": "eval:doc.acceptance_to_change != 'No' && ['Yes','May be'].includes(doc.call_1_interest) && (!doc.call_1_outcome || doc.call_1_outcome == 'Connected' || ['actual_date','duration','outcome','by','interest','next_date','notes'].some((f) => doc['call_2_' + f]))"
   },
   {
    "fieldname": "call_2_prevention_level",
@@ -326,7 +326,7 @@
    "fieldname": "call_3_section",
    "fieldtype": "Section Break",
    "label": "Follow-up Call 3",
-   "depends_on": "eval:doc.acceptance_to_change != 'No' && ['Yes','May be'].includes(doc.call_2_interest)"
+   "depends_on": "eval:doc.acceptance_to_change != 'No' && ['Yes','May be'].includes(doc.call_2_interest) && (!doc.call_2_outcome || doc.call_2_outcome == 'Connected' || ['actual_date','duration','outcome','by','interest','next_date','notes'].some((f) => doc['call_3_' + f]))"
   },
   {
    "fieldname": "call_3_prevention_level",
@@ -386,11 +386,10 @@
   {
    "fieldname": "follow_up_status",
    "fieldtype": "Select",
-   "label": "Follow-up Status",
+   "label": "Status",
    "options": "Follow-up 1\nFollow-up 2\nFollow-up 3\nNot Interested\nNo Response\nClosed",
    "default": "Follow-up 1",
    "reqd": 1,
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "description": "Not Interested: the caregiver clearly refuses to continue the conversation on the phone. No Response: the caregiver did not pick up when called 3 times, at different times."
   },

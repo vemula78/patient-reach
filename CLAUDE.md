@@ -396,3 +396,25 @@ until he signs off the logic and the test results.
   keeps the row on its visit until the referral is closed, and brings Call 1
   forward to day 3 for the urgent priorities. `Sparsh Clinical Review Queue`
   works the flags out on the day it is run.
+
+## Change request of 29-Oct-2026 (Deepa Rajesh, revised document)
+
+- **One visit per caregiver**: `_refuse_a_second_visit` refuses a new visit for
+  a caregiver who has one not cancelled (amendments excepted); the form warns
+  when the caregiver is picked. The 8 caregivers with two visits on 30-Oct
+  keep them.
+- **A call that did not connect opens no further call**, even with a Yes or May
+  be; a call already entered stays open (SFT-00616, -00652, -00955 had one).
+- Tracker `follow_up_status` is labelled **Status** and is off the list: the
+  coloured indicator column is the one Status column.
+- The **Healthcare page** and the **Visit list's columns** (List View Settings
+  "Ticket", which overrides `in_list_view`) are care records, edited by
+  `patches/v1_13/healthcare_landing_page.py`. It is idempotent and can be
+  re-run with `bench execute` after a migrate that resets the page. The ops
+  repo's `care_nav_followups.py` re-adds "Caregiver Follow-ups" to that page:
+  it must not run after this patch.
+- `Sparsh Counsellor Statistics` ("Counsellor/Coach wise Statistics"), role
+  `Sparsh Statistics Viewer`, given on care to the four people the team named.
+- The caregiver's Dashboard tab is hidden (Property Setter) and its Support /
+  Sai Sparsh boxes are gone from `api.get_data`. "Patient" now translates to
+  "Caregiver".

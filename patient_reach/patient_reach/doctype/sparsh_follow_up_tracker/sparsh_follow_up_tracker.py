@@ -82,14 +82,27 @@ def any_call_entry(values):
 	return any(call_has_entry(values, n) for n in CALLS)
 
 
+def previous_going_on(values, n):
+	"""The caregiver said Yes or May be on call `n - 1`."""
+	return values.get(f"call_{n - 1}_interest") in GOING_ON
+
+
 def call_is_open(values, n):
 	"""Call 1 always; call 2 or 3 only when the previous call's interest is
-	Yes or May be. None of the calls is open when the caregiver's acceptance to
-	change is No (the change request, 23-Oct-2026). The same test as the
-	sections' `depends_on`."""
+	Yes or May be and it was not a call that failed to connect (change request
+	of 29-Oct-2026). None of the calls is open when the caregiver's acceptance
+	to change is No (23-Oct-2026). The same test as the sections' `depends_on`.
+
+	A call already entered stays open: on 30-Oct-2026 three caregivers on care
+	had a call 2 after a call 1 that did not connect, and hiding it would hide
+	what the counsellor recorded."""
 	if values.get("acceptance_to_change") == "No":
 		return False
-	return n == 1 or values.get(f"call_{n - 1}_interest") in GOING_ON
+	if n == 1:
+		return True
+	outcome = values.get(f"call_{n - 1}_outcome")
+	connected = outcome in (None, "", "Connected")
+	return previous_going_on(values, n) and (connected or call_has_entry(values, n))
 
 
 # What a counsellor must fill in a call that was not connected, or where the

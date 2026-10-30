@@ -342,8 +342,9 @@ fixtures = [
 	},
 	{"dt": "Translation", "filters": [["source_text", "in", ["Ticket", "Patient"]]]},
 	# 13-Oct-2026: opens Sparsh Clinical Safety Review, Dr Nayanjeet's review list.
-	# Who holds it is site data, given on care, not shipped here.
-	{"dt": "Role", "filters": [["name", "in", ["Sparsh Clinical Reviewer"]]]},
+	# 30-Oct-2026: Sparsh Statistics Viewer opens Sparsh Counsellor Statistics.
+	# Who holds them is site data, given on care, not shipped here.
+	{"dt": "Role", "filters": [["name", "in", ["Sparsh Clinical Reviewer", "Sparsh Statistics Viewer"]]]},
 ]
 
 doc_events = {

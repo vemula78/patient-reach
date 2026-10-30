@@ -190,7 +190,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Patient ID / Caregiver ID",
+   "label": "Caregiver ID",
    "options": "Patient",
    "reqd": 1,
    "search_index": 1
@@ -203,7 +203,6 @@
    "fieldname": "nodal_centre",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": " Nodal Centre",
    "options": "Branch",
    "reqd": 1
@@ -598,7 +597,7 @@
    "fieldname": "patient_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Patient Name / Caregiver Name",
+   "label": "Caregiver Name",
    "read_only": 1
   },
   {
@@ -671,7 +670,9 @@
    "fieldtype": "Select",
    "label": "Department (of Original Patient)",
    "mandatory_depends_on": "eval:doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "options": "\nIP Cardiac Sciences\nIP Neuro Sciences\nIP Multi-specialty\nOPD"
+   "options": "\nIP Cardiac Sciences\nIP Neuro Sciences\nIP Multi-specialty\nOPD",
+   "in_list_view": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "any_other_information_of_original_patient",
@@ -808,7 +809,7 @@
    "fieldname": "patient_mobile_no",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Patient/Caregiver Mobile No",
+   "label": "Caregiver Mobile No",
    "read_only": 1
   },
   {
@@ -822,14 +823,17 @@
    "fieldname": "counselled_date",
    "fieldtype": "Date",
    "label": "Counselled Date",
-   "read_only": 0
+   "read_only": 0,
+   "reqd": 1
   },
   {
    "fieldname": "counsellor_name",
    "fieldtype": "Link",
    "label": "Counsellor-Coach’s Name",
    "read_only": 0,
-   "options": "User"
+   "options": "User",
+   "reqd": 1,
+   "default": "__user"
   },
   {
    "fieldname": "feedback",
@@ -1209,7 +1213,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-13 18:00:00",
+ "modified": "2026-10-30 12:00:00",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Ticket",
