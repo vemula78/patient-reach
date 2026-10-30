@@ -27,18 +27,21 @@ from frappe import _
 
 from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import FINISHED
 
+NO_COUNSELLOR = "(no counsellor recorded)"
+
 
 def build_rows(users, caregivers, visits, follow_ups):
 	"""One row per counsellor, by name. `users` maps a login to its full name
 	(every enabled Volunteer); the three count maps are keyed by login. A login
 	with a count but not in `users` (a disabled account, say) is listed too,
-	so no record goes uncounted."""
+	and records with no counsellor (1 draft visit on 30-Oct-2026) get a row of
+	their own, so no record goes uncounted and the columns add up to the
+	page's totals."""
+	caregivers, visits, follow_ups = (_blank_as_one(m) for m in (caregivers, visits, follow_ups))
 	logins = set(users) | set(caregivers) | set(visits) | set(follow_ups)
-	logins.discard(None)
-	logins.discard("")
 	rows = [
 		{
-			"counsellor_name": users.get(login) or login,
+			"counsellor_name": users.get(login) or login or NO_COUNSELLOR,
 			"counsellor_email": login,
 			"caregivers": caregivers.get(login, 0),
 			"visits": visits.get(login, 0),
@@ -46,7 +49,15 @@ def build_rows(users, caregivers, visits, follow_ups):
 		}
 		for login in logins
 	]
-	return sorted(rows, key=lambda r: (r["counsellor_name"].lower(), r["counsellor_email"]))
+	return sorted(rows, key=lambda r: (not r["counsellor_email"], r["counsellor_name"].lower(), r["counsellor_email"]))
+
+
+def _blank_as_one(counts):
+	"""None and "" are both "no counsellor": one key, their counts added."""
+	out = {}
+	for login, n in counts.items():
+		out[login or ""] = out.get(login or "", 0) + n
+	return out
 
 
 def _counts(doctype, field, filters):
