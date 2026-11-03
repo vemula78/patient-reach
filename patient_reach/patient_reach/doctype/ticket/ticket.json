@@ -976,14 +976,15 @@
    "options": "\nLevel 1\nLevel 2\nLevel 3\nLevel 4",
    "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
    "mandatory_depends_on": "eval:doc.bp_rule=='DRL v1.4' && doc.ticket_type == 'Preventive Cardiology' && doc.visit_type == 'First Visit'",
-   "description": "Level 1 Primordial, 2 Primary (at risk), 3 Secondary (has the disease), 4 Tertiary (survivor of a heart attack, stroke or other DRL A8 event). The S modifier is recorded separately below, and neither it nor the BP changes the Level."
+   "description": "<ul><li>Level 1 (Primordial): Healthy, No bad habits, No Cardiometabolic diagnosis, No family history.</li><li>Level 2 (Primary): \"At Risk.\" Has habits (Smoking/Stress/Pre-diabetic/family history) but no disease yet.</li><li>Level 3 (Secondary): \"Sick.\" Has BP/Diabetes/Obesity/Heart Disease/Kidney/Thyroid/Liver disease.</li><li>Level 4 (Tertiary): \"Survivor.\" Already had a heart attack/stroke, or another DRL A8 event.</li></ul>The S modifier is recorded separately below, and neither it nor the BP changes the Level."
   },
   {
    "fieldname": "s_modifier",
    "fieldtype": "Select",
    "label": "S modifier: past surgery or structural illness",
    "options": "\nYes\nNo",
-   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
+   "description": "\"S\" modifier: Past surgeries and Structural illness, for any Level. It replaces Level 1s, 2s, 3s and 4s of the earlier form; the visit still files the two together (Level 2 and Yes is kept as Level 2s)."
   },
   {
    "fieldname": "level_4_lock",
