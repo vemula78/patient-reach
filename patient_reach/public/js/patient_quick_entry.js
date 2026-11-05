@@ -90,3 +90,18 @@
 	install();
 	document.addEventListener("DOMContentLoaded", install);
 })();
+
+// AGE line on the Patient form (05-Nov-2026). Health writes it only on the
+// first load of each record and when Date of Birth is edited, and all Patient
+// forms share one box, so opening a record already cached in the browser
+// showed the previous caregiver's age. Rewrite it on every refresh.
+frappe.ui.form.on("Patient", {
+	refresh(frm) {
+		const box = frm.fields_dict.age_html && frm.fields_dict.age_html.wrapper;
+		if (!box) return;
+		if (!frm.doc.dob) return $(box).html("");
+		const d = moment.duration(moment().diff(moment(frm.doc.dob, "YYYY-MM-DD")));
+		if (d.asMilliseconds() < 0) return $(box).html("");
+		$(box).html(`${__("AGE")} : ${d.years()} ${__("Year(s)")} ${d.months()} ${__("Month(s)")} ${d.days()} ${__("Day(s)")}`);
+	},
+});
