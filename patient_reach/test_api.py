@@ -41,8 +41,9 @@ class TestPatientAutoname(UnitTestCase):
 
 	def test_hospital_without_a_branch_code_is_refused(self):
 		"""A Branch exists but carries no code: still not nameable."""
+		# Branch Code is mandatory on the form, so only a bulk insert can leave it empty.
 		branch = frappe.get_doc(doctype="Branch", branch=frappe.generate_hash("nocode", 8)).insert(
-			ignore_permissions=True
+			ignore_permissions=True, ignore_mandatory=True
 		)
 		self.addCleanup(branch.delete, ignore_permissions=True)
 

@@ -175,7 +175,10 @@ class TestTicketBeforeValidate(UnitTestCase):
 		self.assertEqual(doc.bp_status, "Elevated")
 
 	def test_recorded_verdicts_survive_when_there_is_nothing_to_derive(self):
-		"""Without measurements the hook must leave the counsellor's entry alone."""
+		"""Without measurements the string test entry is left alone. BP Status is
+		derived and read-only under DRL v1.4, which grades every new visit, and
+		a blank input leaves its result blank (Dr Nayanjeet's instruction D), so
+		a value typed into the field is not kept."""
 		doc = self._draft(
 			waist_cm=0,
 			height_cm=0,
@@ -185,7 +188,7 @@ class TestTicketBeforeValidate(UnitTestCase):
 		)
 		ticket_before_validate(doc)
 		self.assertEqual(doc.string_test_result, PASS_RESULT)
-		self.assertEqual(doc.bp_status, "High")
+		self.assertFalse(doc.bp_status)
 
 	def test_unparseable_bp_still_produces_a_verdict(self):
 		"""Prose is classified, not ignored -- so it does overwrite."""
