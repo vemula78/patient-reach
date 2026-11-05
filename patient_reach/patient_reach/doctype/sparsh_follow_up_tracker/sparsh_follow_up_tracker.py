@@ -106,8 +106,9 @@ def call_is_open(values, n):
 
 
 # What a counsellor must fill in a call that was not connected, or where the
-# caregiver said No. Interest is only on calls 1 and 2; call 3 has no interest.
-NOT_CONNECTED_FIELDS = ("prevention_level", "actual_date", "duration", "by", "interest", "notes")
+# caregiver said No. Call Duration is not asked: a Duration field cannot hold 0, so a
+# call that never connected would otherwise be impossible to save. Interest is only on calls 1 and 2; call 3 has no interest.
+NOT_CONNECTED_FIELDS = ("prevention_level", "actual_date", "by", "interest", "notes")
 
 
 def is_not_connected(values, n):

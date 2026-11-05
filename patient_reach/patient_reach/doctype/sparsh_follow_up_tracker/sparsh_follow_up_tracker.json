@@ -213,7 +213,7 @@
    "label": "Call Duration",
    "hide_days": 1,
    "hide_seconds": 1,
-   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
+   "description": "Leave blank when the call did not connect."
   },
   {
    "fieldname": "call_1_outcome",
@@ -283,7 +283,7 @@
    "label": "Call Duration",
    "hide_days": 1,
    "hide_seconds": 1,
-   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
+   "description": "Leave blank when the call did not connect."
   },
   {
    "fieldname": "call_2_outcome",
@@ -353,7 +353,7 @@
    "label": "Call Duration",
    "hide_days": 1,
    "hide_seconds": 1,
-   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
+   "description": "Leave blank when the call did not connect."
   },
   {
    "fieldname": "call_3_outcome",

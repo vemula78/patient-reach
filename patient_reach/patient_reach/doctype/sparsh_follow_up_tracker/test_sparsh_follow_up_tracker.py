@@ -208,6 +208,15 @@ class TestChangeRequest2026_10_23(UnitTestCase):
 		values = {**full, "call_1_interest": "No", "call_2_outcome": "Wrong Number"}
 		self.assertEqual(missing_when_not_connected(values), [])
 
+	def test_call_duration_is_not_required_for_a_call_that_never_connected(self):
+		"""A Duration field cannot hold 0 (the control turns it into blank), so
+		requiring it made "No Answer After 3 Attempts" impossible to save."""
+		self.assertNotIn("duration", NOT_CONNECTED_FIELDS)
+		for n in (1, 2, 3):
+			self.assertNotIn("mandatory_depends_on", FIELDS[f"call_{n}_duration"])
+		values = {f"call_1_{f}": "x" for f in NOT_CONNECTED_FIELDS}
+		self.assertEqual(missing_when_not_connected({**values, "call_1_outcome": "No Answer After 3 Attempts"}), [])
+
 	def test_json_requires_the_same_fields(self):
 		for n in (1, 2, 3):
 			self.assertEqual(FIELDS[f"call_{n}_prevention_level"]["label"], "Current Prevention Level")
