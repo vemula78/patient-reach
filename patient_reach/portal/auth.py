@@ -96,7 +96,7 @@ def _make_otp():
 
 # The DLT-registered wording. The gateway refuses a body that differs from the
 # registered template, so change this only together with the template on the DLT portal.
-DEFAULT_OTP_MESSAGE = "Your OTP for SSSIHMS Patient Reach is {otp}. It is valid for 5 minutes. Do not share it with anyone."
+DEFAULT_OTP_MESSAGE = "{otp} is your OTP to log in or register on SSSIHMS Patient Reach. Valid for 5 minutes. Do not share it with anyone."
 EXOTEL_SETTINGS = (
     "exotel_subdomain",
     "exotel_account_sid",
