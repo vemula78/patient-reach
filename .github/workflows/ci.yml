@@ -100,6 +100,10 @@ jobs:
 
       - name: Setup
         run: |
+          # The current mariadb client requires TLS by default and the mariadb:10.6
+          # service offers none. bench calls the client itself (new-site), so a
+          # client config file is the one setting that covers every call.
+          printf '[client]\nskip-ssl\n' > ~/.my.cnf
           pip install frappe-bench
           bench init --skip-redis-config-generation --skip-assets \
             --frappe-branch "$FRAPPE_BRANCH" --python "$(which python)" ~/frappe-bench
