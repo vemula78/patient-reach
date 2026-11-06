@@ -231,6 +231,32 @@ class TestPortalEnquiry(UnitTestCase):
 		self.assertEqual(row.responder, self.staff)
 		self.assertTrue(row.responding_date)
 
+	def test_administrator_can_work_an_enquiry(self):
+		"""Administrator holds every role, Patient Portal User too; the enquirer check must not catch it."""
+		doc = self._raise(self.portal_a)
+		frappe.set_user("Administrator")
+		doc = apply_workflow(doc, "Review")
+		self.assertIn(doc.workflow_state, ("Reviewed by Volunteer", "Reviewed by Staff", "Reviewed by Doctor"))
+
+	def test_a_patient_posting_directly_cannot_forge_status_or_a_hospital_reply(self):
+		frappe.set_user(self.portal_a)
+		doc = frappe.get_doc(
+			{
+				"doctype": "Portal Enquiry",
+				"enquirer": self.portal_b,
+				"workflow_state": "Responded By Doctor",
+				"enquirer_name": "Someone Else",
+				"subject": "Forged subject here",
+				"details": "A forged enquiry body of text",
+				"responses": [{"response": "The hospital says everything is fine"}],
+			}
+		)
+		doc.insert()
+		self.assertEqual(doc.enquirer, self.portal_a)
+		self.assertEqual(doc.workflow_state, "Draft")
+		self.assertNotEqual(doc.enquirer_name, "Someone Else")
+		self.assertEqual(len(doc.responses), 0)
+
 	def test_the_patient_cannot_move_their_own_enquiry_along(self):
 		doc = self._raise(self.portal_a)
 		with self.assertRaises((WorkflowTransitionError, frappe.PermissionError)):
