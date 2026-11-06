@@ -66,10 +66,10 @@ for _state in ("Draft", "Reviewed by Volunteer", "Reviewed by Staff", "Reviewed 
 
 
 def _ensure_role():
+	# Syncing the doctype may already have created the role, with desk access on.
 	if not frappe.db.exists("Role", "Patient Portal User"):
-		frappe.get_doc(
-			{"doctype": "Role", "role_name": "Patient Portal User", "desk_access": 0}
-		).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "Role", "role_name": "Patient Portal User"}).insert(ignore_permissions=True)
+	frappe.db.set_value("Role", "Patient Portal User", "desk_access", 0)
 
 
 def execute():
