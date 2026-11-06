@@ -83,6 +83,11 @@ class TestForm(UnitTestCase):
 		self.assertEqual(fields["consulting_doctor"]["options"], "User")
 		self.assertEqual(fields["patient_id"]["options"], "Patient")
 
+	def test_no_field_has_a_colon_default(self):
+		"""A default of ":Company" is "copy this field from a Company record" to Frappe, and the
+		New form then fails with Unknown column 'company' (found in the 06-Nov rehearsal)."""
+		self.assertEqual([n for n, f in _fields().items() if str(f.get("default", "")).startswith(":")], [])
+
 	def test_the_patient_profile_brings_name_mobile_and_nodal_centre_forward(self):
 		fields = _fields()
 		self.assertEqual(fields["patient_name"]["fetch_from"], "patient_id.patient_name")

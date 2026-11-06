@@ -154,7 +154,6 @@
    "fieldtype": "Link",
    "label": "Company",
    "options": "Company",
-   "default": ":Company",
    "read_only": 1,
    "reqd": 1
   },

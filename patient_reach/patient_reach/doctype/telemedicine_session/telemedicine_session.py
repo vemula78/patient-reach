@@ -51,6 +51,13 @@ def doctor_users(doctype, txt, searchfield, start, page_len, filters):
 
 
 class TelemedicineSession(Document):
+	def before_validate(self):
+		# Company is read-only on the form and is filled in by the form's script; this covers a
+		# session saved any other way. (A ":Company" field default does not mean "the default
+		# company" to Frappe: it copies the field from a Company record and fails.)
+		if not self.company:
+			self.company = frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+
 	def before_insert(self):
 		if not self.workflow_state:
 			self.workflow_state = FIRST_STATE

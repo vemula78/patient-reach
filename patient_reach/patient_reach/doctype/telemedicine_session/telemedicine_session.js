@@ -9,6 +9,12 @@ frappe.ui.form.on("Telemedicine Session", {
 		}));
 		frm.set_query("follow_up_by", () => ({ filters: { enabled: 1, user_type: "System User" } }));
 	},
+	onload(frm) {
+		if (frm.is_new() && !frm.doc.company) {
+			const company = frappe.defaults.get_user_default("Company") || frappe.defaults.get_global_default("company");
+			if (company) frm.set_value("company", company);
+		}
+	},
 	patient_ws_number(frm) {
 		const value = (frm.doc.patient_ws_number || "").replace(/\s+/g, "").toUpperCase();
 		if (value !== frm.doc.patient_ws_number) frm.set_value("patient_ws_number", value);
