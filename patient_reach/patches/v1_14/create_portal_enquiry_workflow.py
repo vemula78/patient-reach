@@ -37,7 +37,8 @@ STATES = [
 	("Duplicate", "Inverse", "Staff"),
 ]
 
-HAS_RESPONSE = "doc.responses and len(doc.responses) > 0"
+# Workflow conditions are evaluated in a sandbox without len(); a child table is a list, empty when there is no reply.
+HAS_RESPONSE = "doc.responses"
 
 # (from, action, to, role, condition)
 TRANSITIONS = [

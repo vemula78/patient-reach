@@ -140,6 +140,11 @@ class TestSession(UnitTestCase):
 			{
 				"doctype": "Telemedicine Session",
 				"patient_id": "TMS-TEST-PATIENT",
+				# ignore_links (below) also skips the fetch that brings these forward from the
+				# profile, so they are given here; the fetch itself is pinned by the JSON test.
+				"patient_name": "Test Patient",
+				"patient_mobile_no": "+919876500001",
+				"nodal_centre": "Test Centre",
 				"patient_ws_number": "ws00123456",
 				"department": "Test Department",
 				"company": "Test Company",
@@ -152,14 +157,11 @@ class TestSession(UnitTestCase):
 		doc.flags.ignore_permissions = True
 		return doc
 
-	def test_it_saves_as_scheduled_with_a_clean_ws_number_and_the_profile_details(self):
+	def test_it_saves_as_scheduled_with_a_clean_ws_number(self):
 		doc = self._make().insert()
 		self.assertEqual(doc.workflow_state, "Scheduled")
 		self.assertEqual(doc.patient_ws_number, "WS00123456")
 		self.assertEqual(doc.visit_type, "First Visit")
-		self.assertEqual(doc.patient_name, "Test Patient")
-		self.assertEqual(doc.patient_mobile_no, "+919876500001")
-		self.assertEqual(doc.nodal_centre, "Test Centre")
 
 	def test_blood_pressure_must_be_systolic_over_diastolic(self):
 		self.assertEqual(self._make(bp_reading=" 120 / 80 ").insert().bp_reading, "120/80")
@@ -176,6 +178,8 @@ class TestSession(UnitTestCase):
 			self._make(patient_ws_number="WS000123456").insert()
 		with self.assertRaises(frappe.MandatoryError):
 			self._make(patient_id=None).insert()
+		with self.assertRaises(frappe.MandatoryError):
+			self._make(patient_mobile_no=None).insert()
 
 	def test_completing_needs_advice_and_nothing_else(self):
 		doc = self._make().insert()
