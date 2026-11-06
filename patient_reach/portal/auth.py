@@ -11,6 +11,7 @@ import secrets
 import time
 
 import frappe
+import requests
 from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, strip_html_tags
 
@@ -93,18 +94,54 @@ def _make_otp():
     return f"{secrets.randbelow(10**6):06d}"
 
 
-def _deliver(mobile, otp):
-    if otp_mode() == "static":
-        return  # POC: nothing is sent; the OTP is the configured static value
-    if not frappe.db.get_single_value("SMS Settings", "sms_gateway_url"):
-        frappe.throw("SMS is not configured yet. Please contact the administrator.")
-    from frappe.core.doctype.sms_settings.sms_settings import send_sms
+# The DLT-registered wording. The gateway refuses a body that differs from the
+# registered template, so change this only together with the template on the DLT portal.
+DEFAULT_OTP_MESSAGE = "Your OTP for SSSIHMS Patient Reach is {otp}. It is valid for 5 minutes. Do not share it with anyone."
+EXOTEL_SETTINGS = (
+    "exotel_subdomain",
+    "exotel_account_sid",
+    "exotel_api_key",
+    "exotel_api_token",
+    "portal_sms_sender_id",
+    "portal_sms_dlt_entity_id",
+    "portal_sms_dlt_template_id",
+)
 
-    template = frappe.conf.get("portal_otp_message") or (
-        "Your OTP for SSSIHMS Patient Reach is {otp}. It is valid for 5 minutes."
-    )
-    # Some gateways want 10 digits, some 91XXXXXXXXXX: adjust here once DLT/gateway is known.
-    send_sms([mobile.lstrip("+")], template.format(otp=otp), success_msg=False)
+
+def _deliver(mobile, otp):
+    """Send the OTP by SMS through Exotel. Every setting lives in site_config.json.
+
+    The API key and token are secrets and so are never in code, the database or
+    a log. Nothing about the recipient or the message is logged either.
+    """
+    if otp_mode() == "static":
+        return  # developer sites: nothing is sent; the OTP is the configured static value
+    conf = frappe.conf
+    if not all(conf.get(k) for k in EXOTEL_SETTINGS):
+        frappe.throw("SMS is not configured yet. Please contact the administrator.")
+
+    template = conf.get("portal_otp_message") or DEFAULT_OTP_MESSAGE
+    try:
+        res = requests.post(
+            f"https://{conf.exotel_subdomain}/v1/Accounts/{conf.exotel_account_sid}/Sms/send.json",
+            auth=(conf.exotel_api_key, conf.exotel_api_token),
+            data={
+                "From": conf.portal_sms_sender_id,
+                "To": mobile,
+                "Body": template.format(otp=otp),
+                "DltEntityId": conf.portal_sms_dlt_entity_id,
+                "DltTemplateId": conf.portal_sms_dlt_template_id,
+                "SmsType": "transactional",
+            },
+            timeout=10,
+        )
+        ok = res.status_code in (200, 201)
+        status = res.status_code
+    except requests.RequestException as e:
+        ok, status = False, type(e).__name__
+    if not ok:
+        frappe.log_error(title="Portal OTP SMS failed", message=f"Exotel answered: {status}")
+        frappe.throw("We could not send the OTP just now. Please try again in a few minutes.")
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])

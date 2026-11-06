@@ -95,6 +95,54 @@ class TestPortalAuth(UnitTestCase):
 			verify(MOBILE_A, OTP, "register", "Test Caregiver")
 
 
+class TestExotelDelivery(UnitTestCase):
+	CONF = {
+		"exotel_subdomain": "api.example.test",
+		"exotel_account_sid": "acct",
+		"exotel_api_key": "key",
+		"exotel_api_token": "token",
+		"portal_sms_sender_id": "SENDER",
+		"portal_sms_dlt_entity_id": "1000000000000000001",
+		"portal_sms_dlt_template_id": "1000000000000000002",
+	}
+
+	def _conf(self, **over):
+		return patch.dict(frappe.local.conf, {**self.CONF, "developer_mode": 0, **over})
+
+	def test_unconfigured_site_refuses_instead_of_pretending(self):
+		missing = {k: None for k in self.CONF}
+		with patch.dict(frappe.local.conf, {**missing, "developer_mode": 0}), patch(
+			"patient_reach.portal.auth.requests.post"
+		) as post:
+			with self.assertRaises(frappe.ValidationError):
+				auth._deliver("+919876500001", OTP)
+		post.assert_not_called()
+
+	def test_sms_goes_to_exotel_with_the_dlt_fields_and_basic_auth(self):
+		with self._conf(), patch("patient_reach.portal.auth.requests.post") as post:
+			post.return_value.status_code = 200
+			auth._deliver("+919876500001", OTP)
+		(url,), kw = post.call_args
+		self.assertEqual(url, "https://api.example.test/v1/Accounts/acct/Sms/send.json")
+		self.assertEqual(kw["auth"], ("key", "token"))
+		self.assertEqual(kw["data"]["DltTemplateId"], "1000000000000000002")
+		self.assertEqual(kw["data"]["DltEntityId"], "1000000000000000001")
+		self.assertEqual(kw["data"]["To"], "+919876500001")
+		self.assertIn(OTP, kw["data"]["Body"])
+		self.assertNotIn("token", url)
+
+	def test_a_gateway_refusal_is_an_error_and_the_log_holds_no_number_or_otp(self):
+		with self._conf(), patch("patient_reach.portal.auth.requests.post") as post, patch(
+			"patient_reach.portal.auth.frappe.log_error"
+		) as log:
+			post.return_value.status_code = 400
+			with self.assertRaises(frappe.ValidationError):
+				auth._deliver("+919876500001", OTP)
+		logged = " ".join(map(str, log.call_args.kwargs.values()))
+		self.assertNotIn("9876500001", logged)
+		self.assertNotIn(OTP, logged)
+
+
 class TestPortalEnquiry(UnitTestCase):
 	@classmethod
 	def setUpClass(cls):
