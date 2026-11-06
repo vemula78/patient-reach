@@ -1,0 +1,37 @@
+{% extends "templates/pr_portal_base.html" %}
+
+{% block page_content %}
+<div class="pr-wrap pr-narrow">
+  <div class="pr-card pr-auth">
+    <h1>Log in</h1>
+    <p class="pr-muted">Enter your mobile number. We will send a one-time password (OTP) by SMS.</p>
+    {% if demo_otp %}
+    <div class="pr-alert"><strong>Demo mode.</strong> No SMS is sent. Use OTP <strong>{{ demo_otp }}</strong>.</div>
+    {% endif %}
+    <div id="pr-msg" class="pr-msg" role="alert"></div>
+
+    <form id="pr-form1" novalidate>
+      <label for="pr-mobile">Mobile number</label>
+      <div class="pr-phone">
+        <span>+91</span>
+        <input id="pr-mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit mobile number" maxlength="10" required>
+      </div>
+      <button id="pr-send" class="pr-btn pr-btn-block" type="submit">Send OTP</button>
+    </form>
+
+    <form id="pr-form2" hidden novalidate>
+      <label for="pr-otp">Enter the 6-digit OTP</label>
+      <input id="pr-otp" type="tel" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit OTP" required>
+      <button id="pr-verify" class="pr-btn pr-btn-block" type="submit">Verify and log in</button>
+      <button id="pr-resend" class="pr-link" type="button" disabled>Resend OTP</button>
+      <button id="pr-change" class="pr-link" type="button">Change number</button>
+    </form>
+
+    <p class="pr-muted" style="margin-top:18px">New here? <a href="/portal-register">Register</a></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block pr_script %}
+<script>frappe.ready(function () { prInitOtpFlow("login"); });</script>
+{% endblock %}

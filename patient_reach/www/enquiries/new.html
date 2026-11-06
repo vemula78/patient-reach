@@ -1,0 +1,54 @@
+{% extends "templates/pr_portal_base.html" %}
+
+{% block page_content %}
+<div class="pr-wrap pr-page" style="max-width:640px">
+  <h1>New enquiry</h1>
+  <div class="pr-alert">
+    If this is a medical emergency, do not wait for a reply. Please call the hospital:
+    <a href="tel:+918047104600">{{ hospital.campuses[0].phone }}</a> ({{ hospital.campuses[0].name }}).
+  </div>
+
+  <div class="pr-card">
+    <div id="pr-msg" class="pr-msg" role="alert"></div>
+    <form id="pr-enquiry-form" novalidate>
+      <label for="pr-subject">Subject</label>
+      <input id="pr-subject" type="text" maxlength="140" placeholder="Briefly, what is your enquiry about?" required>
+
+      <label for="pr-details">Details</label>
+      <textarea id="pr-details" maxlength="2000" placeholder="Please describe your enquiry" required></textarea>
+      <div class="pr-count"><span id="pr-count">0</span> / 2000</div>
+      <p class="pr-muted">Please do not include Aadhaar numbers, bank or payment details.</p>
+
+      <button id="pr-submit" class="pr-btn pr-btn-block" type="submit">Submit enquiry</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block pr_script %}
+<script>
+frappe.ready(function () {
+  const $ = (id) => document.getElementById(id);
+  $("pr-details").addEventListener("input", function () { $("pr-count").textContent = this.value.length; });
+
+  $("pr-enquiry-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    prSetMsg("");
+    const subject = $("pr-subject").value.trim();
+    const details = $("pr-details").value.trim();
+    if (subject.length < 3) return prSetMsg("Please enter a subject.");
+    if (details.length < 10) return prSetMsg("Please add a few more details (at least 10 characters).");
+
+    const btn = $("pr-submit");
+    btn.disabled = true;
+    const r = await prCall("patient_reach.portal.enquiry.create_enquiry", { subject: subject, details: details });
+    if (!r.ok) {
+      btn.disabled = false;
+      if (r.status === 401 || r.status === 403) { window.location.href = "/portal-login"; return; }
+      return prSetMsg(r.error);
+    }
+    window.location.href = "/enquiries/view?submitted=1&name=" + encodeURIComponent(r.data.name);
+  });
+});
+</script>
+{% endblock %}

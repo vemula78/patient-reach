@@ -1,0 +1,39 @@
+{% extends "templates/pr_portal_base.html" %}
+
+{% block page_content %}
+<div class="pr-wrap pr-page" style="max-width:720px">
+  <p><a href="/enquiries">&larr; My Enquiries</a></p>
+
+  {% if just_submitted %}
+  <div class="pr-notice">
+    Your enquiry has been submitted. Your reference number is <strong>{{ enquiry.name }}</strong>.
+  </div>
+  {% endif %}
+
+  <div class="pr-card">
+    <div class="pr-title-row">
+      <div>
+        <div class="pr-ref">{{ enquiry.name }} &middot; {{ enquiry.created }}</div>
+        <h1>{{ enquiry.subject }}</h1>
+      </div>
+      <span class="pr-badge pr-{{ enquiry.status.tone }}">{{ enquiry.status.label }}</span>
+    </div>
+    <p class="pr-muted">{{ enquiry.status.message }}</p>
+    <div class="pr-text">{{ enquiry.details }}</div>
+  </div>
+
+  <div class="pr-section">
+    <h2>Responses</h2>
+    {% if enquiry.responses %}
+      {% for r in enquiry.responses %}
+      <div class="pr-response">
+        <div class="pr-ref">{{ hospital.short_name }} team &middot; {{ r.date }}</div>
+        <div class="pr-text">{{ r.text }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="pr-muted">No response yet. We will notify you when there is an update.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

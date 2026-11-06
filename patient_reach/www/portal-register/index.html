@@ -1,0 +1,42 @@
+{% extends "templates/pr_portal_base.html" %}
+
+{% block page_content %}
+<div class="pr-wrap pr-narrow">
+  <div class="pr-card pr-auth">
+    <h1>Register</h1>
+    <p class="pr-muted">Create an account with your mobile number to raise and track enquiries with {{ hospital.short_name }}.</p>
+    {% if demo_otp %}
+    <div class="pr-alert"><strong>Demo mode.</strong> No SMS is sent. Use OTP <strong>{{ demo_otp }}</strong>.</div>
+    {% endif %}
+    <div id="pr-msg" class="pr-msg" role="alert"></div>
+
+    <form id="pr-form1" novalidate>
+      <label for="pr-name">Full name</label>
+      <input id="pr-name" type="text" autocomplete="name" maxlength="60" placeholder="Your full name" required>
+
+      <label for="pr-mobile">Mobile number</label>
+      <div class="pr-phone">
+        <span>+91</span>
+        <input id="pr-mobile" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit mobile number" required>
+      </div>
+      <p class="pr-muted" style="margin-top:10px">We will use this number to send OTPs and updates about your enquiries.</p>
+      <p class="pr-muted">By registering you agree that {{ hospital.short_name }} may keep your name, mobile number and enquiries to reply to you. They are not shared outside the hospital.</p>
+      <button id="pr-send" class="pr-btn pr-btn-block" type="submit">Send OTP</button>
+    </form>
+
+    <form id="pr-form2" hidden novalidate>
+      <label for="pr-otp">Enter the 6-digit OTP</label>
+      <input id="pr-otp" type="tel" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit OTP" required>
+      <button id="pr-verify" class="pr-btn pr-btn-block" type="submit">Verify and register</button>
+      <button id="pr-resend" class="pr-link" type="button" disabled>Resend OTP</button>
+      <button id="pr-change" class="pr-link" type="button">Change details</button>
+    </form>
+
+    <p class="pr-muted" style="margin-top:18px">Already registered? <a href="/portal-login">Log in</a></p>
+  </div>
+</div>
+{% endblock %}
+
+{% block pr_script %}
+<script>frappe.ready(function () { prInitOtpFlow("register"); });</script>
+{% endblock %}

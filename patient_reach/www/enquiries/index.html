@@ -1,0 +1,30 @@
+{% extends "templates/pr_portal_base.html" %}
+
+{% block page_content %}
+<div class="pr-wrap pr-page">
+  <div class="pr-title-row">
+    <h1>My Enquiries</h1>
+    <a class="pr-btn" href="/enquiries/new">New enquiry</a>
+  </div>
+
+  {% if enquiries %}
+    {% for e in enquiries %}
+    <a class="pr-card pr-row" href="/enquiries/view?name={{ e.name | urlencode }}">
+      <div>
+        <div class="pr-ref">{{ e.name }}</div>
+        <div class="pr-subject">{{ e.subject }}</div>
+      </div>
+      <div class="pr-meta">
+        <span class="pr-badge pr-{{ e.status.tone }}">{{ e.status.label }}</span>
+        <span class="pr-date">{{ e.created }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  {% else %}
+    <div class="pr-card">
+      <p>You have not raised any enquiries yet.</p>
+      <a class="pr-btn" href="/enquiries/new">Raise your first enquiry</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

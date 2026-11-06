@@ -1,0 +1,59 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "PER.####",
+ "creation": "2026-10-12 18:28:32.513970",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "responding_date",
+  "responder",
+  "responded_by_name",
+  "response"
+ ],
+ "fields": [
+  {
+   "fieldname": "responding_date",
+   "fieldtype": "Date",
+   "label": "Responding Date"
+  },
+  {
+   "fieldname": "responder",
+   "fieldtype": "Link",
+   "label": "Responder",
+   "options": "User"
+  },
+  {
+   "fetch_from": "responder.full_name",
+   "fieldname": "responded_by_name",
+   "fieldtype": "Data",
+   "label": "Responded by Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Response",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 18:07:12.050221",
+ "modified_by": "Administrator",
+ "module": "Patient Reach",
+ "name": "Portal Enquiry Response",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

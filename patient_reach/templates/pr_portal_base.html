@@ -1,0 +1,51 @@
+{% extends "templates/web.html" %}
+
+{% block navbar %}
+<link rel="stylesheet" href="/assets/patient_reach/css/pr_portal.css">
+<header class="pr-header">
+  <div class="pr-wrap pr-header-inner">
+    <a class="pr-brand" href="{{ '/enquiries' if logged_in else '/portal-login' }}">
+      <span class="pr-brand-name">{{ hospital.name }}</span>
+      <span class="pr-brand-tag">{{ hospital.tagline }}</span>
+    </a>
+    <nav class="pr-nav">
+      {% if logged_in %}
+        <a href="/enquiries">My Enquiries</a>
+        <a href="/enquiries/new">New Enquiry</a>
+        <a href="#" id="pr-logout">Log out</a>      
+        {% else %}
+        <a href="/portal-login">Log in</a>
+        <a href="/portal-register">Register</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+{% endblock %}
+
+{% block footer %}
+<footer class="pr-footer">
+  <div class="pr-wrap">
+    <div class="pr-footer-grid">
+      {% for c in hospital.campuses %}
+      <div>
+        <h4>{{ hospital.short_name }} {{ c.name }}</h4>
+        <div>{{ c.address }}</div>
+        <div>Phone: <a href="tel:{{ c.tel }}">{{ c.phone }}</a></div>
+        {% if c.email %}<div>Email: <a href="mailto:{{ c.email }}">{{ c.email }}</a></div>{% endif %}
+      </div>
+      {% endfor %}
+      <div>
+        <h4>Appointments</h4>
+        <div>Call <a href="tel:+918047104600">{{ hospital.appointments_phone }}</a></div>
+        <div><a href="{{ hospital.website }}" target="_blank" rel="noopener">sssihms.org</a></div>
+      </div>
+    </div>
+    <div class="pr-copy">{{ hospital.note }}</div>
+  </div>
+</footer>
+{% endblock %}
+
+{% block script %}
+<script src="/assets/patient_reach/js/pr_portal.js"></script>
+{% block pr_script %}{% endblock %}
+{% endblock %}
