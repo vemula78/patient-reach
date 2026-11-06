@@ -60,10 +60,10 @@ CHARTS = {
 		"type": "Bar",
 		"color": "#7A89C2",
 	},
-	"Telemedicine Sessions by Doctor": {
+	"Telemedicine Sessions by Consulting Doctor": {
 		"chart_type": "Group By",
 		"group_by_type": "Count",
-		"group_by_based_on": "doctor",
+		"group_by_based_on": "consulting_doctor",
 		"number_of_groups": 10,
 		"type": "Bar",
 		"color": "#48BB74",

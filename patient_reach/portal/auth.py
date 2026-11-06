@@ -235,5 +235,12 @@ def _create_user(mobile, full_name):
     )
     doc.append("roles", {"role": ROLE})
     doc.flags.ignore_permissions = True
+    # Frappe makes anyone holding a role with desk access a System User. The role is
+    # created with desk access on when the doctype syncs, before the patch turns it
+    # off, so make sure here: a patient must never be given the desk.
+    if frappe.db.get_value("Role", ROLE, "desk_access"):
+        frappe.db.set_value("Role", ROLE, "desk_access", 0)
     doc.insert()
+    if doc.user_type != "Website User":
+        frappe.throw("Registration is not available right now. Please contact the hospital.")
     return doc.name

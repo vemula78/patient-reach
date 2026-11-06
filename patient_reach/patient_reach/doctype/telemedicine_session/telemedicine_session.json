@@ -6,48 +6,62 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "details_tab",
-  "session_section",
+  "patient_section",
+  "patient_id",
   "patient_ws_number",
   "patient_name",
   "column_break_1",
-  "session_datetime",
-  "doctor",
-  "patient_section",
-  "age",
-  "gender",
-  "column_break_2",
-  "patient_mobile_no",
-  "organisation_section",
   "nodal_centre",
+  "patient_mobile_no",
+  "session_section",
+  "session_datetime",
+  "visit_type",
+  "column_break_2",
+  "screening_doctor",
+  "consulting_doctor",
+  "organisation_section",
+  "company",
   "column_break_3",
   "department",
-  "source_section",
-  "portal_enquiry",
-  "workflow_state",
-  "consultation_tab",
+  "vitals_section",
+  "height_cm",
+  "column_break_4",
+  "weight",
+  "column_break_5",
+  "bp_reading",
+  "review_section",
   "presenting_complaint",
   "examination",
   "advice",
   "call_section",
   "call_duration",
-  "column_break_4",
+  "column_break_6",
   "outcome",
-  "followup_tab",
+  "followup_section",
   "next_session_date",
   "follow_up_by",
-  "cancel_reason"
+  "column_break_7",
+  "cancel_reason",
+  "attachments_section",
+  "attachments",
+  "source_section",
+  "portal_enquiry",
+  "workflow_state"
  ],
  "fields": [
   {
-   "fieldname": "details_tab",
-   "fieldtype": "Tab Break",
-   "label": "Details"
+   "fieldname": "patient_section",
+   "fieldtype": "Section Break",
+   "label": "Patient Details"
   },
   {
-   "fieldname": "session_section",
-   "fieldtype": "Section Break",
-   "label": "Session"
+   "fieldname": "patient_id",
+   "fieldtype": "Link",
+   "label": "Patient ID",
+   "options": "Patient",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
   },
   {
    "fieldname": "patient_ws_number",
@@ -62,12 +76,37 @@
    "fieldname": "patient_name",
    "fieldtype": "Data",
    "label": "Patient Name",
-   "reqd": 1,
+   "fetch_from": "patient_id.patient_name",
+   "read_only": 1,
    "in_list_view": 1
   },
   {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nodal_centre",
+   "fieldtype": "Link",
+   "label": "Nodal Centre",
+   "options": "Branch",
+   "fetch_from": "patient_id.custom_hospital_id",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "patient_mobile_no",
+   "fieldtype": "Data",
+   "label": "Patient Mobile No",
+   "options": "Phone",
+   "fetch_from": "patient_id.mobile",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "session_section",
+   "fieldtype": "Section Break",
+   "label": "Session"
   },
   {
    "fieldname": "session_datetime",
@@ -78,55 +117,46 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "doctor",
-   "fieldtype": "Link",
-   "label": "Doctor",
-   "options": "User",
+   "fieldname": "visit_type",
+   "fieldtype": "Select",
+   "label": "Visit Type",
+   "options": "\nFirst Visit\nFollow-up",
+   "default": "First Visit",
    "reqd": 1,
-   "in_list_view": 1,
    "in_standard_filter": 1
-  },
-  {
-   "fieldname": "patient_section",
-   "fieldtype": "Section Break",
-   "label": "Patient"
-  },
-  {
-   "fieldname": "age",
-   "fieldtype": "Int",
-   "label": "Age (years)",
-   "reqd": 1
-  },
-  {
-   "fieldname": "gender",
-   "fieldtype": "Link",
-   "label": "Gender",
-   "options": "Gender",
-   "reqd": 1
   },
   {
    "fieldname": "column_break_2",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "patient_mobile_no",
+   "fieldname": "screening_doctor",
    "fieldtype": "Data",
-   "label": "Patient Mobile No",
-   "options": "Phone",
-   "reqd": 1
+   "label": "Screening Doctor"
+  },
+  {
+   "fieldname": "consulting_doctor",
+   "fieldtype": "Link",
+   "label": "Consulting Doctor",
+   "options": "User",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Users who hold the Doctor role."
   },
   {
    "fieldname": "organisation_section",
    "fieldtype": "Section Break",
-   "label": "Organisation"
+   "label": "Organisation Info"
   },
   {
-   "fieldname": "nodal_centre",
+   "fieldname": "company",
    "fieldtype": "Link",
-   "label": "Nodal Centre",
-   "options": "Branch",
-   "reqd": 1,
-   "in_standard_filter": 1
+   "label": "Company",
+   "options": "Company",
+   "default": ":Company",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "column_break_3",
@@ -141,32 +171,38 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "source_section",
+   "fieldname": "vitals_section",
    "fieldtype": "Section Break",
-   "label": "Source"
+   "label": "Vitals"
   },
   {
-   "fieldname": "portal_enquiry",
-   "fieldtype": "Link",
-   "label": "Portal Enquiry",
-   "options": "Portal Enquiry",
-   "description": "Set when the session follows a patient enquiry from the portal."
+   "fieldname": "height_cm",
+   "fieldtype": "Float",
+   "label": "Height (in cm)"
   },
   {
-   "fieldname": "workflow_state",
-   "fieldtype": "Link",
-   "label": "Workflow State",
-   "options": "Workflow State",
-   "hidden": 1,
-   "no_copy": 1,
-   "read_only": 1,
-   "in_standard_filter": 1,
-   "allow_on_submit": 1
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
   },
   {
-   "fieldname": "consultation_tab",
-   "fieldtype": "Tab Break",
-   "label": "Consultation"
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "label": "Weight (in kg)"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bp_reading",
+   "fieldtype": "Data",
+   "label": "Blood Pressure Reading (mmHg)",
+   "description": "Example: 120/80"
+  },
+  {
+   "fieldname": "review_section",
+   "fieldtype": "Section Break",
+   "label": "Clinical Review"
   },
   {
    "fieldname": "presenting_complaint",
@@ -196,7 +232,7 @@
    "description": "Minutes. Zero is allowed."
   },
   {
-   "fieldname": "column_break_4",
+   "fieldname": "column_break_6",
    "fieldtype": "Column Break"
   },
   {
@@ -207,8 +243,8 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "followup_tab",
-   "fieldtype": "Tab Break",
+   "fieldname": "followup_section",
+   "fieldtype": "Section Break",
    "label": "Follow-up"
   },
   {
@@ -223,14 +259,51 @@
    "options": "User"
   },
   {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "cancel_reason",
    "fieldtype": "Small Text",
    "label": "Cancel or No-show Reason"
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Source"
+  },
+  {
+   "fieldname": "portal_enquiry",
+   "fieldtype": "Link",
+   "label": "Portal Enquiry",
+   "options": "Portal Enquiry",
+   "description": "Set when the session follows a patient enquiry from the portal."
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "label": "Workflow State",
+   "options": "Workflow State",
+   "hidden": 1,
+   "no_copy": 1,
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-06 12:00:00.000000",
+ "modified": "2026-11-06 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Patient Reach",
  "name": "Telemedicine Session",
@@ -292,6 +365,6 @@
  "states": [],
  "title_field": "patient_name",
  "track_changes": 1,
- "search_fields": "patient_ws_number,patient_name",
+ "search_fields": "patient_ws_number,patient_name,patient_id",
  "show_title_field_in_link": 0
 }

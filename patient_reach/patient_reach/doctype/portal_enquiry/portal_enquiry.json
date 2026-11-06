@@ -43,7 +43,6 @@
    "in_list_view": 1
   },
   {
-   "default": "Patient Enquiry",
    "fieldname": "nodal_centre",
    "fieldtype": "Link",
    "label": "Nodal Centre",

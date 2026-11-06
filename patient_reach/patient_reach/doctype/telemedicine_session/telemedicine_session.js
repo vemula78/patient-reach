@@ -3,8 +3,10 @@
 
 frappe.ui.form.on("Telemedicine Session", {
 	setup(frm) {
-		// Care users only: portal accounts are User records too and must not be offered.
-		frm.set_query("doctor", () => ({ filters: { enabled: 1, user_type: "System User" } }));
+		// Care users who hold the Doctor role; portal accounts are User records too and are not offered.
+		frm.set_query("consulting_doctor", () => ({
+			query: "patient_reach.patient_reach.doctype.telemedicine_session.telemedicine_session.doctor_users",
+		}));
 		frm.set_query("follow_up_by", () => ({ filters: { enabled: 1, user_type: "System User" } }));
 	},
 	patient_ws_number(frm) {

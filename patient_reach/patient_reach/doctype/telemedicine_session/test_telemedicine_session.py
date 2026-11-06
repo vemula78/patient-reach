@@ -22,14 +22,14 @@ from patient_reach.patient_reach.doctype.telemedicine_session.telemedicine_sessi
 
 DOCTYPES = Path(__file__).resolve().parents[1]
 REQUIRED = {
+	"patient_id",
 	"patient_ws_number",
-	"patient_name",
-	"session_datetime",
-	"doctor",
-	"age",
-	"gender",
-	"patient_mobile_no",
 	"nodal_centre",
+	"patient_mobile_no",
+	"session_datetime",
+	"visit_type",
+	"consulting_doctor",
+	"company",
 	"department",
 }
 
@@ -74,6 +74,21 @@ class TestForm(UnitTestCase):
 	def test_exactly_the_agreed_fields_are_required(self):
 		self.assertEqual({n for n, f in _fields().items() if f.get("reqd")}, REQUIRED)
 
+	def test_it_is_one_page_with_vitals_review_and_attachments(self):
+		fields = _fields()
+		self.assertFalse([n for n, f in fields.items() if f["fieldtype"] == "Tab Break"])
+		for n in ("height_cm", "weight", "bp_reading", "examination", "advice", "screening_doctor", "attachments"):
+			self.assertIn(n, fields)
+		self.assertEqual(fields["screening_doctor"]["fieldtype"], "Data")
+		self.assertEqual(fields["consulting_doctor"]["options"], "User")
+		self.assertEqual(fields["patient_id"]["options"], "Patient")
+
+	def test_the_patient_profile_brings_name_mobile_and_nodal_centre_forward(self):
+		fields = _fields()
+		self.assertEqual(fields["patient_name"]["fetch_from"], "patient_id.patient_name")
+		self.assertEqual(fields["patient_mobile_no"]["fetch_from"], "patient_id.mobile")
+		self.assertEqual(fields["nodal_centre"]["fetch_from"], "patient_id.custom_hospital_id")
+
 	def test_consent_is_not_asked_and_duration_is_minutes_that_may_be_zero(self):
 		fields = _fields()
 		self.assertFalse([n for n in fields if "consent" in n])
@@ -100,6 +115,15 @@ class TestSession(UnitTestCase):
 	def setUpClass(cls):
 		super().setUpClass()
 		wf.execute()
+		# A bare Patient row, inserted below the hooks: the naming hook and the mandatory
+		# custom fields of this app are not what is under test here.
+		pat = frappe.get_doc(
+			{"doctype": "Patient", "name": "TMS-TEST-PATIENT", "patient_name": "Test Patient", "first_name": "Test",
+			 "mobile": "+919876500001", "custom_hospital_id": "Test Centre"}
+		)
+		pat.creation = pat.modified = frappe.utils.now()
+		pat.owner = pat.modified_by = "Administrator"
+		pat.db_insert()
 
 	@classmethod
 	def tearDownClass(cls):
@@ -115,14 +139,11 @@ class TestSession(UnitTestCase):
 		doc = frappe.get_doc(
 			{
 				"doctype": "Telemedicine Session",
+				"patient_id": "TMS-TEST-PATIENT",
 				"patient_ws_number": "ws00123456",
-				"patient_name": "Test Patient",
-				"age": 54,
-				"gender": "Male",
-				"patient_mobile_no": "+919876500001",
-				"nodal_centre": "Test Centre",
 				"department": "Test Department",
-				"doctor": "Administrator",
+				"company": "Test Company",
+				"consulting_doctor": "Administrator",
 				"session_datetime": "2026-11-10 11:00:00",
 				**over,
 			}
@@ -131,16 +152,30 @@ class TestSession(UnitTestCase):
 		doc.flags.ignore_permissions = True
 		return doc
 
-	def test_it_saves_as_scheduled_with_a_clean_ws_number(self):
+	def test_it_saves_as_scheduled_with_a_clean_ws_number_and_the_profile_details(self):
 		doc = self._make().insert()
 		self.assertEqual(doc.workflow_state, "Scheduled")
 		self.assertEqual(doc.patient_ws_number, "WS00123456")
+		self.assertEqual(doc.visit_type, "First Visit")
+		self.assertEqual(doc.patient_name, "Test Patient")
+		self.assertEqual(doc.patient_mobile_no, "+919876500001")
+		self.assertEqual(doc.nodal_centre, "Test Centre")
 
-	def test_a_bad_ws_number_or_missing_mobile_cannot_be_saved(self):
+	def test_blood_pressure_must_be_systolic_over_diastolic(self):
+		self.assertEqual(self._make(bp_reading=" 120 / 80 ").insert().bp_reading, "120/80")
+		for bad in ("80/120", "12080", "abc", "120/"):
+			with self.assertRaises(frappe.ValidationError, msg=bad):
+				self._make(bp_reading=bad).insert()
+
+	def test_the_consulting_doctor_must_hold_the_doctor_role(self):
+		with self.assertRaises(frappe.ValidationError):
+			self._make(consulting_doctor="Guest").insert()
+
+	def test_a_bad_ws_number_or_missing_patient_cannot_be_saved(self):
 		with self.assertRaises(frappe.ValidationError):
 			self._make(patient_ws_number="WS000123456").insert()
 		with self.assertRaises(frappe.MandatoryError):
-			self._make(patient_mobile_no=None).insert()
+			self._make(patient_id=None).insert()
 
 	def test_completing_needs_advice_and_nothing_else(self):
 		doc = self._make().insert()
@@ -153,7 +188,7 @@ class TestSession(UnitTestCase):
 		doc.save()
 		doc = apply_workflow(doc, "Complete Session")
 		self.assertEqual(doc.workflow_state, "Completed")
-		self.assertIsNone(doc.outcome)  # outcome and duration stay optional
+		self.assertFalse(doc.outcome)  # outcome and duration stay optional
 
 	def test_a_completed_session_cannot_skip_back_to_scheduled(self):
 		doc = self._make(advice="Done").insert()
