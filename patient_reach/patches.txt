@@ -26,3 +26,5 @@ patient_reach.patches.v1_11.my_follow_ups_include_closed
 patient_reach.patches.v1_12.add_lgd_districts
 patient_reach.patches.v1_13.healthcare_landing_page
 patient_reach.patches.v1_14.create_portal_enquiry_workflow
+patient_reach.patches.v1_15.create_telemedicine_workflow
+patient_reach.patches.v1_15.create_telemedicine_dashboard

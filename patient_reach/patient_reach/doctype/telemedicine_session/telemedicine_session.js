@@ -1,0 +1,20 @@
+// Copyright (c) 2026, Frugal Scientific and contributors
+// For license information, please see license.txt
+
+frappe.ui.form.on("Telemedicine Session", {
+	setup(frm) {
+		// Care users only: portal accounts are User records too and must not be offered.
+		frm.set_query("doctor", () => ({ filters: { enabled: 1, user_type: "System User" } }));
+		frm.set_query("follow_up_by", () => ({ filters: { enabled: 1, user_type: "System User" } }));
+	},
+	patient_ws_number(frm) {
+		const value = (frm.doc.patient_ws_number || "").replace(/\s+/g, "").toUpperCase();
+		if (value !== frm.doc.patient_ws_number) frm.set_value("patient_ws_number", value);
+		if (value && !/^WS(00|0000)[0-9]{6}$/.test(value)) {
+			frappe.show_alert({
+				message: __("The WS number must be WS, then 00 or 0000, then six digits."),
+				indicator: "orange",
+			});
+		}
+	},
+});
