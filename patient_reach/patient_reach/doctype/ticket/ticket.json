@@ -956,7 +956,8 @@
    "fieldname": "health_events_section",
    "fieldtype": "Section Break",
    "label": "Heart and brain events (DRL A8)",
-   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
+   "hidden": 1
   },
   {
    "fieldname": "health_events_note",
@@ -997,7 +998,8 @@
    "fieldname": "red_flag_section",
    "fieldtype": "Section Break",
    "label": "Red-flag symptoms: ask before measuring BP",
-   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
+   "hidden": 1
   },
   {
    "fieldname": "red_flag_intro",
@@ -1093,7 +1095,8 @@
   {
    "fieldname": "red_flag_answer_section",
    "fieldtype": "Section Break",
-   "depends_on": "eval:doc.bp_rule=='DRL v1.4'"
+   "depends_on": "eval:doc.bp_rule=='DRL v1.4'",
+   "hidden": 1
   },
   {
    "fieldname": "rf_none_asked",

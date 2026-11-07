@@ -34,7 +34,7 @@ from patient_reach.doc_events import _release_previous_caregivers_tracker, ticke
 from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_up_tracker import (
 	FINISHED,
 	GOING_ON,
-	NOT_CONNECTED_FIELDS,
+	REQUIRED_FIELDS,
 	any_call_entry,
 	call_is_open,
 	chained_schedule,
@@ -42,9 +42,12 @@ from patient_reach.patient_reach.doctype.sparsh_follow_up_tracker.sparsh_follow_
 	check_calls,
 	is_eligible,
 	latest_eligible_visit,
-	missing_when_not_connected,
+	is_required,
+	join_level,
+	missing_required,
 	next_call_due,
 	prepopulate_prevention_levels,
+	split_level,
 	review_reasons,
 )
 
@@ -173,58 +176,123 @@ class TestChangeRequest2026_10_23(UnitTestCase):
 
 	def test_prevention_level_carries_forward(self):
 		values = {"prevention_level": "Level 2", "call_1_interest": "Yes", "call_2_prevention_level": "Level 3"}
-		self.assertEqual(
-			prepopulate_prevention_levels(values),
-			{"call_1_prevention_level": "Level 2", "call_2_prevention_level": "Level 3"},
-		)
+		fill = prepopulate_prevention_levels(values)
+		self.assertEqual(fill["call_1_prevention_level"], "Level 2")
+		self.assertEqual((fill["call_1_level"], fill["call_1_s_modifier"]), ("Level 2", "No"))
+		self.assertEqual((fill["call_2_level"], fill["call_2_prevention_level"]), ("Level 3", "Level 3"))
 		values["call_2_interest"] = "May be"
 		self.assertEqual(prepopulate_prevention_levels(values)["call_3_prevention_level"], "Level 3")
 		self.assertEqual(prepopulate_prevention_levels({"acceptance_to_change": "No", "prevention_level": "Level 1"}), {})
 
-	def test_connected_and_interested_needs_nothing_more(self):
-		self.assertEqual(missing_when_not_connected({"call_1_outcome": "Connected", "call_1_interest": "Yes"}), [])
-		self.assertEqual(missing_when_not_connected({}), [], "a blank outcome is not yet entered")
+	def test_the_s_modifier_files_as_the_visit_does(self):
+		"""Level 2 and Yes is "Level 2s", as the visit files it."""
+		self.assertEqual(join_level("Level 2", "Yes"), "Level 2s")
+		self.assertEqual(join_level("Level 2", "No"), "Level 2")
+		self.assertEqual(join_level("Level 2", None), "Level 2")
+		fill = prepopulate_prevention_levels(
+			{"prevention_level": "Level 1", "call_1_level": "Level 3", "call_1_s_modifier": "Yes", "call_1_interest": "Yes"}
+		)
+		self.assertEqual(fill["call_1_prevention_level"], "Level 3s")
+		self.assertEqual(fill["call_2_prevention_level"], "Level 3s", "the next call starts from this one")
+		self.assertEqual(fill["call_2_s_modifier"], "Yes")
 
-	def test_not_connected_needs_every_field_but_the_next_date(self):
-		errors = missing_when_not_connected({"call_1_outcome": "Wrong Number"})
+	def test_the_visits_level_carries_into_the_dropdowns(self):
+		fill = prepopulate_prevention_levels({"prevention_level": "Level 2s"})
+		self.assertEqual((fill["call_1_level"], fill["call_1_s_modifier"]), ("Level 2", "Yes"))
+
+	def test_a_level_typed_before_the_dropdowns_is_split(self):
+		fill = prepopulate_prevention_levels({"prevention_level": "Level 1", "call_1_prevention_level": "level 4S"})
+		self.assertEqual((fill["call_1_level"], fill["call_1_s_modifier"]), ("Level 4", "Yes"))
+		self.assertEqual(split_level("Level 3"), ("Level 3", "No"))
+
+	def test_text_that_is_not_a_level_is_kept_not_lost(self):
+		self.assertEqual(split_level("high risk"), (None, None))
+		self.assertEqual(split_level("Level 5"), (None, None))
+		fill = prepopulate_prevention_levels({"call_1_prevention_level": "high risk"})
+		self.assertEqual(fill["call_1_prevention_level"], "high risk")
+		self.assertIsNone(fill["call_1_level"])
+
+	def test_nothing_is_required_until_the_call_connects_or_interest_is_yes_or_may_be(self):
+		"""Change request of 07-Nov-2026 (item 7): "No Answer After 3 Attempts"
+		no longer asks for the level, date, duration, follow-up by or notes."""
+		self.assertEqual(missing_required({}), [], "a blank outcome is not yet entered")
+		for outcome in ("No Answer After 3 Attempts", "Wrong Number", "Caregiver Declined"):
+			self.assertEqual(missing_required({"call_1_outcome": outcome}), [], outcome)
+			self.assertEqual(missing_required({"call_1_outcome": outcome, "call_1_interest": "No"}), [], outcome)
+		self.assertTrue(is_required({"call_3_outcome": "Connected"}, 3))
+		self.assertFalse(is_required({"call_3_outcome": "Wrong Number", "call_3_interest": "Yes"}, 3), "call 3 has no interest")
+
+	def test_a_connected_call_needs_every_field_but_the_next_date(self):
+		errors = missing_required({"call_1_outcome": "Connected"})
 		self.assertEqual(len(errors), 1)
-		for field in NOT_CONNECTED_FIELDS:
+		for field in REQUIRED_FIELDS:
 			self.assertIn(field, errors[0])
 		self.assertNotIn("next_date", errors[0])
-		full = {f"call_1_{f}": "x" for f in NOT_CONNECTED_FIELDS}
-		self.assertEqual(missing_when_not_connected({**full, "call_1_outcome": "Wrong Number"}), [])
+		full = {f"call_1_{f}": "x" for f in REQUIRED_FIELDS}
+		self.assertEqual(missing_required({**full, "call_1_outcome": "Connected"}), [])
 
-	def test_a_no_needs_every_field_even_when_connected(self):
-		self.assertEqual(len(missing_when_not_connected({"call_1_outcome": "Connected", "call_1_interest": "No"})), 1)
+	def test_yes_or_may_be_needs_every_field_even_without_a_connected_outcome(self):
+		for interest in ("Yes", "May be"):
+			self.assertEqual(len(missing_required({"call_1_interest": interest})), 1, interest)
+		full = {f"call_1_{f}": "x" for f in REQUIRED_FIELDS}
+		self.assertEqual(missing_required({**full, "call_1_interest": "Yes"}), [])
 
-	def test_call_three_has_no_interest_to_require(self):
-		values = {"call_1_interest": "Yes", "call_2_interest": "Yes", "call_3_outcome": "Caregiver Declined"}
-		errors = missing_when_not_connected(values)
+	def test_the_same_holds_for_calls_two_and_three(self):
+		def full(n, **over):
+			return {**{f"call_{n}_{f}": "x" for f in REQUIRED_FIELDS}, **{f"call_{n}_{k}": v for k, v in over.items()}}
+
+		call_1 = full(1, interest="Yes")
+		started_2 = {**call_1, "call_2_outcome": "Connected", "call_2_interest": "May be"}
+		self.assertEqual(len(missing_required(started_2)), 1, "call 2 connected, nothing else entered")
+		two = {**call_1, **full(2, outcome="Connected", interest="May be")}
+		self.assertEqual(missing_required(two), [])
+		self.assertEqual(missing_required({**two, "call_3_outcome": "Wrong Number"}), [], "call 3 not connected")
+		errors = missing_required({**two, "call_3_outcome": "Connected"})
 		self.assertEqual(len(errors), 1)
-		self.assertNotIn("interest", errors[0])
+		self.assertNotIn("interest", errors[0].split(", because")[0], "call 3 has no interest")
 
 	def test_closed_calls_are_not_checked(self):
-		full = {f"call_1_{f}": "x" for f in NOT_CONNECTED_FIELDS}
-		values = {**full, "call_1_interest": "No", "call_2_outcome": "Wrong Number"}
-		self.assertEqual(missing_when_not_connected(values), [])
+		values = {"call_1_outcome": "Connected", "call_1_interest": "No", "call_2_outcome": "Connected"}
+		self.assertEqual(len(missing_required(values)), 1, "only call 1; call 2 never opened")
 
-	def test_call_duration_is_not_required_for_a_call_that_never_connected(self):
-		"""A Duration field cannot hold 0 (the control turns it into blank), so
-		requiring it made "No Answer After 3 Attempts" impossible to save."""
-		self.assertNotIn("duration", NOT_CONNECTED_FIELDS)
-		for n in (1, 2, 3):
-			self.assertNotIn("mandatory_depends_on", FIELDS[f"call_{n}_duration"])
-		values = {f"call_1_{f}": "x" for f in NOT_CONNECTED_FIELDS}
-		self.assertEqual(missing_when_not_connected({**values, "call_1_outcome": "No Answer After 3 Attempts"}), [])
+	def test_call_duration_is_asked_only_of_a_connected_call(self):
+		"""A Duration field cannot hold 0, so it must never be required of a
+		call that did not connect."""
+		self.assertIn("duration", REQUIRED_FIELDS)
+		self.assertEqual(missing_required({"call_1_outcome": "No Answer After 3 Attempts"}), [])
 
 	def test_json_requires_the_same_fields(self):
 		for n in (1, 2, 3):
-			self.assertEqual(FIELDS[f"call_{n}_prevention_level"]["label"], "Current Prevention Level")
-			for f in NOT_CONNECTED_FIELDS:
-				if n == 3 and f == "interest":
-					continue
-				self.assertIn(f"doc.call_{n}_outcome != 'Connected'", FIELDS[f"call_{n}_{f}"]["mandatory_depends_on"])
+			self.assertEqual(FIELDS[f"call_{n}_level"]["label"], "Current Prevention Level")
+			self.assertEqual(FIELDS[f"call_{n}_level"]["options"], "\nLevel 1\nLevel 2\nLevel 3\nLevel 4")
+			self.assertEqual(FIELDS[f"call_{n}_s_modifier"]["options"], "\nYes\nNo")
+			self.assertEqual(FIELDS[f"call_{n}_prevention_level"]["hidden"], 1)
+			self.assertNotIn("mandatory_depends_on", FIELDS[f"call_{n}_prevention_level"])
+			self.assertNotIn("mandatory_depends_on", FIELDS[f"call_{n}_s_modifier"])
+			expected = (
+				f"eval:doc.call_{n}_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_{n}_interest)"
+				if n < 3
+				else "eval:doc.call_3_outcome == 'Connected'"
+			)
+			for f in ("level", "actual_date", "duration", "by", "notes") + (("interest",) if n < 3 else ()):
+				self.assertEqual(FIELDS[f"call_{n}_{f}"]["mandatory_depends_on"], expected, f"call {n} {f}")
 			self.assertNotIn("mandatory_depends_on", FIELDS.get(f"call_{n}_next_date", {}))
+			self.assertNotIn("mandatory_depends_on", FIELDS[f"call_{n}_outcome"])
+
+	def test_the_level_dropdowns_sit_in_the_calls_first_column(self):
+		order = META["field_order"]
+		for n in (1, 2, 3):
+			i = order.index(f"call_{n}_prevention_level")
+			self.assertEqual(order[i + 1 : i + 3], [f"call_{n}_level", f"call_{n}_s_modifier"])
+			self.assertLess(i, order.index(f"call_{n}_column"))
+
+	def test_the_red_flag_and_event_sections_are_off_the_form(self):
+		"""Item 8 of 07-Nov-2026. Hidden, not deleted: the review queue and the
+		Level 4 rules still read the fields."""
+		for section in ("call_red_flag_section", "events_section"):
+			self.assertEqual(FIELDS[section]["hidden"], 1, section)
+		for field in ("call_red_flag", "health_events"):
+			self.assertIn(field, FIELDS)
 
 
 class TestChangeRequest2026_10_29(UnitTestCase):
@@ -235,7 +303,11 @@ class TestChangeRequest2026_10_29(UnitTestCase):
 		values = {"call_1_outcome": "No Answer After 3 Attempts", "call_1_interest": "May be"}
 		self.assertFalse(call_is_open(values, 2))
 		self.assertIsNone(next_call_due({**values, "call_1_actual_date": "2026-10-10", "call_2_scheduled_date": "2026-10-24"}))
-		self.assertEqual(prepopulate_prevention_levels({**values, "prevention_level": "Level 2"}), {"call_1_prevention_level": "Level 2"})
+		self.assertEqual(
+			list(prepopulate_prevention_levels({**values, "prevention_level": "Level 2"})),
+			["call_1_prevention_level", "call_1_level", "call_1_s_modifier"],
+			"only call 1 is open",
+		)
 		values = {"call_1_interest": "Yes", "call_2_outcome": "Wrong Number", "call_2_interest": "Yes"}
 		self.assertTrue(call_is_open(values, 2))
 		self.assertFalse(call_is_open(values, 3))

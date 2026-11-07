@@ -19,6 +19,8 @@ The rules below are module-level functions with no `frappe`, so they are
 pinned by unit tests without a bench.
 """
 
+import re
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -105,34 +107,36 @@ def call_is_open(values, n):
 	return previous_going_on(values, n) and (connected or call_has_entry(values, n))
 
 
-# What a counsellor must fill in a call that was not connected, or where the
-# caregiver said No. Call Duration is not asked: a Duration field cannot hold 0, so a
-# call that never connected would otherwise be impossible to save. Interest is only on calls 1 and 2; call 3 has no interest.
-NOT_CONNECTED_FIELDS = ("prevention_level", "actual_date", "by", "interest", "notes")
+# What a counsellor must fill in once a call connected, or the caregiver said
+# Yes or May be (change request of 07-Nov-2026). It reverses the rule of
+# 29-Oct-2026, which asked for all of this on a call that did NOT connect and
+# so made "No Answer After 3 Attempts" a form of five compulsory answers.
+# Everything in the call is required except the Next Follow-up Date. Call 3
+# has no interest. `prevention_level` is the string filed from the Level and
+# S modifier dropdowns; the S modifier itself is optional, as on the visit.
+REQUIRED_FIELDS = ("prevention_level", "actual_date", "duration", "by", "interest", "notes")
 
 
-def is_not_connected(values, n):
-	"""True when call `n` has an outcome other than Connected, or the caregiver
-	said No. A blank outcome is not yet entered, so it does not count."""
-	outcome = values.get(f"call_{n}_outcome")
+def is_required(values, n):
+	"""True when call `n` connected, or its interest is Yes or May be."""
 	interest = values.get(f"call_{n}_interest") if n < 3 else None
-	return bool((outcome and outcome != "Connected") or interest == "No")
+	return values.get(f"call_{n}_outcome") == "Connected" or interest in GOING_ON
 
 
-def missing_when_not_connected(values):
-	"""The errors for an open call that was not connected, or where the caregiver
-	said No, with a field left blank. Everything in the call is required except
-	the Next Follow-up Date. `mandatory_depends_on` is client-side only, so an
-	API save or an import would get past it without this."""
+def missing_required(values):
+	"""The errors for an open call that connected, or where the caregiver said
+	Yes or May be, with a field left blank. A call that did not connect and is
+	not going on needs nothing. `mandatory_depends_on` is client-side only, so
+	an API save or an import would get past it without this."""
 	errors = []
 	for n in CALLS:
-		if not call_is_open(values, n) or not is_not_connected(values, n):
+		if not call_is_open(values, n) or not is_required(values, n):
 			continue
-		fields = NOT_CONNECTED_FIELDS if n < 3 else tuple(f for f in NOT_CONNECTED_FIELDS if f != "interest")
+		fields = REQUIRED_FIELDS if n < 3 else tuple(f for f in REQUIRED_FIELDS if f != "interest")
 		missing = [f for f in fields if not values.get(f"call_{n}_{f}")]
 		if missing:
 			errors.append(
-				f"Call {n}: fill in {', '.join(missing)}, because the call was not connected or the caregiver said No."
+				f"Call {n}: fill in {', '.join(missing)}, because the call connected or the caregiver is interested."
 			)
 	return errors
 
@@ -144,17 +148,45 @@ def check_acceptance(values):
 	return []
 
 
+def split_level(text):
+	"""("Level 2", "Yes") from "Level 2s"; ("Level 2", "No") from "Level 2";
+	(None, None) when the text is not one of the eight Levels."""
+	m = re.fullmatch(r"\s*level\s*([1-4])\s*(s?)\s*", str(text or ""), re.IGNORECASE)
+	if not m:
+		return None, None
+	return f"Level {m.group(1)}", "Yes" if m.group(2) else "No"
+
+
+def join_level(level, s_modifier):
+	"""The string the visit files: "Level 2" and Yes is kept as "Level 2s"."""
+	return f"{level}s" if level and s_modifier == "Yes" else level
+
+
 def prepopulate_prevention_levels(values):
-	"""Each open call's Current Prevention Level: the one entered, else the level
-	before it (the intake level for call 1). Only the calls shown on the form."""
+	"""Each open call's Current Prevention Level, as the Level and S modifier
+	dropdowns and the filed string: the one entered, else the level before it
+	(the intake level for call 1). Only the calls shown on the form.
+
+	A level entered in the old free-text field (before 07-Nov-2026) is split
+	into the two dropdowns when it reads as one of the eight Levels."""
 	fill = {}
 	previous = values.get("prevention_level")
 	for n in CALLS:
 		if not call_is_open(values, n):
 			continue
-		level = values.get(f"call_{n}_prevention_level") or previous
-		fill[f"call_{n}_prevention_level"] = level
-		previous = level
+		level, s_modifier = values.get(f"call_{n}_level"), values.get(f"call_{n}_s_modifier")
+		text = join_level(level, s_modifier) if level else values.get(f"call_{n}_prevention_level")
+		if not text:
+			text = previous
+		level, parsed_s = split_level(text)
+		if level and not values.get(f"call_{n}_level"):
+			s_modifier = parsed_s
+		elif not level:
+			level = values.get(f"call_{n}_level")
+		fill[f"call_{n}_prevention_level"] = join_level(level, s_modifier) if level else text
+		fill[f"call_{n}_level"] = level
+		fill[f"call_{n}_s_modifier"] = s_modifier
+		previous = fill[f"call_{n}_prevention_level"]
 	return fill
 
 
@@ -236,7 +268,7 @@ class SparshFollowupTracker(Document):
 		# save also re-saves its tracker (doc_events), and a tracker entered before
 		# these rules must not stop that visit from saving.
 		if not self.flags.get("synced_from_visit"):
-			errors += check_acceptance(values) + missing_when_not_connected(values)
+			errors += check_acceptance(values) + missing_required(values)
 		if errors:
 			frappe.throw("<br>".join(_(e) for e in errors))
 		self.update(chained_schedule(values))

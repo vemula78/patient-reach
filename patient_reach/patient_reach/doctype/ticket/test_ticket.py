@@ -493,3 +493,67 @@ class TestOneVisitPerCaregiver(UnitTestCase):
 		with patch("patient_reach.doc_events.frappe.get_all", return_value=[]) as get_all:
 			_refuse_a_second_visit(frappe._dict(patient_id="SWF-SPARSH-0001"))
 		self.assertEqual(get_all.call_args.kwargs["filters"]["docstatus"], ["<", 2])
+
+
+class TestChangeRequest2026_11_07(UnitTestCase):
+	"""Change request of 07-Nov-2026 (items 2, 5 and 6): the Heart and Brain
+	section and the Red-flag questions with their status are off the visit form,
+	and a new visit opens with Company filled in. Hidden, not deleted: the BP
+	grading and the Level 4 rules still read the fields, so nothing recorded
+	before is lost and the sections can come back."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		import json
+		from pathlib import Path
+
+		here = Path(__file__).parent
+		meta = json.loads((here / "ticket.json").read_text())
+		cls.fields = {f["fieldname"]: f for f in meta["fields"]}
+		cls.order = meta["field_order"]
+		cls.js = (here / "ticket.js").read_text()
+
+	def test_the_sections_are_hidden(self):
+		for section in ("health_events_section", "red_flag_section", "red_flag_answer_section"):
+			self.assertEqual(self.fields[section].get("hidden"), 1, section)
+
+	def test_their_fields_are_kept_for_the_logic_that_reads_them(self):
+		for field in ("health_events", "rf_balance", "rf_none_asked", "red_flag_status", "emergency_action"):
+			self.assertIn(field, self.fields)
+
+	def test_no_field_in_a_hidden_section_is_mandatory(self):
+		"""A hidden mandatory field would make the visit impossible to save."""
+		hidden = None
+		for name in self.order:
+			field = self.fields.get(name, {})
+			if field.get("fieldtype") == "Section Break":
+				hidden = field.get("hidden") == 1 and name in (
+					"health_events_section",
+					"red_flag_section",
+					"red_flag_answer_section",
+				)
+			if hidden:
+				self.assertFalse(field.get("reqd"), name)
+				if field.get("mandatory_depends_on"):
+					self.assertEqual(name, "rf_other_detail", "only when the other-symptom box is ticked")
+
+	def test_the_referral_fields_are_not_hidden_with_them(self):
+		"""`referred_to` sat beside the red-flag fields; it must stay on the form."""
+		self.assertNotEqual(self.fields["referred_to"].get("hidden"), 1)
+		section_of = None
+		for name in self.order:
+			if self.fields.get(name, {}).get("fieldtype") == "Section Break":
+				section_of = name
+			if name == "referred_to":
+				self.assertNotIn(
+					section_of, ("health_events_section", "red_flag_section", "red_flag_answer_section")
+				)
+
+	def test_there_is_no_red_flags_button_to_nowhere(self):
+		self.assertNotIn("add_custom_button(__(\"Red flags\")", self.js)
+
+	def test_a_new_visit_opens_with_company_filled(self):
+		self.assertIn("onload: function (frm)", self.js)
+		self.assertIn('get_user_default("Company")', self.js)
+		self.assertIn("sysdefaults", self.js)

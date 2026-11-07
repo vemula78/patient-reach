@@ -68,17 +68,31 @@
 					const district_at = this.mandatory.findIndex((df) => df.fieldname === "custom_district");
 					const base = district_at >= 0 ? this.mandatory.splice(district_at, 1)[0] : district;
 					const state_at = this.mandatory.findIndex((df) => df.fieldname === "custom_state");
-					this.mandatory.splice(
-						state_at + 1,
-						0,
-						Object.assign({}, base, {
-							get_query: () => ({ filters: { state: this.dialog.get_value("custom_state") } }),
-						})
-					);
+					this.mandatory.splice(state_at + 1, 0, Object.assign({}, base));
 				}
 				super.render_dialog();
+				// The filter and the clearing are attached to the controls, after the
+				// popup is built (change request of 07-Nov-2026, item 4). A `get_query`
+				// on the field definition, and an `onchange` set on it after the popup
+				// is rendered, are both ignored by the popup on care (checked on the
+				// live popup: every district showed, and a district chosen for one
+				// State stayed after the State was changed).
 				const state = this.dialog && this.dialog.fields_dict.custom_state;
-				if (state) state.df.onchange = () => this.dialog.set_value("custom_district", "");
+				const district_control = this.dialog && this.dialog.fields_dict.custom_district;
+				if (state && district_control) {
+					let seen = this.dialog.get_value("custom_state");
+					const clear_if_state_changed = () => {
+						const now = this.dialog.get_value("custom_state");
+						if (now === seen) return;
+						seen = now;
+						this.dialog.set_value("custom_district", "");
+					};
+					district_control.get_query = () => {
+						clear_if_state_changed();
+						return { filters: { state: this.dialog.get_value("custom_state") || "" } };
+					};
+					state.$input.on("change blur awesomplete-selectcomplete", () => setTimeout(clear_if_state_changed, 0));
+				}
 			}
 		}
 		PatientReachQuickEntryForm.patient_reach = true;
@@ -96,6 +110,13 @@
 // forms share one box, so opening a record already cached in the browser
 // showed the previous caregiver's age. Rewrite it on every refresh.
 frappe.ui.form.on("Patient", {
+	// Districts of the chosen State only, from the moment the form opens. The
+	// "Filter District based on State" client script sets this only when the
+	// State is changed, so a form opened with a State already chosen listed
+	// every district (change request of 07-Nov-2026, item 4).
+	setup(frm) {
+		frm.set_query("custom_district", () => ({ filters: { state: frm.doc.custom_state || "" } }));
+	},
 	refresh(frm) {
 		const box = frm.fields_dict.age_html && frm.fields_dict.age_html.wrapper;
 		if (!box) return;

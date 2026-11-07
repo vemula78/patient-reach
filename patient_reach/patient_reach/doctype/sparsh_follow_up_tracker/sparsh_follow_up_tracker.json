@@ -40,6 +40,8 @@
   "disposition_note",
   "call_1_section",
   "call_1_prevention_level",
+  "call_1_level",
+  "call_1_s_modifier",
   "call_1_scheduled_date",
   "call_1_actual_date",
   "call_1_duration",
@@ -51,6 +53,8 @@
   "call_1_notes",
   "call_2_section",
   "call_2_prevention_level",
+  "call_2_level",
+  "call_2_s_modifier",
   "call_2_scheduled_date",
   "call_2_actual_date",
   "call_2_duration",
@@ -62,6 +66,8 @@
   "call_2_notes",
   "call_3_section",
   "call_3_prevention_level",
+  "call_3_level",
+  "call_3_s_modifier",
   "call_3_scheduled_date",
   "call_3_actual_date",
   "call_3_duration",
@@ -190,8 +196,21 @@
   {
    "fieldname": "call_1_prevention_level",
    "fieldtype": "Data",
+   "label": "Current Prevention Level (filed)",
+   "hidden": 1
+  },
+  {
+   "fieldname": "call_1_level",
+   "fieldtype": "Select",
    "label": "Current Prevention Level",
-   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
+   "options": "\nLevel 1\nLevel 2\nLevel 3\nLevel 4",
+   "mandatory_depends_on": "eval:doc.call_1_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_1_interest)"
+  },
+  {
+   "fieldname": "call_1_s_modifier",
+   "fieldtype": "Select",
+   "label": "S modifier: past surgery or structural illness",
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "call_1_scheduled_date",
@@ -205,7 +224,7 @@
    "fieldname": "call_1_actual_date",
    "fieldtype": "Date",
    "label": "Actual Call Date",
-   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_1_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_1_interest)"
   },
   {
    "fieldname": "call_1_duration",
@@ -213,7 +232,8 @@
    "label": "Call Duration",
    "hide_days": 1,
    "hide_seconds": 1,
-   "description": "Leave blank when the call did not connect."
+   "description": "Leave blank when the call did not connect.",
+   "mandatory_depends_on": "eval:doc.call_1_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_1_interest)"
   },
   {
    "fieldname": "call_1_outcome",
@@ -230,14 +250,14 @@
    "fieldtype": "Link",
    "label": "Follow-up By",
    "options": "User",
-   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_1_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_1_interest)"
   },
   {
    "fieldname": "call_1_interest",
    "fieldtype": "Select",
    "label": "Caregiver's Interest for Next Follow-up",
    "options": "\nYes\nNo\nMay be",
-   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_1_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_1_interest)"
   },
   {
    "fieldname": "call_1_next_date",
@@ -250,7 +270,7 @@
    "fieldname": "call_1_notes",
    "fieldtype": "Small Text",
    "label": "Call Notes",
-   "mandatory_depends_on": "eval:(doc.call_1_outcome && doc.call_1_outcome != 'Connected') || doc.call_1_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_1_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_1_interest)"
   },
   {
    "fieldname": "call_2_section",
@@ -261,8 +281,21 @@
   {
    "fieldname": "call_2_prevention_level",
    "fieldtype": "Data",
+   "label": "Current Prevention Level (filed)",
+   "hidden": 1
+  },
+  {
+   "fieldname": "call_2_level",
+   "fieldtype": "Select",
    "label": "Current Prevention Level",
-   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
+   "options": "\nLevel 1\nLevel 2\nLevel 3\nLevel 4",
+   "mandatory_depends_on": "eval:doc.call_2_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_2_interest)"
+  },
+  {
+   "fieldname": "call_2_s_modifier",
+   "fieldtype": "Select",
+   "label": "S modifier: past surgery or structural illness",
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "call_2_scheduled_date",
@@ -275,7 +308,7 @@
    "fieldname": "call_2_actual_date",
    "fieldtype": "Date",
    "label": "Actual Call Date",
-   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_2_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_2_interest)"
   },
   {
    "fieldname": "call_2_duration",
@@ -283,7 +316,8 @@
    "label": "Call Duration",
    "hide_days": 1,
    "hide_seconds": 1,
-   "description": "Leave blank when the call did not connect."
+   "description": "Leave blank when the call did not connect.",
+   "mandatory_depends_on": "eval:doc.call_2_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_2_interest)"
   },
   {
    "fieldname": "call_2_outcome",
@@ -300,14 +334,14 @@
    "fieldtype": "Link",
    "label": "Follow-up By",
    "options": "User",
-   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_2_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_2_interest)"
   },
   {
    "fieldname": "call_2_interest",
    "fieldtype": "Select",
    "label": "Caregiver's Interest for Next Follow-up",
    "options": "\nYes\nNo\nMay be",
-   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_2_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_2_interest)"
   },
   {
    "fieldname": "call_2_next_date",
@@ -320,7 +354,7 @@
    "fieldname": "call_2_notes",
    "fieldtype": "Small Text",
    "label": "Call Notes",
-   "mandatory_depends_on": "eval:(doc.call_2_outcome && doc.call_2_outcome != 'Connected') || doc.call_2_interest == 'No'"
+   "mandatory_depends_on": "eval:doc.call_2_outcome == 'Connected' || ['Yes', 'May be'].includes(doc.call_2_interest)"
   },
   {
    "fieldname": "call_3_section",
@@ -331,8 +365,21 @@
   {
    "fieldname": "call_3_prevention_level",
    "fieldtype": "Data",
+   "label": "Current Prevention Level (filed)",
+   "hidden": 1
+  },
+  {
+   "fieldname": "call_3_level",
+   "fieldtype": "Select",
    "label": "Current Prevention Level",
-   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
+   "options": "\nLevel 1\nLevel 2\nLevel 3\nLevel 4",
+   "mandatory_depends_on": "eval:doc.call_3_outcome == 'Connected'"
+  },
+  {
+   "fieldname": "call_3_s_modifier",
+   "fieldtype": "Select",
+   "label": "S modifier: past surgery or structural illness",
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "call_3_scheduled_date",
@@ -345,7 +392,7 @@
    "fieldname": "call_3_actual_date",
    "fieldtype": "Date",
    "label": "Actual Call Date",
-   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
+   "mandatory_depends_on": "eval:doc.call_3_outcome == 'Connected'"
   },
   {
    "fieldname": "call_3_duration",
@@ -353,7 +400,8 @@
    "label": "Call Duration",
    "hide_days": 1,
    "hide_seconds": 1,
-   "description": "Leave blank when the call did not connect."
+   "description": "Leave blank when the call did not connect.",
+   "mandatory_depends_on": "eval:doc.call_3_outcome == 'Connected'"
   },
   {
    "fieldname": "call_3_outcome",
@@ -370,13 +418,13 @@
    "fieldtype": "Link",
    "label": "Follow-up By",
    "options": "User",
-   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
+   "mandatory_depends_on": "eval:doc.call_3_outcome == 'Connected'"
   },
   {
    "fieldname": "call_3_notes",
    "fieldtype": "Small Text",
    "label": "Call Notes",
-   "mandatory_depends_on": "eval:doc.call_3_outcome && doc.call_3_outcome != 'Connected'"
+   "mandatory_depends_on": "eval:doc.call_3_outcome == 'Connected'"
   },
   {
    "fieldname": "status_section",
@@ -486,7 +534,8 @@
    "fieldtype": "Section Break",
    "label": "Red-flag symptom on a call",
    "collapsible": 1,
-   "collapsible_depends_on": "eval:doc.call_red_flag"
+   "collapsible_depends_on": "eval:doc.call_red_flag",
+   "hidden": 1
   },
   {
    "fieldname": "call_red_flag_list",
@@ -532,7 +581,8 @@
    "fieldtype": "Section Break",
    "label": "Heart and brain events reported on calls",
    "collapsible": 1,
-   "collapsible_depends_on": "eval:(doc.health_events || []).length"
+   "collapsible_depends_on": "eval:(doc.health_events || []).length",
+   "hidden": 1
   },
   {
    "fieldname": "events_note",

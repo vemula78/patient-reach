@@ -22,6 +22,16 @@ const RED_FLAG_FIELDS = [
 ];
 
 frappe.ui.form.on("Ticket", {
+	// A new visit opens with Company filled in, as it did before (change request
+	// of 07-Nov-2026, item 2): the user's own default, else the site's. The form
+	// is read-only on Company, so the user cannot set it, and it used to stay
+	// empty until the first save.
+	onload: function (frm) {
+		if (frm.is_new() && !frm.doc.company) {
+			const company = frappe.defaults.get_user_default("Company") || (frappe.boot.sysdefaults || {}).company;
+			if (company) frm.set_value("company", company);
+		}
+	},
 	refresh: function (frm) {
 		toggle_sections(frm);
 		show_drl_v14(frm);
@@ -158,8 +168,10 @@ function drl_values(frm) {
 // red-flag questions from anywhere in the visit (Dr Nayanjeet, Q6).
 function show_drl_v14(frm) {
 	if (frm.doc.bp_rule !== DRL_RULE) return;
+	// The red-flag questions are off the visit form (change request of
+	// 07-Nov-2026, item 6), so there is nothing for a "Red flags" button to
+	// scroll to. Drop the button an earlier release added.
 	frm.remove_custom_button(__("Red flags"));
-	frm.add_custom_button(__("Red flags"), () => frm.scroll_to_field("rf_balance"));
 	if (frm.doc.red_flag_status === "Red-flag symptom present") {
 		frm.dashboard.set_headline_alert(
 			`<div style="color: var(--red-600); font-weight: var(--weight-semibold);">${__(
