@@ -51,3 +51,42 @@ class TestShortcutLabels(UnitTestCase):
 		self.assertIn("white-space: normal", block)
 		self.assertIn("overflow: visible", block)
 		self.assertIn("text-overflow: clip", block)
+
+
+class TestIndianiseDistricts(UnitTestCase):
+	"""Item 3 of 07-Nov-2026: the mapping of old district names to the official
+	ones. Pure functions; the move itself (rename_doc) is Frappe's."""
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		from patient_reach.patches.v1_16 import indianise_districts
+
+		cls.mod = indianise_districts
+
+	def test_no_name_maps_to_itself_or_is_a_target_of_another(self):
+		"""A chain (A to B, B to C) would depend on the order they run in."""
+		for state, names in self.mod.MAP.items():
+			for old, official in names.items():
+				self.assertNotEqual(old, official, (state, old))
+				self.assertNotIn(official, names, f"{state}: {old} -> {official} is itself renamed")
+
+	def test_an_existing_district_for_the_official_name_is_used(self):
+		existing = {"Ballari (Bellary)", "Bellary", "Raichur"}
+		self.assertEqual(self.mod.resolve_target(existing - {"Bellary"}, "Ballari"), "Ballari (Bellary)")
+
+	def test_spelling_and_case_do_not_hide_an_existing_district(self):
+		self.assertEqual(self.mod.resolve_target({"Raebareli", "Rai Bareli"}, "Rae Bareli"), "Raebareli")
+		self.assertEqual(self.mod.resolve_target({"Kalaburagi (Gulbarga)"}, "Kalaburagi"), "Kalaburagi (Gulbarga)")
+
+	def test_with_no_such_district_the_old_one_is_renamed(self):
+		self.assertEqual(self.mod.resolve_target({"Lucknow"}, "Prayagraj"), "Prayagraj")
+
+	def test_the_ambiguous_names_are_left_for_review(self):
+		west_bengal = self.mod.MAP["WEST BENGAL"]
+		for name in ("Bardhaman", "Burdwan", "Midnapore"):
+			self.assertNotIn(name, west_bengal, "Purba or Paschim needs the caregiver's address")
+
+	def test_the_patch_is_registered_after_the_one_that_adds_districts(self):
+		text = (APP / "patches.txt").read_text()
+		self.assertLess(text.index("v1_12.add_lgd_districts"), text.index("v1_16.indianise_districts"))

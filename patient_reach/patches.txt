@@ -29,3 +29,4 @@ patient_reach.patches.v1_14.create_portal_enquiry_workflow
 patient_reach.patches.v1_15.create_telemedicine_workflow
 patient_reach.patches.v1_15.create_telemedicine_dashboard
 patient_reach.patches.v1_16.split_follow_up_levels
+patient_reach.patches.v1_16.indianise_districts
