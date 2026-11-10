@@ -1,0 +1,79 @@
+{% extends "templates/web.html" %}
+
+{% block head_include %}
+{{ super() }}
+<link rel="manifest" href="/assets/patient_reach/sparsh.webmanifest">
+<link rel="apple-touch-icon" href="/assets/patient_reach/images/sparsh-180.png">
+<meta name="theme-color" content="#003366">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sai Sparsh">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  body { background: #fff; color: #2c2c2c; font-family: Lato, Arial, sans-serif; }
+  .sp-head { background: #003366; color: #fff; border-bottom: 3px solid #c8a84b; padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+  .sp-head img { width: 44px; height: 44px; background: #fff; border-radius: 50%; padding: 2px; }
+  .sp-head b { display: block; font-family: 'Playfair Display', Georgia, serif; font-size: 1.15rem; line-height: 1.2; }
+  .sp-head span { font-size: .8rem; opacity: .85; }
+  .sp-wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 32px; }
+  .sp-hello { font-size: 1rem; margin: 0 0 16px; color: #1a5276; }
+  .sp-big { display: block; background: #003366; color: #fff; text-decoration: none; border-radius: 10px; padding: 22px 18px; margin-bottom: 14px; min-height: 96px; }
+  .sp-big:hover, .sp-big:focus { color: #fff; text-decoration: none; background: #1a5276; }
+  .sp-big.sp-go { background: #e07b39; }
+  .sp-big.sp-go:hover, .sp-big.sp-go:focus { background: #c96a2b; }
+  .sp-big b { display: block; font-size: 1.35rem; margin-bottom: 4px; }
+  .sp-big span { font-size: .92rem; opacity: .92; }
+  .sp-row { display: flex; gap: 10px; margin-top: 6px; }
+  .sp-row a { flex: 1; text-align: center; padding: 12px 8px; border: 1px solid #1a5276; border-radius: 8px; color: #1a5276; text-decoration: none; font-size: .95rem; }
+  .sp-install { margin-top: 26px; padding: 14px; background: #d6e8f7; border-radius: 8px; font-size: .9rem; display: none; }
+  .sp-install button { margin-top: 8px; background: #003366; color: #fff; border: 0; border-radius: 6px; padding: 10px 14px; font-size: .95rem; }
+  .sp-install.show { display: block; }
+  .sp-emerg { margin-top: 22px; font-size: .85rem; color: #c0392b; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<header class="sp-head">
+  <img src="/assets/patient_reach/images/sparsh-192.png" alt="">
+  <div><b>Sai Sparsh</b><span>Sri Sathya Sai Institute of Higher Medical Sciences</span></div>
+</header>
+{% endblock %}
+
+{% block page_content %}
+<div class="sp-wrap">
+  <p class="sp-hello">Sairam, {{ user_full_name }}</p>
+  <a class="sp-big sp-go" href="/desk/ticket/new"><b>New First Visit</b><span>Record a caregiver's first visit</span></a>
+  <a class="sp-big" href="/desk/sparsh-follow-up-tracker"><b>Follow-up Calls</b><span>Your caregivers' follow-up call list</span></a>
+  <div class="sp-row">
+    <a href="/desk/patient">Patients</a>
+    <a href="/desk">Full menu</a>
+  </div>
+  <div class="sp-install" id="sp-install">
+    <div id="sp-install-text"></div>
+    <button type="button" id="sp-install-btn" hidden>Add to home screen</button>
+  </div>
+  <p class="sp-emerg">Any emergency symptom: call 112 or use the hospital's emergency process. Do not wait for a form.</p>
+</div>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block script %}
+<script>
+(function () {
+  var box = document.getElementById("sp-install"), txt = document.getElementById("sp-install-text"), btn = document.getElementById("sp-install-btn"), deferred = null;
+  if (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) return;
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (ios) {
+    txt.textContent = "To keep this on your phone: tap the Share button in Safari, then Add to Home Screen.";
+    box.classList.add("show");
+  }
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault(); deferred = e;
+    txt.textContent = "Keep Sai Sparsh on your phone's home screen.";
+    btn.hidden = false; box.classList.add("show");
+  });
+  btn.addEventListener("click", function () { if (deferred) { deferred.prompt(); deferred = null; box.classList.remove("show"); } });
+})();
+</script>
+{% endblock %}

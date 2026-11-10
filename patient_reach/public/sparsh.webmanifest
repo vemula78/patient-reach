@@ -1,0 +1,16 @@
+{
+  "name": "Sai Sparsh",
+  "short_name": "Sai Sparsh",
+  "description": "First visits and follow-up calls for Sai Sparsh volunteers",
+  "start_url": "/sparsh",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#003366",
+  "icons": [
+    {"src": "/assets/patient_reach/images/sparsh-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/assets/patient_reach/images/sparsh-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/assets/patient_reach/images/sparsh-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
