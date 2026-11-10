@@ -26,3 +26,20 @@
 .shortcut-widget-box .widget-head {
 	align-items: flex-start;
 }
+
+/* Phones: the round chat button sat over the lowest fields, list rows and the
+   Back/Next bar of the Visit form (12-Nov-2026, volunteers' phone use). On a
+   narrow screen make it smaller and lift it clear of that bar, and leave room
+   at the foot of the page so the last row can be scrolled above it. */
+@media (max-width: 768px) {
+	#sssihms-chat-bubble {
+		width: 44px !important;
+		height: 44px !important;
+		right: 10px !important;
+		bottom: 84px !important;
+	}
+	.layout-main-section,
+	.page-content {
+		padding-bottom: 72px;
+	}
+}
