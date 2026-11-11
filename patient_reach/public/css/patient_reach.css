@@ -42,4 +42,16 @@
 	.page-content {
 		padding-bottom: 72px;
 	}
+	/* The Visit form's Back/Next bar is built by script with no side padding,
+	   so Next touched the screen edge and looked cut off. */
+	.sparsh-wizard-bar {
+		padding: 0 12px;
+		box-sizing: border-box;
+	}
+	/* List rows are wider than a phone; let them scroll sideways instead of
+	   being cut off at the right edge. */
+	.frappe-list .result-container {
+		overflow-x: auto !important;
+		-webkit-overflow-scrolling: touch;
+	}
 }
